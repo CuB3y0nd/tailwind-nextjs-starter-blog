@@ -1,0 +1,382 @@
+---
+title: 'Pwntools Cheat Sheet'
+date: '2023-08-18'
+lastmod: '2023-08-23'
+tags: ['PWN', 'Stack']
+draft: false
+summary: '这篇博客记录了 `pwntools` 库中一些实用的功能。'
+authors: ['default']
+---
+
+## 0x01 Pwntools
+
+Pwntools 是一个 CTF 框架和漏洞利用开发库。它用 Python 编写，专为快速原型设计
+和漏洞利用开发而设计，旨在使编写漏洞利用脚本变得尽可能更简单。
+
+### 1x01 安装
+
+如果你是 Arch Linux，可以使用以下命令安装 pwntools：
+
+```bash
+sudo pacman -S python-pwntools
+```
+
+### 1x02 Windows
+
+很不幸，pwntools 的许多功能在 Windows 上并不适用，因为它使用了 `_curses` 模块，
+而该模块不适用于 Windows。
+
+## 0x02 进程和交互
+
+### 1x01 进程
+
+进程（Process）是你与 pwntools 中的某些内容交互的主要方式，启动一个进程很容易。
+
+```python
+p = process('./vulnerable_binary')
+```
+
+你也可以远程连接进程：
+
+```bash
+p = remote('my.special.ip', port)
+```
+
+### 1x02 发送数据到进程
+
+`pwntools` 的强大之处在于它可以与你的进程进行极其简单的通信。
+
+#### 2x01 p.send(data)
+
+向进程发送数据，数据可以是 **字符串** 或 **类似字节的对象**。pwntools 会为你处理这一切。
+
+#### 2x02 p.sendline(data)
+
+将数据发送到进程，后跟换行符 `\n` 。有些程序需要 `\n` 来接收输入。
+
+`p.sendline(data)` 等同于 `p.send(data + '\n')`
+
+### 1x03 从进程接收数据
+
+#### 2x01 p.recv(numb)
+
+从进程接收 `numb` 大小的字节数据。
+
+#### 2x02 p.recvuntil(delimiter, drop=False)
+
+接收所有数据，直到遇到 **分隔符**，然后返回数据。如果 `drop` 为 `True` ，则返回
+的数据不包含 **分隔符**。
+
+#### 2x03 p.recvline(keepends=True)
+
+本质上相当于 `p.recvuntil('\n', drop=keepends)` 。接收直到到达 `\n` 的所有
+数据，如果 `keepends` 为 `True` ，则返回包括 `\n` 的接收到的所有数据。
+
+#### 2x04 p.clean(timeout=0.02)
+
+接收超时秒数内的 **所有** 数据并返回。另一个类似的函数是 `p.recvall()` ，但这
+通常需要很长时间才能执行，因此用 `p.clean()` 要好得多。
+
+#### 2x05 Timeout
+
+所有接收函数都包含 `timeout` 参数以及其它列出的参数。
+
+例如，`p.recv(numb=16, timeout=1)` 将执行，但如果在超时秒内未接收到 `numb`
+大小的字节，则数据将被缓存以供下一个接收函数使用，并返回一个空字符串 `''` 。
+
+:::danger
+当 exploit 没有任何问题时，错误的接收数量可能会导致你的漏洞利用程序停止。这应该
+是你检查的第一件事。如果你不确定，请改用 `p.clean()` 。
+:::
+
+## 0x03 日志
+
+日志是 pwntools 的一个非常有用的功能，它可以让你知道在代码中的哪些位置，并且你
+可以以不同的方式记录不同类型的数据。
+
+### 1x01 log.info(text)
+
+```
+>>> log.info('Binary Base is at 0x400000')
+[*] Binary Base is at 0x400000
+```
+
+### 1x02 log.success(text)
+
+```
+>>> log.success('ASLR bypassed! Libc base is at 0xf7653000')
+[+] ASLR bypassed! Libc base is at 0xf7653000
+```
+
+### 1x03 log.error(text)
+
+```
+>>> log.success('The payload is too long')
+[-] The payload is too long
+```
+
+## 0x04 上下文
+
+上下文（context）是 pwntools 中的一个全局变量，它允许你只设置某些值一次，以后的所有
+函数都会自动使用该数据。
+
+```
+context.arch = 'i386'
+context.os = 'linux'
+context.endian = 'little'
+context.bits = 64
+```
+
+现在，每次生成 shellcode 或使用 `p64()` 和 `u64()` 这样的函数时，它都会使用 `context` 变量。
+
+如果你认为设置很多，这里有个更简单的方法：
+
+```python
+context.binary = './vulnerable_binary'
+```
+
+这使你能够简化更多的工作。例如，当你使用 `process()` 时：
+
+```python
+p = process()
+```
+
+它将自动使用 `context` 中定义的二进制文件，你无需再次指定它。
+
+## 0x05 包装
+
+使用 python 内置的 `struct` 模块包装通常很痛苦，因为需要记住大量不必要的选项。
+pwntools 使这变得轻而易举，使用 `context` 全局变量自动识别应该如何包装数据。
+
+### 1x01 p64(addr)
+
+根据 `context` 包装 `addr` ，默认情况下是 **小端字节序**。
+
+```python
+p64(0x04030201) == b'\x01\x02\x03\x04'
+
+context.endian = 'big'
+p64(0x04030201) == b'\x04\x03\x02\x01'
+```
+
+:::info
+`p64()` 返回一个类似字节的对象，因此你必须将溢出 Padding 的形式改为 `b'A'` 而
+不仅仅是 `'A'` 。
+:::
+
+### 1x02 u64(data)
+
+根据 `context` 解包数据；与 `p64()` 的作用完全相反。
+
+### 1x03 flat(*args)
+
+可以接收一堆参数并根据 `context` 将它们全部进行包装。完整的功能相当复杂，
+但本质上是：
+
+```python
+payload = flat(
+  0x01020304,
+  0x59549342,
+  0x12186354
+)
+```
+
+等同于
+
+```python
+payload = p64(0x01020304) + p64(0x59549342) + p64(0x12186354)
+```
+
+:::failure
+`flat()` 使用 `context` ，因此除非你指定它是其它 bits 的，否则它将始终尝试将其
+包装为 `context` 对应的 bits 的数据。
+:::
+
+## 0x06 ELF
+
+pwntools `ELF` 类是你可能需要的最有用的类，因此了解它的全部功能将使你的生活更轻松。
+本质上，`ELF` 类允许你在运行时查找变量并停止硬编码。
+
+### 1x01 创建一个 ELF 对象
+
+想要创建一个 ELF 对象非常简单：
+
+```python
+elf = ELF('./vulnerable_program')
+```
+
+### 1x02 获取进程
+
+我们可以从 `ELF` 中获取它，而不是指定一个新进程：
+
+```python
+p = elf.process()
+```
+
+### 1x03 PLT 和 GOT 表
+
+想做 `ret2plt` 吗？很简单：
+
+```python
+puts_plt = elf.plt['puts']
+puts_got = elf.got['puts']
+```
+
+### 1x04 Functions
+
+需要返回一个名为 `vuln` 的函数？不必费心使用反汇编器或调试器来查找它在哪里。
+
+```python
+main_address = elf.functions['vuln']
+```
+
+注：`elf.functions` 返回一个 `Function` 对象，因此如果你只需要地址，可以使用 `elf.symbols` ：
+
+```python
+main_address = elf.symbols['symbol']
+```
+
+### 1x05 elf.libc
+
+在本地时，我们可以获取二进制文件运行时使用的 `libc` 。
+
+```python
+libc = elf.libc
+```
+
+### 1x06 elf.search(needle, writable=False)
+
+在整个二进制文件中搜索特定的字符序列。在做 `ret2libc` 时非常有用。如果设置了可写，
+它只会检查内存中可以写入的部分。注：这会返回一个生成器，因此如果你想要第一个匹配项，
+则必须将其包含在 `next()` 中。
+
+```python
+binsh = next(libc.search(b'/bin/sh\x00'))
+```
+
+### 1x07 elf.address
+
+`elf.address` 是二进制文件的基地址。如果二进制文件没有启用 PIE，那么它是绝对的；
+如果启用了，则所有地址都是相对的（它假设二进制基地址为 `0x0`）。
+
+设置 `address` 值会自动更新符号表（symbols）、`got`、`plt` 和 `functions` 的地址，
+这在调整 PIE 或 ASLR 时非常有用。
+
+假设你在启用 ASLR 时泄漏了 `libc` 的基地址；使用 pwntools，获取 `ret2libc` 的
+`system` 地址将非常容易：
+
+```python
+libc = elf.libc
+libc.address = 0xf7f23000  # You 'leaked' this
+
+system = libc.symbols['system']
+binsh = next(libc.search(b'/bin/sh\x00'))
+exit_addr = libc.symbols['exit']
+
+# Now you can do the ret2libc
+```
+
+## 0x07 ROP
+
+`ROP` 类非常强大，使你能够以更少的行创建可读的 ROP 链。
+
+### 1x01 创建一个 ROP 对象
+
+```python
+rop = ROP(elf)
+```
+
+### 1x02 添加溢出 Padding
+
+```python
+rop.raw('A' * 64)
+```
+
+### 1x03 添加一个包装值
+
+```python
+rop.raw(0x12345678)
+```
+
+### 1x04 调用函数 win()
+
+```python
+rop.win()
+```
+
+如果你需要参数：
+
+```python
+rop.win(0xdeadc0de, 0xdeadbeef)
+```
+
+### 1x05 抛弃逻辑代码
+
+```python
+from pwn import *
+
+elf = context.binary = ELF('./showcase')
+rop = ROP(elf)
+
+rop.win1(0x12345678)
+rop.win2(0xdeadbeef, 0xdeadc0de)
+rop.flag(0xc0ded00d)
+
+print(rop.dump())
+```
+
+`dump()` 输出：
+
+```
+0x0000:         0x40118b pop rdi; ret
+0x0008:       0x12345678 [arg0] rdi = 305419896
+0x0010:         0x401102 win1
+0x0018:         0x40118b pop rdi; ret
+0x0020:       0xdeadbeef [arg0] rdi = 3735928559
+0x0028:         0x401189 pop rsi; pop r15; ret
+0x0030:       0xdeadc0de [arg1] rsi = 3735929054
+0x0038:       'oaaapaaa' <pad r15>
+0x0040:         0x40110c win2
+0x0048:         0x40118b pop rdi; ret
+0x0050:       0xc0ded00d [arg0] rdi = 3235827725
+0x0058:         0x401119 flag
+```
+
+### 1x06 发送 ROP 链
+
+```python
+p.sendline(rop.chain())
+```
+
+### 1x07 对比
+
+不使用 pwntools：
+
+```python
+payload = flat(
+    POP_RDI,
+    0xdeadc0de,
+    elf.sym['win1'],
+    POP_RDI,
+    0xdeadbeef,
+    POP_RSI,
+    0x98765432,
+    elf.sym['win2'],
+    POP_RDI,
+    0x54545454,
+    elf.sym['flag']
+)
+
+p.sendline(payload)
+```
+
+使用 pwntools：
+
+```python
+rop.win1(0xdeadc0de)
+rop.win2(0xdeadbeef, 0x98765432)
+rop.flag(0x54545454)
+
+p.sendline(rop.chain())
+```
+
