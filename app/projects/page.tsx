@@ -1,5 +1,5 @@
 import projectsData from '@/data/projectsData'
-import Card from '@/components/Card'
+import ProjectCard from '@/components/ProjectCard'
 import { genPageMetadata } from 'app/seo'
 
 export const metadata = genPageMetadata({ title: '项目' })
@@ -15,11 +15,14 @@ export default function Projects() {
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             我的开源项目列表
           </p>
+          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
+            <strike>被你发现了！这是一个被鸽了的页面 qwq ……</strike> 有空一定填坑！
+          </p>
         </div>
         <div className="container py-12">
-          <div className="-m-4 flex flex-wrap">
+          <div className="mb-6 grid gap-4 sm:grid-cols-2">
             {projectsData.map((d) => (
-              <Card
+              <ProjectCard
                 key={d.title}
                 title={d.title}
                 description={d.description}
