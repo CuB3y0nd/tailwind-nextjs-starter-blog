@@ -7,7 +7,7 @@ const friendsData = [
   },
   {
     name: 'Vlex',
-    avatar: '/static/images/friends/Vlex.png',
+    avatar: '/static/images/friends/Vlex.jpg',
     url: 'https://www.vernonwu.com',
     description: 'Vlex\'s Blog.'
   },
