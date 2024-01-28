@@ -30,7 +30,7 @@ export default function Friends() {
           </div>
         </div>
       </div>
-      <h2 className="text-sm font-extrabold leading-6 tracking-tight text-gray-900 dark:text-gray-100 sm:text-2xl sm:leading-7 md:text-4xl md:leading-10">
+      <h2 className="text-2xl font-extrabold leading-7 tracking-tight text-gray-900 dark:text-gray-100 sm:text-2xl sm:leading-7 md:text-4xl md:leading-10">
         提交格式
       </h2>
       <pre>
@@ -40,24 +40,28 @@ export default function Friends() {
   name: 'Your name',
   avatar: 'Your avatar link',
   url: 'Your website link,
-  description: 'Your description.'
+  description: 'Your description.',
 }
           `}
         </code>
       </pre>
-      <p>
-        1. 您可以通过 <del>创建 PR</del> 或在评论区按照上述指定的格式进行提交友链。
-      </p>
-      <p>
-        2. 那些不尊重他人劳动成果、无出处转载、有恶意行为的网站请勿前来交流。
-      </p>
+      <blockquote style={{ borderLeft: '4px solid', padding: '10px' }}>
+        <p>
+          1. 您可以通过 <del>创建 PR</del> 或在评论区按照上述指定的格式进行提交友链。
+        </p>
+        <p>
+          2. 那些不尊重他人劳动成果、无出处转载、有恶意行为的网站请勿前来交流。
+        </p>
+      </blockquote>
       <br />
-      <p>
-        网站失效、停止维护、不当内容都可能被取消链接！
-      </p>
-      <p>
-        仅限个人非商业博客/网站！
-      </p>
+      <center>
+        <p>
+          <b>网站失效、停止维护、不当内容都可能被取消链接！</b>
+        </p>
+        <p>
+          <b>仅限个人非商业博客/网站！</b>
+        </p>
+      </center>
     </>
   )
 }
