@@ -27,7 +27,6 @@ lerna-debug.log*
 .pnpm-debug.log*
 
 # dotenv environment variable files
-***REMOVED***
 ***REMOVED***.development.local
 ***REMOVED***.test.local
 ***REMOVED***.production.local
