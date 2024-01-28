@@ -6,7 +6,7 @@ const siteMetadata = {
   description: '开发者、网络安全爱好者、Pwner。',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
+  siteUrl: 'https://www.cubeyond.net',
   siteRepo: 'https://github.com/CuB3y0nd/cubeyond.net',
   siteLogo: '/static/images/logo.png',
   socialBanner: '/static/images/twitter-card.png',
@@ -37,7 +37,7 @@ const siteMetadata = {
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus
     // Please add your ***REMOVED*** file and modify it according to your selection
-    provider: 'emailoctopus',
+    provider: 'mailchimp',
   },
   comments: {
     // If you want to use an analytics provider you have to add it to the
