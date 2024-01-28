@@ -46,7 +46,7 @@ export default function Friends() {
         </code>
       </pre>
       <p>
-        1. 您可以通过 <strike>创建 PR</strike> 或在评论区按照上述指定的格式进行提交友链。
+        1. 您可以通过 <del>创建 PR</del> 或在评论区按照上述指定的格式进行提交友链。
       </p>
       <p>
         2. 那些不尊重他人劳动成果、无出处转载、有恶意行为的网站请勿前来交流。
