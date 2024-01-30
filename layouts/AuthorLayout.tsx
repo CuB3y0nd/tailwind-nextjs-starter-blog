@@ -2,6 +2,8 @@ import { ReactNode } from 'react'
 import type { Authors } from 'contentlayer/generated'
 import SocialIcon from '@/components/social-icons'
 import Image from '@/components/Image'
+import siteMetadata from '@/data/siteMetadata'
+import Comments from '@/components/Comments'
 
 interface Props {
   children: ReactNode
@@ -43,6 +45,11 @@ export default function AuthorLayout({ children, content }: Props) {
           </div>
         </div>
       </div>
+      {siteMetadata.comments && (
+        <div className="pb-6 pt-6 text-center text-gray-700 dark:text-gray-300" id="comment">
+          <Comments />
+        </div>
+      )}
     </>
   )
 }
