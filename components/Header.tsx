@@ -43,9 +43,11 @@ const Header = () => {
                 </Link>
               ))}
           </div>
-          <SearchButton />
-          <ThemeSwitch />
-          <MobileNav />
+          <div className="flex items-center space-x-2">
+            <SearchButton />
+            <ThemeSwitch />
+            <MobileNav />
+          </div>
         </div>
       </div>
     </header>
