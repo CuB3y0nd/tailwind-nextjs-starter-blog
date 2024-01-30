@@ -1,4 +1,5 @@
 import Link from './Link'
+import Image from './Image'
 import siteMetadata from '@/data/siteMetadata'
 import SocialIcon from '@/components/social-icons'
 
@@ -13,6 +14,20 @@ export default function Footer() {
           <div>{` • `}</div>
           <Link href="/">{siteMetadata.title}</Link>
         </div>
+      </div>
+      <div className="flex flex-row items-center justify-center gap-4 mb-4">
+        <Image
+          alt="Written by Human, Not by AI"
+          src="static/images/Written-By-Human-Not-By-AI-Badge-white.svg"
+          width={120}
+          height={50}
+        />
+        <Image
+          alt="Written by Human, Not by AI"
+          src="static/images/Written-By-Human-Not-By-AI-Badge-black.svg"
+          width={120}
+          height={50}
+        />
       </div>
     </footer>
   )
