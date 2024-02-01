@@ -3,7 +3,7 @@ import type { Authors } from 'contentlayer/generated'
 import SocialIcon from '@/components/social-icons'
 import Image from '@/components/Image'
 import siteMetadata from '@/data/siteMetadata'
-import Comments from '@/components/Comments'
+import Comments from '@/components/CommentsWithoutProperty'
 
 interface Props {
   children: ReactNode
