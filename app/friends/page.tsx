@@ -2,7 +2,7 @@ import friendsData from '@/data/friendsData'
 import FriendCard from '@/components/FriendCard'
 import { genPageMetadata } from 'app/seo'
 import siteMetadata from '@/data/siteMetadata'
-import Comments from '@/components/Comments'
+import Comments from '@/components/FriendComments'
 
 export const metadata = genPageMetadata({ title: '友链' })
 
