@@ -2283,6 +2283,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fontsource/lxgw-wenkai@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "@fontsource/lxgw-wenkai@npm:5.0.1"
+  checksum: 09b050038a0ab61432de5041cb51c3bf3edf5f4f371695ec46e743572e681ccdcc3f6c429ecce7790c9da797591a48202c9d3ad21eab37b1697fe961602e4c75
+  languageName: node
+  linkType: hard
+
 "@giscus/react@npm:^2.3.0":
   version: 2.3.0
   resolution: "@giscus/react@npm:2.3.0"
@@ -11310,6 +11317,7 @@ __metadata:
   resolution: "tailwind-nextjs-starter-blog@workspace:."
   dependencies:
     "@catppuccin/tailwindcss": ^0.1.6
+    "@fontsource/lxgw-wenkai": ^5.0.1
     "@next/bundle-analyzer": 14.0.3
     "@svgr/webpack": ^8.0.1
     "@tailwindcss/forms": ^0.5.4

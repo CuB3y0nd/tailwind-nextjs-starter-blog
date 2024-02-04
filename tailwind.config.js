@@ -22,7 +22,7 @@ module.exports = {
         14: '3.5rem',
       },
       fontFamily: {
-        sans: ['var(LXGW_WenKai)', ...fontFamily.sans],
+        sans: ['LXGW WenKai', ...fontFamily.sans],
       },
       colors: {
         primary: colors.blue,
