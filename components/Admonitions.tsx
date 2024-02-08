@@ -13,9 +13,7 @@ const Note = ({ children }) => {
             </strong>
           </p>
         </div>
-        <p>
-          {children}
-        </p>
+        {children}
       </div>
     </>
   )
@@ -36,9 +34,7 @@ const Tip = ({ children }) => {
             </strong>
           </p>
         </div>
-        <p>
-          {children}
-        </p>
+        {children}
       </div>
     </>
   )
@@ -59,9 +55,7 @@ const Important = ({ children }) => {
             </strong>
           </p>
         </div>
-        <p>
-          {children}
-        </p>
+        {children}
       </div>
     </>
   )
@@ -82,9 +76,7 @@ const Warning = ({ children }) => {
             </strong>
           </p>
         </div>
-        <p>
-          {children}
-        </p>
+        {children}
       </div>
     </>
   )
@@ -105,9 +97,7 @@ const Caution = ({ children }) => {
             </strong>
           </p>
         </div>
-        <p>
-          {children}
-        </p>
+        {children}
       </div>
     </>
   )
