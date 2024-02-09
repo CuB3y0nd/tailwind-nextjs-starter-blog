@@ -1,7 +1,7 @@
 const { withContentlayer } = require('next-contentlayer')
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process***REMOVED***.ANALYZE === 'true',
+  enabled: process.env.ANALYZE === 'true',
 })
 
 // You might need to insert additional domains in script-src if you are using external services

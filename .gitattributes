@@ -104,7 +104,7 @@ TODO              text
 *.conf            text
 *.config          text
 .editorconfig     text
-***REMOVED***              text
+.env              text
 .gitattributes    text
 .gitconfig        text
 .htaccess         text

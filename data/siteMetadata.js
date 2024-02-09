@@ -21,7 +21,7 @@ const siteMetadata = {
     // supports Plausible, Simple Analytics, Umami, Posthog or Google Analytics.
     // umamiAnalytics: {
     //   // We use an env variable for this site to avoid other users cloning our analytics ID
-    //   umamiWebsiteId: process***REMOVED***.NEXT_UMAMI_ID, // e.g. 123e4567-e89b-12d3-a456-426614174000
+    //   umamiWebsiteId: process.env.NEXT_UMAMI_ID, // e.g. 123e4567-e89b-12d3-a456-426614174000
     // },
     plausibleAnalytics: {
       plausibleDataDomain: '', // e.g. tailwind-nextjs-starter-blog.vercel.app
@@ -36,7 +36,7 @@ const siteMetadata = {
   },
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus
-    // Please add your ***REMOVED*** file and modify it according to your selection
+    // Please add your .env file and modify it according to your selection
     provider: 'mailchimp',
   },
   comments: {
@@ -48,10 +48,10 @@ const siteMetadata = {
     giscusConfig: {
       // Visit the link below, and follow the steps in the 'configuration' section
       // https://giscus.app/
-      repo: process***REMOVED***.NEXT_PUBLIC_GISCUS_REPO,
-      repositoryId: process***REMOVED***.NEXT_PUBLIC_GISCUS_REPOSITORY_ID,
-      category: process***REMOVED***.NEXT_PUBLIC_GISCUS_CATEGORY,
-      categoryId: process***REMOVED***.NEXT_PUBLIC_GISCUS_CATEGORY_ID,
+      repo: process.env.NEXT_PUBLIC_GISCUS_REPO,
+      repositoryId: process.env.NEXT_PUBLIC_GISCUS_REPOSITORY_ID,
+      category: process.env.NEXT_PUBLIC_GISCUS_CATEGORY,
+      categoryId: process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID,
       mapping: 'pathname', // supported options: pathname, url, title
       reactions: '1', // Emoji reactions: 1 = enable / 0 = disable
       // Send discussion metadata periodically to the parent window: 1 = enable / 0 = disable
