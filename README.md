@@ -1,11 +1,13 @@
-# cubeyond.net
+# CuB3y0nd's Portfolio
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/CuB3y0nd/cubeyond.net)
 
 ## Quick Start Guide
 
 1. Clone the repo
 
 ```bash
-npx degit 'timlrx/tailwind-nextjs-starter-blog'
+git clone https://github.com/CuB3y0nd/cubeyond.net.git
 ```
 
 2. Personalize `siteMetadata.js` (site related information)
@@ -137,3 +139,8 @@ See [Next.js on Netlify](https://docs.netlify.com/integrations/frameworks/next-j
 6. Deploy the `out` folder to your hosting service of choice or run `npx serve out` to view the website locally.
 
 **Note**: Deploying on Github pages require addition modifications to the base path. Please refer to the FAQ for more information.
+
+## Licence
+
+[MIT](https://github.com/CuB3y0nd/cubeyond.net/blob/master/LICENSE) © [CuB3y0nd](https://www.cubeyond.net)
+
