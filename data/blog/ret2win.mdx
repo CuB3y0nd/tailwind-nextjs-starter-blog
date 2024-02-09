@@ -8,8 +8,7 @@ summary: '最基本的二进制漏洞利用'
 authors: ['default']
 ---
 
-**ret2win** 中有一个 `win()` 函数（或等效函数）；一旦你成功地将执行重定向到那里，
-你就完成了挑战。
+**ret2win** 中有一个 `win()` 函数（或等效函数）；一旦你成功地将执行重定向到那里，你就完成了挑战。
 
 为了实现这一点，我们必须覆盖 EIP，但覆盖成我们想要的特定值。
 
@@ -18,23 +17,19 @@ authors: ['default']
 - 直到我们开始覆盖返回地址（EIP）为止的 `溢出 Padding`
 - 我们想要将 EIP 覆盖成什么值
 
-:::warning
-当我说「覆盖 EIP」时，我的意思是覆盖压入到 EIP 中的已保存的返回地址。
-EIP 寄存器 并不位于栈上，因此不会被直接覆盖。
-:::
+<Warning>
+  当我说「覆盖 EIP」时，我的意思是覆盖压入到 EIP 中的已保存的返回地址。EIP 寄存器 并不位于栈上，因此不会被直接覆盖。
+</Warning>
 
 LINK
 
 ## 0x01 计算溢出 Padding
 
-这可以通过简单的试验和错误找到。我们可以发送可变数量的字符，将 `Segmentation Fault`
-消息和 pwndbg 结合使用，来判断我们何时覆盖了 EIP 。有一种比简单的暴力破解更好的
-方法：[德布鲁因（De Bruijn）序列](https://www.cubeyond.net/de-bruijn-sequences/)，为了方便起见，现在我们直接使用已经计算出的溢出 Padding。
+这可以通过简单的试验和错误找到。我们可以发送可变数量的字符，将 `Segmentation Fault` 消息和 pwndbg 结合使用，来判断我们何时覆盖了 EIP 。有一种比简单的暴力破解更好的方法：[德布鲁因（De Bruijn）序列](https://www.cubeyond.net/de-bruijn-sequences/)，为了方便起见，现在我们直接使用已经计算出的溢出 Padding。
 
-:::info
-除了覆盖 EIP 之外，还可能会因其他原因而出现分段错误。使用调试器确保
-`溢出 Padding` 正确。
-:::
+<Note>
+  除了覆盖 EIP 之外，还可能会因其他原因而出现分段错误。使用调试器确保 `溢出 Padding` 正确。
+</Note>
 
 这里的溢出 Padding 为 52 字节的偏移量。
 
@@ -50,21 +45,17 @@ $ i fun
 [...]
 ```
 
-:::info
-`i fun` 代表 **i**nfo **f**unction，可以列出分析中发现的函数。
-:::
+<Note>
+  `i fun` 代表 **i**nfo **f**unction，可以列出分析中发现的函数。
+</Note>
 
-可以看到这里的 `flag()` 函数位于 `0x080491c3` 。
+可以看到这里的 `flag()` 函数位于 `0x080491c3`。
 
 ## 0x03 编写地址
 
-最后一个难题是弄清楚如何发送我们想要的地址。在 [二进制漏洞利用简介](https://www.cubeyond.net/stack-introduction/)中，
-我们发送的 `A` 变成了 `0x41` —— 这是 `A` 的 `ASCII 码` 。所以解决方案
-很简单——我们只要找到 `ASCII` 码为 `0x08`、`0x04`、`0x91` 和 `0xc3` 的
-字符即可。
+最后一个难题是弄清楚如何发送我们想要的地址。在 [二进制漏洞利用简介](https://www.cubeyond.net/stack-introduction/)中，我们发送的 `A` 变成了 `0x41` —— 这是 `A` 的 `ASCII 码`。所以解决方案很简单——我们只要找到 `ASCII` 码为 `0x08`、`0x04`、`0x91` 和 `0xc3` 的字符即可。
 
-这比你想象的要简单得多，因为我们可以在 Python 中将它们指定为
-十六进制：
+这比你想象的要简单得多，因为我们可以在 Python 中将它们指定为十六进制。
 
 ```python
 address = '\x08\x04\x91\xc3'
@@ -72,20 +63,19 @@ address = '\x08\x04\x91\xc3'
 
 这使得事情变得容易得多。
 
-:::tip
-使用 `xxd` 可以以二进制或十六进制显示文件的内容：
+<Tip>
+  使用 `xxd` 可以以二进制或十六进制显示文件的内容：
 
-$ echo '\x41\x41\x41\x41' | xxd
-00000000: 4141 4141 0a        AAAA.
+  $ echo '\x41\x41\x41\x41' | xxd<br />
+  00000000: 4141 4141 0a        AAAA.
 
-$ echo 'AAAA' | xxd
-00000000: 4141 4141 0a        AAAA.
-:::
+  $ echo 'AAAA' | xxd<br />
+  00000000: 4141 4141 0a        AAAA.
+</Tip>
 
 ## 0x04 编写漏洞利用脚本
 
-现在我们知道了溢出 Padding 和想要覆盖的值，我们可以使用 [pwntools](https://github.com/Gallopsled/pwntools) 与二进制文件
-交互，编写漏洞利用脚本。
+现在我们知道了溢出 Padding 和想要覆盖的值，我们可以使用 [pwntools](https://github.com/Gallopsled/pwntools) 与二进制文件交互，编写漏洞利用脚本。
 
 ```python:exp.py
 from pwn import *
@@ -104,9 +94,7 @@ p.sendline(payload)
 p.interactive()
 ```
 
-如果你直接运行上面的脚本，就会发现一个小问题：它没有输出 `Exploited` 。为什么？
-我们可以用调试器来检查一下。添加 hook `pwndbg` 的代码，以及 `pause()`，以便
-我们可以在想发送 `payload` 的时候发送 `payload` 。
+如果你直接运行上面的脚本，就会发现一个小问题：它没有输出 `Exploited`。为什么？我们可以用调试器来检查一下。添加 hook `pwndbg` 的代码，以及 `pause()`，以便我们可以在想发送 `payload` 的时候发送 `payload` 。
 
 ```python:exp.py
 from pwn import *
@@ -145,16 +133,11 @@ $ x/20wx $esp
 [...]
 ```
 
-`0xc3910408` ，看起来熟悉吗？这是我们试图发送的地址，只不过字节顺序被反转了，
-而这种反转的原因是 [字节顺序](https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F) 使用大端序的系统将最高有效字节（具有最大值的字节）
-存储在最小的内存地址处，这就是我们发送它们的方式。使用小端序的系统的做法恰恰相反，
-这是有 [原因](https://softwareengineering.stackexchange.com/questions/95556/what-is-the-advantage-of-little-endian-format) 的，并且我们遇到的大多数二进制文件都是小端序的。就我们而言，只要知道
-字节在使用小端序的可执行文件中 *payload 以相反的顺序存储* 就可以了。
+`0xc3910408`，看起来熟悉吗？这是我们试图发送的地址，只不过字节顺序被反转了，而这种反转的原因是 [字节顺序](https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F) 使用大端序的系统将最高有效字节（具有最大值的字节）存储在最小的内存地址处，这就是我们发送它们的方式。使用小端序的系统的做法恰恰相反，这是有 [原因](https://softwareengineering.stackexchange.com/questions/95556/what-is-the-advantage-of-little-endian-format) 的，并且我们遇到的大多数二进制文件都是小端序的。就我们而言，只要知道字节在使用小端序的可执行文件中 *payload 以相反的顺序存储* 就可以了。
 
 ## 0x05 确定字节顺序
 
-`pwntools` 附带了一个名为 `checksec` 的工具，用于二进制分析。我们可以直接在 `pwndbg`
-中使用这条指令：
+`pwntools` 附带了一个名为 `checksec` 的工具，用于二进制分析。我们可以直接在 `pwndbg` 中使用这条指令。
 
 ```
 $ checksec
@@ -173,7 +156,7 @@ Arch:     i386-32-little
 payload += '\x08\x04\x91\xc3'[::-1]
 ```
 
-如果你现在运行它，它将成功输出 `Exploited!` ：
+如果你现在运行它，它将成功输出 `Exploited!`：
 
 ```
 $ python exp.py
@@ -191,8 +174,7 @@ Exploited!!!!!
 
 ## 0x07 Pwntools 和 字节顺序
 
-毫不奇怪，你并不是第一个想到「能否使字节顺序书写变得更简单」的人。
-幸运的是，`pwntools` 有一个内置的 `p32()` 函数可供使用！
+毫不奇怪，你并不是第一个想到「能否使字节顺序书写变得更简单」的人。幸运的是，`pwntools` 有一个内置的 `p32()` 函数可供使用！
 
 ```python
 payload += '\x08\x04\x91\xc3'[::-1]
@@ -204,8 +186,7 @@ payload += '\x08\x04\x91\xc3'[::-1]
 payload += p32(0x080491c3)
 ```
 
-这样就简单多了。唯一需要注意的是它返回字节而不是字符串，因此你必须
-将溢出 Padding 设置为字节字符串：
+这样就简单多了。唯一需要注意的是它返回字节而不是字符串，因此你必须将溢出 Padding 设置为字节字符串：
 
 ```python
 payload = b'A' * 52  # 注意 "b"

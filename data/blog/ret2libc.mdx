@@ -8,18 +8,15 @@ summary: '标准 ROP 漏洞利用'
 authors: ['default']
 ---
 
-ret2libc 基于 C 标准库中的 `system` 函数。该函数会执行传递给它的任何内容，
-这使其成为最佳攻击目标。libc 中的另一个内容是字符串 `/bin/sh` ；如果你将
-此字符串传递给 `system` 函数，它会弹出一个 shell。
+ret2libc 基于 C 标准库中的 `system` 函数。该函数会执行传递给它的任何内容，这使其成为最佳攻击目标。libc 中的另一个内容是字符串 `/bin/sh`；如果你将此字符串传递给 `system` 函数，它会弹出一个 shell。
 
-这就是它的全部内容——将 `/bin/sh` 作为参数传递给 `system` 。
+这就是它的全部内容——将 `/bin/sh` 作为参数传递给 `system`。
 
 LINK
 
 ## 0x01 禁用 ASLR
 
-首先，我们将禁用 ASLR。ASLR 随机化 libc 在内存中的地址，这意味着我们无法计算出
-`system()` 和 `/bin/sh` 的位置。为了便于你理解一般理论，我们将从禁用它开始。
+首先，我们将禁用 ASLR。ASLR 随机化 libc 在内存中的地址，这意味着我们无法计算出 `system()` 和 `/bin/sh` 的位置。为了便于你理解一般理论，我们将从禁用它开始。
 
 ```bash
 echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
@@ -29,8 +26,7 @@ echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
 
 ### 1x01 获取 libc 地址
 
-幸运的是 Linux 有一个名为 `ldd` 的命令用于动态链接。如果我们用它来查看编译好的 ELF
-文件，它会告诉我们它使用的库及其地址。
+幸运的是 Linux 有一个名为 `ldd` 的命令用于动态链接。如果我们用它来查看编译好的 ELF 文件，它会告诉我们它使用的库及其地址。
 
 ```bash
 $ ldd vuln-32
@@ -39,30 +35,30 @@ $ ldd vuln-32
 	  /lib/ld-linux.so.2 => /usr/lib/ld-linux.so.2 (0xf7edd000)
 ```
 
-`libc.so.6` 是我们需要的 libc 文件，所以 libc 的地址是 `0xf7c00000` 。
+`libc.so.6` 是我们需要的 libc 文件，所以 libc 的地址是 `0xf7c00000`。
 
-:::info
-`libc` 地址以及 `system()` 和 `/bin/sh` 的偏移量对你来说可能不同。这不是问题，它只是
-意味着你有不同的版本的 `libc` 。
-:::
+<Note>
+  `libc` 地址以及 `system()` 和 `/bin/sh` 的偏移量对你来说可能不同。这不是问题，它只是意味着你有不同的版本的 `libc`。
+</Note>
 
 ### 1x02 获取 system() 的地址
 
-为了调用 `system()` ，我们肯定需要它在内存中的地址。为此，我们可以使用 `readelf` 命令。
+为了调用 `system()`，我们肯定需要它在内存中的地址。为此，我们可以使用 `readelf` 命令。
 
 ```bash
 $ readelf -s /usr/lib32/libc.so.6 | grep system
   3209: 0004f610    63 FUNC    WEAK   DEFAULT   13 system@@GLIBC_2.0
 ```
 
-`-s` 参数告诉 `readelf` 查看当前 ELF 文件的符号表，符号表中的信息只包括 **全局变量
-和函数名**。这里我们可以发现 `system()` 距 `libc` 库的偏移量是 `0x4f610` 。
+`-s` 参数告诉 `readelf` 查看当前 ELF 文件的符号表，符号表中的信息只包括 **全局变量和函数名**。这里我们可以发现 `system()` 距 `libc` 库的偏移量是 `0x4f610`。
 
 ### 1x03 获取 /bin/sh 的地址
 
-由于 `/bin/sh` 只是一个字符串，因此我们可以在刚刚通过 `ldd` 找到的动态链接库的基础上使用
-`strings` 指令。注：当将字符串作为参数传递时，你需要传递指向字符串的 **地址**，而不是字符串
-的十六进制表示形式，因为这就是 C 语言所规定的方式。
+由于 `/bin/sh` 只是一个字符串，因此我们可以在刚刚通过 `ldd` 找到的动态链接库的基础上使用 `strings` 指令。
+
+<Important>
+  当将字符串作为参数传递时，你需要传递指向字符串的 **地址**，而不是字符串的十六进制表示形式，因为这就是 C 语言所规定的方式。
+</Important>
 
 ```bash
 $ strings -a -t x /usr/lib32/libc.so.6 | grep /bin/sh
@@ -98,7 +94,9 @@ p.interactive()
 
 使用链接到 64-bit 程序的 `libc` 重复上述过程。
 
-注：你必须使用 `pop rdi; ret` gadget 将其放入 RDI 寄存器中，而不是在返回地址之后传递参数。
+<Important>
+  你必须使用 `pop rdi; ret` gadget 将其放入 RDI 寄存器中，而不是在返回地址之后传递参数。
+</Important>
 
 ```bash
 $ ROPgadget --binary vuln-64 | grep rdi
@@ -167,15 +165,14 @@ p.interactive()
 
 64-bit 的半自动脚本本质上是一样的。
 
-:::tip
-如果题目提供了 libc ，也可以这样用：
+<Tip>
+  如果题目提供了 libc ，也可以这样用：
 
-libc = ELF('libc.so.6')
+  libc = ELF('libc.so.6')<br />
+  print(libc.sym['system'])
+</Tip>
 
-print(libc.sym['system'])
-:::
-
-:::info
-pwntools 可以通过其 ROP 功能进一步简化它，但我不会在这里展示它们。
-:::
+<Note>
+  pwntools 可以通过其 ROP 功能进一步简化它，但我不会在这里展示它们。
+</Note>
 

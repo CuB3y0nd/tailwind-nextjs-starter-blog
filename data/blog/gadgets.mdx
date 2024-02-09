@@ -8,79 +8,71 @@ summary: 'Gadgets 是一小段后跟 `ret` 指令的代码。例如：`pop rdi; 
 authors: ['default']
 ---
 
-Gadgets 是一小段后跟 `ret` 指令的代码。例如：`pop rdi; ret` 。我们可以操纵这些
-gadgets 的 `ret` ，将它们串成一个链来完成我们想要做的事情。
+Gadgets 是一小段后跟 `ret` 指令的代码。例如：`pop rdi; ret`。我们可以操纵这些 gadgets 的 `ret`，将它们串成一个链来完成我们想要做的事情。
 
 ## 0x01 例子
 
 假设在执行 `pop rdi; ret` gadget 期间栈看起来像这样：
 
 <center>
-  <img src="https://s1.ax1x.com/2023/08/11/pPneJr8.png" />
+  <Image alt="origin" src="https://s11.ax1x.com/2024/02/09/pF3lztg.png" width={248} height={109} />
 </center>
 
-很明显：`0x10` 被弹出到 `rdi` 中，因为它在弹出到 `rdi` 前位于栈顶。一旦出栈，
-`rsp` 就会移动：
+很明显：`0x10` 被弹出到 `rdi` 中，因为它在弹出到 `rdi` 前位于栈顶。一旦出栈，`rsp` 就会移动：
 
 <center>
-  <img src="https://s1.ax1x.com/2023/08/11/pPneGKf.png" />
+  <Image alt="origin" src="https://s11.ax1x.com/2024/02/09/pF319pj.png" width={248} height={109} />
 </center>
 
-由于 `ret` 相当于 `pop rip` ，因此 `0x5655576724` 被移至 `rip` 中。
-请注意栈是如何布局的。
+由于 `ret` 相当于 `pop rip` ，因此 `0x5655576724` 被移至 `rip` 中。请注意栈是如何布局的。
 
 ## 0x02 使用 Gadgets
 
-当我们覆盖返回地址时，我们覆盖了 `rsp` 指向的值。一旦该值出栈，它就会
-指向栈中的下一个值。但请等待，我们可以覆盖栈中的下一个值。
+当我们覆盖返回地址时，我们覆盖了 `rsp` 指向的值。一旦该值出栈，它就会指向栈中的下一个值。但请等待，我们可以覆盖栈中的下一个值。
 
-假设我们想要利用二进制文件跳转到 `pop rdi; ret` gadget，将 `0x100` 弹出到
-`rdi` 中，然后跳转到 `flag()` 。让我们一步步执行：
+假设我们想要利用二进制文件跳转到 `pop rdi; ret` gadget，将 `0x100` 弹出到 `rdi` 中，然后跳转到 `flag()`。让我们一步步执行：
 
 <center>
-  <img src="https://s1.ax1x.com/2023/08/11/pPneYqS.png" />
+  <Image alt="origin" src="https://s11.ax1x.com/2024/02/09/pF31McR.png" width={514} height={218} />
 </center>
 
-在原来的 `ret` 上，我们覆盖了返回地址，我们让 gadget 地址出栈。现在 `rip`
-移动指向到 gadget，`rsp` 移动到下一个内存地址。
+在原来的 `ret` 上，我们覆盖了返回地址，我们让 gadget 地址出栈。现在 `rip` 移动指向到 gadget，`rsp` 移动到下一个内存地址。
 
 <center>
-  <img src="https://s1.ax1x.com/2023/08/11/pPneNVg.png" />
+  <Image alt="origin" src="https://s11.ax1x.com/2024/02/09/pF318HK.png" width={515} height={245} />
 </center>
 
-`rsp` 移动指向到 `0x100`；`rip` 变为 `pop rdi`。现在，当我们出栈时，`0x100`
-被移入 `rdi` 。
+`rsp` 移动指向到 `0x100`；`rip` 变为 `pop rdi`。现在，当我们出栈时，`0x100` 被移入 `rdi`。
 
 <center>
-  <img src="https://s1.ax1x.com/2023/08/11/pPne3xP.png" />
+  <Image alt="origin" src="https://s11.ax1x.com/2024/02/09/pF31YND.png" width={515} height={245} />
 </center>
 
 RSP 移动到栈上的下一个项目，即 `flag()` 的地址。执行 `ret` 并调用 `flag()` 。
 
 ## 0x03 总结
 
-本质上，如果 gadget 从栈中弹出值，只需将这些值放在后面（包括 `ret` 中
-的 `pop rip`）。如果我们想将 `0x10` 弹出到 `rdi` 然后跳转到 `0x16` ，
-我们的 payload 将如下所示：
+本质上，如果 gadget 从栈中弹出值，只需将这些值放在后面（包括 `ret` 中的 `pop rip`）。如果我们想将 `0x10` 弹出到 `rdi` 然后跳转到 `0x16`，我们的 payload 将如下所示：
 
 <center>
-  <img src="https://s1.ax1x.com/2023/08/11/pPneUaQ.png" />
+  <Image alt="origin" src="https://s11.ax1x.com/2024/02/09/pF31dgA.png" width={375} height={171} />
 </center>
 
-注：如果你有多个 `pop` 指令，则可以添加更多值。
+<Important>
+  如果你有多个 `pop` 指令，则可以添加更多值。
+</Important>
 
 <center>
-  <img src="https://s1.ax1x.com/2023/08/11/pPnea5j.png" />
+  <Image alt="origin" src="https://s11.ax1x.com/2024/02/09/pF31yE8.png" width={484} height={271} />
 </center>
 
-:::info
-之所以使用 `rdi` 作为示例，是因为如果你还记得的话，那是 64-bit 程序中
-的第一个参数的寄存器。这意味着使用该 gadget 控制该寄存器非常重要。
-:::
+<Note>
+  之所以使用 `rdi` 作为示例，是因为如果你还记得的话，那是 64-bit 程序中的第一个参数的寄存器。这意味着使用该 gadget 控制该寄存器非常重要。
+</Note>
 
 ## 0x04 查找 Gadgets
 
-我们可以使用 [ROPGadget](https://github.com/JonathanSalwan/ROPgadget) 工具来查找可能的 gadgets 。
+我们可以使用 [ROPGadget](https://github.com/JonathanSalwan/ROPgadget) 工具来查找可能的 gadgets。
 
 ```
 $ ROPgadget --binary vuln-64
