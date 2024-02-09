@@ -2,6 +2,14 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/CuB3y0nd/cubeyond.net)
 
+## Motivation
+
+I started this blog as a way to document and share the things I have learned and found useful in my journey as a cyber security.
+
+Writing and noting things down is a great way for me to solidify my understanding of new concepts and technologies, and I hope that my blog can be a helpful resource for others who are interested in development, cyber security , and related technologies.
+
+I would be highly appreciated if you could leave your comments and thoughts on what I have written 🍻
+
 ## Quick Start Guide
 
 1. Clone the repo
