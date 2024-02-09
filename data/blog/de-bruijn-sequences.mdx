@@ -1,5 +1,5 @@
 ---
-title: '德布鲁因（De Bruijn）序列'
+title: '德布鲁因 (De Bruijn) 序列'
 date: '2023-08-08'
 lastmod: '2023-08-17'
 tags: ['PWN', 'Stack']
@@ -8,30 +8,26 @@ summary: '计算偏移量的方法'
 authors: ['default']
 ---
 
-`n 阶` [De Bruijn 序列](https://en.wikipedia.org/wiki/De_Bruijn_sequence) 是一个由 `n` 个不重复的字符组成的字符串序列。这使得查找 EIP
-之前的偏移量变得更加简单：我们只需传入 De Bruijn 序列，获取 EIP 中的值并找到
-序列中的 **一个可能的匹配** 来计算偏移量。这里将在 **ret2win** 二进制文件上执行此操作。
+`n 阶` [De Bruijn 序列](https://en.wikipedia.org/wiki/De_Bruijn_sequence) 是一个由 `n` 个不重复的字符组成的字符串序列。这使得查找 EIP 之前的偏移量变得更加简单：我们只需传入 De Bruijn 序列，获取 EIP 中的值并找到序列中的 **一个可能的匹配** 来计算偏移量。这里将在 **ret2win** 二进制文件上执行此操作。
 
 LINK
 
 ## 0x01 生成序列
 
-同样，`pwndbg` 附带了一个很好的命令行工具（称为 `cyclic`），可以为我们生成它。
-让我们创建一个长度为 `100` 的序列。
+同样，`pwndbg` 附带了一个很好的命令行工具（称为 `cyclic`），可以为我们生成它。让我们创建一个长度为 `100` 的序列。
 
 ```
 $ cyclic 100
 aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaa
 ```
 
-:::tip
-直接使用 cyclic 将生成默认长度为 100 的序列，指定序列长度可以使用 `cyclic <count>` 。
-:::
+<Note>
+  直接使用 cyclic 将生成默认长度为 100 的序列，指定序列长度可以使用 `cyclic <count>`。
+</Note>
 
 ## 0x02 使用序列
 
-现在我们有了序列，让我们在 `pwndbg` 提示输入时将其输入，使程序崩溃，然后计算
-EIP 沿着序列有多远。
+现在我们有了序列，让我们在 `pwndbg` 提示输入时将其输入，使程序崩溃，然后计算 EIP 沿着序列有多远。
 
 ```
 $ pwndbg vuln
@@ -45,7 +41,7 @@ Program received signal SIGSEGV, Segmentation fault.
 [...]
 ```
 
-崩溃的地址是 `0x6161616e` ；我们可以给 `cyclic` 加上参数 `-l <lookup_value>` 来计算偏移量：
+崩溃的地址是 `0x6161616e`；我们可以给 `cyclic` 加上参数 `-l <lookup_value>` 来计算偏移量：
 
 ```
 $ cyclic -l 0x6161616e
@@ -57,14 +53,9 @@ Found at offset 52
 
 ## 0x03 更为通用的计算方法
 
-这种 `cyclic -l` 的方法有时候确实可以直接计算出偏移地址，但是有时候也不行。下面
-讲一个更加通用的方法：
+这种 `cyclic -l` 的方法有时候确实可以直接计算出偏移地址，但是有时候也不行。下面讲一个更加通用的方法：
 
-我们发现：用 `cyclic` 生成输入到程序中的垃圾数据都是 `aaaaaaaa` ，`baaaaaaa` ，`caaaaaaa`
-这样依次类推的。那么想要返回到哪里，其实就只要把溢出点替换为我们的返回地址就好了；
-这个引发崩溃的序列（溢出点）之前的输入长度就是偏移量。比如引起崩溃的序列是 `haaaaaaa` ，
-这个子序列在完整的序列中排在第 8 位，说明偏移量占据了 7 个地址。因为 64-bit 系统
-一个地址是 8 字节，所以我们可以用 `7 * 8` 计算得到偏移地址。然后我们就可以在这个
-偏移地址后面加上我们的返回地址或者 shellcode 之类的，构成 exploit 了。
+我们发现：用 `cyclic` 生成输入到程序中的垃圾数据都是 `aaaaaaaa`、`baaaaaaa`、`caaaaaaa` 这样依次类推的。那么想要返回到哪里，其实就只要把溢出点替换为我们的返回地址就好了；这个引发崩溃的序列（溢出点）之前的输入长度就是偏移量。比如引起崩溃的序列是 `haaaaaaa`，这个子序列在完整的序列中排在第 8 位，说明偏移量占据了 7 个地址。因为 64-bit 系统一个地址是 8 字节，所以我们可以用 `7 * 8` 计算得到偏移地址。然后我们就可以在这个偏移地址后面加上我们的返回地址或者 shellcode 之类的，构成 exploit 了。
 
 另，32-bit 程序的一个地址是 4 字节。
+
