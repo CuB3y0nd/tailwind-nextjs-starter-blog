@@ -6,6 +6,7 @@ import Image from './Image'
 import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
 import { Note, Tip, Important, Warning, Caution } from './Admonitions'
+import Download from './DownloadLink'
 
 export const components: MDXComponents = {
   Image,
@@ -19,4 +20,5 @@ export const components: MDXComponents = {
   Important,
   Warning,
   Caution,
+  Download,
 }
