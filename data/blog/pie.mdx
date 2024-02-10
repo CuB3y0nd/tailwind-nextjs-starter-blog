@@ -8,6 +8,10 @@ summary: '地址无关可执行文件 (PIE, Position-Independent Executable) 意
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 地址无关代码 (Position-Independent Code, PIC) 又称地址无关可执行文件 (PIE, Position-Independent Executable)。这意味着每次运行该文件时，它都会被加载到不同的内存地址中。因此你无法在不知道函数地址和 Gadget 等东西的地址的情况下对它们进行硬编码。
 
 ## 0x01 分析

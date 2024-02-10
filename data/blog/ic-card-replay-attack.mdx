@@ -8,7 +8,11 @@ summary: '射频卡安全研究'
 authors: ['default']
 ---
 
-<strong><font color='red'>本文只作技术交流分享研究之用，请勿用于非法用途，否则后果自负！</font></strong>
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
+<br /><strong><font color='red'>本文只作技术交流分享研究之用，请勿用于非法用途，否则后果自负！</font></strong>
 
 ## 0x01 开端
 
@@ -56,7 +60,7 @@ authors: ['default']
 
 ## 0x04 破解过程和工具
 
-### PCR532
+### 0x01 PCR532
 
 网上有大量的工具可供使用（这里使用卖家给的 `PCR532` 工具），同时无需单片机而直接使用串口进行通信也省去了编码的麻烦。这也是我使用 `PCR532` 的一个原因，而 `PCR532` 同时也是知名读卡器 `ACR122U` 所采用的读卡芯片，虽不及 `Proxmark3（PM3）` 但功能也十分强大了。
 
@@ -66,7 +70,7 @@ authors: ['default']
   <Image alt="PCR 532" src="https://s11.ax1x.com/2024/02/09/pF33TsI.jpg" width={3904} height={2928} />
 </center>
 
-### 破解过程
+### 0x02 破解过程
 
 这时把要读取的卡片放在读卡器上就行，但是我要做的是破解卡而不是复制卡。所以在此之前，我先把卡放在水控机上看了下余额，记录下来以便分析内容。记好之后先 `连接设备` ，然后点击界面中的 `开始解卡` 按钮进行对卡密钥的破解和内容读取。此时软件正在进行的操作就是之前提到的第二种方法。这个过程不会持续很长时间，稍等就好，期间卡也不要拿开读卡器。
 

@@ -8,6 +8,10 @@ summary: '绕过 ASLR'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 PLT 和 GOT 是 ELF 文件中的两个段，处理了大部分 **动态链接** 的工作。在 CTF 中，动态链接的二进制文件比静态链接的二进制文件更常见。动态链接的目的是：二进制文件不必携带运行所需的完整代码，这大大减小了它们的大小。它们依赖系统库（尤其是 `libc` ，C 标准库）提供主要功能。
 
 例如，大多数 ELF 文件都不会自带 `puts` 函数的实现，而是动态链接到系统提供的 `puts` 上。这样就减小了 ELF 文件的体积，同时用户可以升级系统库，ELF 文件会自动使用新版本系统库而不必在每次新版本出现时重新下载所有的二进制文件。

@@ -8,6 +8,10 @@ summary: '运行你自己的指令'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 在真正的漏洞利用中，你不太可能拥有 `win()` 函数。shellcode 是一种允许 **运行你自己的指令** 的方法，使你能够在系统上运行任意命令。
 
 **shellcode** 本质上是 **一系列汇编指令**，一旦我们将它输入到二进制文件中，它就会覆盖返回地址（返回指针）以劫持代码，并执行我们自己的指令。

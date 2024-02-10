@@ -8,6 +8,10 @@ summary: '防御缓冲区溢出'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure toHeading={3} />
+</div>
+
 Canary 的意思是金丝雀，源于英国矿井工人用来探查井下气体是否有毒的金丝雀笼子。工人们每次下井都会带上一只金丝雀。如果井下的气体有毒，金丝雀由于对毒性敏感就会停止鸣叫甚至死亡，从而使工人们得到预警。
 
 Canary 的设计非常简单——在函数的开头，一个随机值被放置在栈上，作为检测用的保护值。在程序执行 `ret` 之前，程序会检查该值是否被修改过：如果没有被改变，则说明没有发生缓冲区溢出；反之，说明发生了栈溢出，程序会中止。

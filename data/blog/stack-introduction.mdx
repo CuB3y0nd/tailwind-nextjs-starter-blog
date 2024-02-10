@@ -8,6 +8,10 @@ summary: '运行你自己的指令'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 **二进制利用** 是指发现程序中的漏洞并利用它们来执行你想要的操作。有时，这可能会导致绕过身份验证或机密信息泄露，但偶尔（如果幸运的话）它也可能导致远程代码执行 (RCE)。二进制利用的最基本形式发生在 **栈** 上，栈是存储代码中函数创建的临时变量的内存区域。
 
 当调用一个新函数时，被调用函数的内存地址被压入栈——这样，程序就知道被调用函数执行完成后应该返回到哪里。让我们看一个基本的二进制文件来展示这一点。

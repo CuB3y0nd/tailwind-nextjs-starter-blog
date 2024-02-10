@@ -8,6 +8,10 @@ summary: '更可靠的 shellcode'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 由于在调试工具里得到的返回地址和正常运行时并不一致（这是运行时环境变量等因素有所不同造成的），所以这种情况下我们只能得到大致但不确切的 shellcode 起始地址，解决办法是在溢出 Padding 前面填充若干长度的 NOP。
 
 NOP，无操作 (**N**o **OP**eration) 指令的作用正如其名：什么也不做。所以在运行到 NOP 指令的时候只会使程序计数器加一，而不会发生其它的事情。这是一种可以破解栈随机化的缓冲区溢出攻击方式。攻击者通过填充字符串注入攻击代码，在实际的攻击代码前注入很长的 NOP 指令序列，只要程序的控制流指向该序列任意一处，都可以无副作用地跳转到 shellcode 的起始处，这允许我们有更大的误差范围，因为向前或向后移动几个字节不会影响程序的正常运行。这与直接运行 shellcode 具有相同的效果。这种 NOP Padding 通常被称为 NOP Slide 或 NOP Sled（俗称「滑雪橇」），因为 EIP 本质上是沿着它们 Slide 的。这样我们就可以通过增加 NOP 填充来试验 shellcode 的起始地址。NOP Sled 可以帮助攻击者提高访问到自己的攻击代码的概率。

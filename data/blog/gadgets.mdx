@@ -8,6 +8,10 @@ summary: 'Gadgets 是一小段后跟 `ret` 指令的代码。例如：`pop rdi; 
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 Gadgets 是一小段后跟 `ret` 指令的代码。例如：`pop rdi; ret`。我们可以操纵这些 gadgets 的 `ret`，将它们串成一个链来完成我们想要做的事情。
 
 ## 0x01 例子

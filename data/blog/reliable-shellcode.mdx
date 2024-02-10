@@ -8,6 +8,10 @@ summary: '使用 ROP 指定 shellcode 的写入位置'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 ## 0x01 利用 ROP
 
 目前 shellcode 漏洞利用中存在的问题是 shellcode 的位置不确定。如果我们可以控制写入 shellcode 的位置，那将会使编写 exp 变得非常方便。

@@ -8,6 +8,10 @@ summary: '标准 ROP 漏洞利用'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 ret2libc 基于 C 标准库中的 `system` 函数。该函数会执行传递给它的任何内容，这使其成为最佳攻击目标。libc 中的另一个内容是字符串 `/bin/sh`；如果你将此字符串传递给 `system` 函数，它会弹出一个 shell。
 
 这就是它的全部内容——将 `/bin/sh` 作为参数传递给 `system`。

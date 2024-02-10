@@ -8,6 +8,10 @@ summary: '最基本的二进制漏洞利用'
 authors: ['default']
 ---
 
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
 **ret2win** 中有一个 `win()` 函数（或等效函数）；一旦你成功地将执行重定向到那里，你就完成了挑战。
 
 为了实现这一点，我们必须覆盖 EIP，但覆盖成我们想要的特定值。
