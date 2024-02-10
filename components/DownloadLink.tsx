@@ -1,6 +1,4 @@
-import React from 'react';
-
-const Download: React.FC<DownloadProps> = ({ name, href, type }) => {
+const Download = ({ name, href, type }) => {
   return (
     <a href={href} download style={{ color: 'inherit', textDecoration: 'none' }}>
       <div className="flex items-center w-full space-x-4 p-1 pl-2 pr-2 rounded-md border-2 border-solid bg-transparent bg-opacity-20 dark:bg-opacity-20 transition duration-200 hover:scale-105 hover:rounded-md border-gray-300 dark:border-gray-700 hover:bg-surface0 dark:hover:bg-surface0-dark mb-5" style={{ borderColor: 'rgb(125, 125, 125)' }}>
