@@ -25,7 +25,7 @@ module.exports = {
         sans: ['LXGW WenKai', ...fontFamily.sans],
       },
       colors: {
-        primary: colors.blue,
+        primary: colors.indigo,
         gray: colors.gray,
       },
       typography: ({ theme }) => ({

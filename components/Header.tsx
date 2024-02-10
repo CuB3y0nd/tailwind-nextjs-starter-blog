@@ -21,7 +21,7 @@ const Header = () => {
             </div>
           </a>
         </div>
-        <div className="flex items-center text-base dark:text-base-dark leading-5">
+        <div className="flex items-center text-base dark:text-base-dark leading-5 space-x-2">
           <div className="hidden sm:block">
             {headerNavLinks
               .filter((link) => link.href !== '/')
