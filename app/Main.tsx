@@ -9,10 +9,10 @@ const MAX_DISPLAY = 4
 export default function Home({ posts }) {
   return (
     <>
-      <div className="mt-20">
+      <div className="mx-auto max-w-2xl px-4 pt-20 sm:px-6 xl:max-w-4xl xl:px-0">
         <div className="space-y-2 pb-8 pt-6 md:space-y-5">
-          <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
-            最新文章
+          <h1 className="font-bold text-3xl mt-4 md:text-4xl tracking-tight text-text dark:text-text-dark">
+            CuB3y0nd
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             {siteMetadata.description}
@@ -43,6 +43,9 @@ export default function Home({ posts }) {
               </svg>
             </a>
           </p>
+          <h3 className="font-bold text-2xl md:text-3xl tracking-tight my-4 text-text dark:text-text-dark flex gap-2">
+            My Writings
+          </h3>
         </div>
         <div className="mb-6 grid gap-4 sm:grid-cols-2">
           {!posts.length && 'No posts found.'}
