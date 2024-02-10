@@ -73,7 +73,7 @@ $ strings -a -t x /usr/lib32/libc.so.6 | grep /bin/sh
 
 ### 1x04 32-bit 漏洞利用
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='info')
@@ -113,7 +113,7 @@ $ ROPgadget --binary vuln-64 | grep rsi
 [...]
 ```
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='info')
@@ -142,7 +142,7 @@ p.interactive()
 
 pwntools 拥有大量功能，使这一切变得更加简单。
 
-```python:exp.py
+```python:exp.py showLineNumbers
 # 32-bit
 from pwn import *
 

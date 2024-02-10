@@ -65,7 +65,7 @@ PLT 和 GOT 配合 `ld.so` 完成动态链接地址解析和调用，GOT 表缓�
 
 这样可以重复利用漏洞，获取多个地址。从而获取足够的信息来确定 `libc` 的版本和偏移。
 
-```python
+```python showLineNumbers
 # 32-bit
 payload = flat(
     b'A' * padding,
@@ -98,7 +98,7 @@ payload = flat(
 
 比如在进行 Stack Pivoting 时，该技术就可以简化 Exploit。
 
-```python
+```python showLineNumbers
 payload = p32(elf.got['puts'])
 payload += b'|'
 payload += b'%3$s'                   # 第三个参数指向缓冲区的开头

@@ -34,13 +34,13 @@ sudo pacman -S python-pwntools
 
 进程 (Process) 是你与 pwntools 中的某些内容交互的主要方式，启动一个进程很容易。
 
-```python
+```python showLineNumbers
 p = process('./vulnerable_binary')
 ```
 
 你也可以远程连接进程：
 
-```bash
+```python showLineNumbers
 p = remote('my.special.ip', port)
 ```
 
@@ -115,7 +115,7 @@ p = remote('my.special.ip', port)
 
 上下文 (context) 是 pwntools 中的一个全局变量，它允许你只设置某些值一次，以后的所有函数都会自动使用该数据。
 
-```
+```python showLineNumbers
 context.arch = 'i386'
 context.os = 'linux'
 context.endian = 'little'
@@ -126,13 +126,13 @@ context.bits = 64
 
 如果你认为设置很多，这里有个更简单的方法：
 
-```python
+```python showLineNumbers
 context.binary = './vulnerable_binary'
 ```
 
 这使你能够简化更多的工作。例如，当你使用 `process()` 时：
 
-```python
+```python showLineNumbers
 p = process()
 ```
 
@@ -146,7 +146,7 @@ p = process()
 
 根据 `context` 包装 `addr`，默认情况下是 **小端字节序**。
 
-```python
+```python showLineNumbers
 p64(0x04030201) == b'\x01\x02\x03\x04'
 
 context.endian = 'big'
@@ -165,7 +165,7 @@ p64(0x04030201) == b'\x04\x03\x02\x01'
 
 可以接收一堆参数并根据 `context` 将它们全部进行包装。完整的功能相当复杂，但本质上是：
 
-```python
+```python showLineNumbers
 payload = flat(
   0x01020304,
   0x59549342,
@@ -175,7 +175,7 @@ payload = flat(
 
 等同于
 
-```python
+```python showLineNumbers
 payload = p64(0x01020304) + p64(0x59549342) + p64(0x12186354)
 ```
 
@@ -191,7 +191,7 @@ pwntools `ELF` 类是你可能需要的最有用的类，因此了解它的全�
 
 想要创建一个 ELF 对象非常简单：
 
-```python
+```python showLineNumbers
 elf = ELF('./vulnerable_program')
 ```
 
@@ -199,7 +199,7 @@ elf = ELF('./vulnerable_program')
 
 我们可以从 `ELF` 中获取它，而不是指定一个新进程：
 
-```python
+```python showLineNumbers
 p = elf.process()
 ```
 
@@ -207,7 +207,7 @@ p = elf.process()
 
 想做 `ret2plt` 吗？很简单：
 
-```python
+```python showLineNumbers
 puts_plt = elf.plt['puts']
 puts_got = elf.got['puts']
 ```
@@ -216,13 +216,13 @@ puts_got = elf.got['puts']
 
 需要返回一个名为 `vuln` 的函数？不必费心使用反汇编器或调试器来查找它在哪里。
 
-```python
+```python showLineNumbers
 main_address = elf.functions['vuln']
 ```
 
 **`elf.functions` 返回一个 `Function` 对象，因此如果你只需要地址，可以使用 `elf.symbols`：**
 
-```python
+```python showLineNumbers
 main_address = elf.symbols['symbol']
 ```
 
@@ -230,7 +230,7 @@ main_address = elf.symbols['symbol']
 
 在本地时，我们可以获取二进制文件运行时使用的 `libc`。
 
-```python
+```python showLineNumbers
 libc = elf.libc
 ```
 
@@ -242,7 +242,7 @@ libc = elf.libc
   这会返回一个生成器，因此如果你想要第一个匹配项，则必须将其包含在 `next()` 中。
 </Important>
 
-```python
+```python showLineNumbers
 binsh = next(libc.search(b'/bin/sh\x00'))
 ```
 
@@ -254,7 +254,7 @@ binsh = next(libc.search(b'/bin/sh\x00'))
 
 假设你在启用 ASLR 时泄漏了 `libc` 的基地址；使用 pwntools，获取 `ret2libc` 的 `system` 地址将非常容易：
 
-```python
+```python showLineNumbers
 libc = elf.libc
 libc.address = 0xf7f23000  # You 'leaked' this
 
@@ -271,37 +271,37 @@ exit_addr = libc.symbols['exit']
 
 ### 1x01 创建一个 ROP 对象
 
-```python
+```python showLineNumbers
 rop = ROP(elf)
 ```
 
 ### 1x02 添加溢出 Padding
 
-```python
+```python showLineNumbers
 rop.raw('A' * 64)
 ```
 
 ### 1x03 添加一个包装值
 
-```python
+```python showLineNumbers
 rop.raw(0x12345678)
 ```
 
 ### 1x04 调用函数 win()
 
-```python
+```python showLineNumbers
 rop.win()
 ```
 
 如果你需要参数：
 
-```python
+```python showLineNumbers
 rop.win(0xdeadc0de, 0xdeadbeef)
 ```
 
 ### 1x05 抛弃逻辑代码
 
-```python
+```python showLineNumbers
 from pwn import *
 
 elf = context.binary = ELF('./showcase')
@@ -333,7 +333,7 @@ print(rop.dump())
 
 ### 1x06 发送 ROP 链
 
-```python
+```python showLineNumbers
 p.sendline(rop.chain())
 ```
 
@@ -341,7 +341,7 @@ p.sendline(rop.chain())
 
 不使用 pwntools：
 
-```python
+```python showLineNumbers
 payload = flat(
     POP_RDI,
     0xdeadc0de,
@@ -361,7 +361,7 @@ p.sendline(payload)
 
 使用 pwntools：
 
-```python
+```python showLineNumbers
 rop.win1(0xdeadc0de)
 rop.win2(0xdeadbeef, 0x98765432)
 rop.flag(0x54545454)

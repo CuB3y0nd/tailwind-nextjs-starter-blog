@@ -30,7 +30,7 @@ Canary 的设计非常简单——在函数的开头，一个随机值被放置�
 
 获取 Canary 的值的方法因程序而异，没有固定的万能方式。但主要的目的是获取它的值。最简单的方法是，如果程序存在格式化字符串漏洞的话，可以利用这个漏洞来泄漏栈上的内容。因为 Canary 和其它局部变量一样，位于栈上。
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 
 void vuln() {
@@ -112,7 +112,7 @@ Leak me
 
 现在让我们用 pwntools 自动抓取 Canary：
 
-```python:canary.py
+```python:canary.py showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -183,7 +183,7 @@ Found at offset 80
 
 返回地址是 Canary 开始后的 16 个字节，因此是 Canary 后的 12 个字节。
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'

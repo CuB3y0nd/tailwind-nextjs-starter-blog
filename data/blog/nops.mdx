@@ -42,7 +42,7 @@ NOP 指令是 `XCHG EAX, EAX` 的别名（32 bit 系统中），它实际上什�
   确保 ASLR 仍处于禁用状态。你可能需要重新调整之前的 EXP，因为缓冲区位置可能会有所不同。
 </Warning>
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='info')
@@ -67,13 +67,13 @@ p.interactive()
 
 **NOP 在某些架构中不是 `\x90`。如果你需要其他架构的 NOP，可以使用 pwntools：**
 
-```python
+```python showLineNumbers
 nop = asm(shellcraft.nop())
 ```
 
 ## 0x02 最终 Exploit
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='info')

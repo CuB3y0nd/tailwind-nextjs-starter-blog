@@ -88,7 +88,7 @@ authors: ['default']
 
 几乎所有的 C/C++ 程序都会利用格式化字符串函数来输出信息，调试程序，或者处理字符串。我们来看一个例子：
 
-```c
+```c showLineNumbers
 int value = 1205;
 
 printf("Decimal: %d\nFloat: %f\nHex: 0x%x", value, (double) value, value);
@@ -114,7 +114,7 @@ Hex: 0x4b5
 
 这就是 C 语言中格式化字符串的方法：格式化占位符可以在打印时动态替换为变量的值。这为攻击者提供了注入数据的机会。让我们尝试以十六进制打印相同的值 3 次：
 
-```c
+```c showLineNumbers
 int value = 1205;
 
 printf("%x %x %x", value, value, value);
@@ -128,7 +128,7 @@ printf("%x %x %x", value, value, value);
 
 但是，如果我们没有把足够的参数传给格式化占位符，会发生什么情况？
 
-```c
+```c showLineNumbers
 int value = 1205;
 
 printf("%x %x %x", value);
@@ -148,7 +148,7 @@ printf("%x %x %x", value);
 
 LINK
 
-```c
+```c showLineNumbers
 #include <stdio.h>
 
 int main(void) {
@@ -183,13 +183,13 @@ f7c16ca0 8048288 804918c
 
 要打印相同的值 3 次可以使用：
 
-```c
+```c showLineNumbers
 printf("%x %x %x", value, value, value);
 ```
 
 这很乏味。所以，C 语言中有更好的方法：
 
-```c
+```c showLineNumbers
 printf("%1$x %1$x %1$x", value);
 ```
 
@@ -224,7 +224,7 @@ ABCD|0x44434241
 
 正如我们所看到的，我们正在读取输入的值。我们可以用 pwntools 写一个简单的脚本验证格式化字符串的读取能力。
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -253,7 +253,7 @@ $ python exp.py
 
 使用 `checksec` 发现二进制文件的基地址是 `0x8048000`，我们可以用它替换 `0x41424344` 并用 `%s` 读取它：
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -270,7 +270,7 @@ p.interactive()
 
 它不起作用。原因是 `printf` 在遇到空字节 `\x00` 时会停止读取，而 ELF 头部的第一个字节正好就是空字节。因此我们必须把格式化占位符放在第一位。
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -339,7 +339,7 @@ $ python exp.py
 
 LINK
 
-```c
+```c showLineNumbers
 #include <stdio.h>
 
 int auth = 0;
@@ -389,7 +389,7 @@ Auth is 0
 
 缓冲区位于第 7 个位置。
 
-```python {title="exp.py"}
+```python {title="exp.py"} showLineNumbers
 from pwn import *
 
 context.log_level = 'info'
@@ -424,7 +424,7 @@ Authenticated!
 
 正如你所期望的，pwntools 有一个方便的功能，可以自动利用 `%n` 格式化占位符：
 
-```python
+```python showLineNumbers
 payload = fmtstr_payload(offset, {location : value})
 ```
 
@@ -434,13 +434,13 @@ payload = fmtstr_payload(offset, {location : value})
   你可以根据需要向字典中添加任意数量的 `location : value` 对。
 </Important>
 
-```python
+```python showLineNumbers
 payload = fmtstr_payload(7, {AUTH : 10})
 ```
 
 你还可以使用 pwntools 获取 `auth` 的位置：
 
-```python
+```python showLineNumbers
 elf = ELF('./auth')
 AUTH = elf.sym['auth']
 ```

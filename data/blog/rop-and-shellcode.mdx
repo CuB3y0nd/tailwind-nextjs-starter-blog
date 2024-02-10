@@ -16,7 +16,7 @@ authors: ['default']
 
 LINK
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 
 void vuln() {
@@ -38,7 +38,7 @@ int main() {
 
 老规矩。
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -51,7 +51,7 @@ p = process()
 
 通过控制 `gets` 的写入位置，我们就可以随心所欲地把 shellcode 放在任意位置，然后执行它。相比以前不确定的 shellcode 位置，这种方法让我们对 shellcode 的控制更加精确可靠。
 
-```python
+```python showLineNumbers
 rop = ROP(elf)
 
 rop.raw('A' * 32)
@@ -68,7 +68,7 @@ p.interactive()
 
 ### 1x01 最终 Exploit
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'

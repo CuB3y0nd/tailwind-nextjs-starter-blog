@@ -22,7 +22,7 @@ LINK
 
 我们先快速浏览一下源码：
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 
 void vuln(int check) {
@@ -190,7 +190,7 @@ LINK
 
 ### 1x01 源码
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 
 void vuln(int check, int check2, int check3) {
@@ -264,7 +264,7 @@ call   0x401122 <vuln>
 
 只是为了表明实际上最终使用的是 `rdi` 而不是 `edi`，我将更改原始的单参数代码以使用更大的数字：
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 
 void vuln(long check) {

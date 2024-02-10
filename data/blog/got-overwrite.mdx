@@ -12,7 +12,7 @@ GOT 表存储了动态链接函数的真实地址。如果能修改其中的某�
 
 看一个简单的例子。
 
-```c
+```c showLineNumbers
 char buffer[20];
 gets(buffer);
 printf(buffer);
@@ -22,7 +22,7 @@ printf(buffer);
 
 这样覆写后的代码在执行时就相当于：
 
-```c
+```c showLineNumbers
 char buffer[20];
 gets(buffer);
 system(buffer);

