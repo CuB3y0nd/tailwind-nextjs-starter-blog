@@ -1,0 +1,30 @@
+---
+title: '栈对齐'
+date: '2024-02-11'
+lastmod: '2024-02-11'
+tags: ['PWN', 'Stack']
+draft: false
+summary: '修复栈没有对齐而导致利用脚本失效的小问题。'
+authors: ['default']
+---
+
+在进行 64-bit 系统上的攻击时，你可能会遇到一个小问题，即你的攻击脚本在本地运行完美，在远程环境中却失败了。甚至在尝试使用提供的 libc 版本而不是本地版本时也会失败。这一问题的根源在于栈对齐。
+
+本质上，[x86-64 ABI](https://stackoverflow.com/questions/54393105/libcs-system-when-the-stack-pointer-is-not-16-padded-causes-segmentation-faul)（应用程序二进制接口）保证了在调用指令上的 16-bits 对齐。libc 利用了这一点，并使用 [SSE 数据传输指令来优化执行](https://docs.oracle.com/cd/E26502_01/html/E28388/eojde.html)；特别是在 `system` 中会使用诸如 `movaps` 等指令。
+
+这意味着如果栈不是 16-bits 对齐的（即 `RSP` 不是 16 的倍数），那么 ROP 链在执行 `system` 时会失败。
+
+修复方法很简单，在你的 ROP 链中调用 `system` 之前，插入一个单独的 `ret` gadget：
+
+```python
+ret = elf.address + 0x2439
+
+[...]
+rop.raw(POP_RDI)
+rop.raw(0x4)        # first parameter
+rop.raw(ret)        # align the stack
+rop.raw(system)
+```
+
+这样做会使 `RSP` 出栈，向前移动 8-bits，从而实现对齐。
+
