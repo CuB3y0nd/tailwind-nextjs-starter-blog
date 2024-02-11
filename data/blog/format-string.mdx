@@ -146,7 +146,7 @@ printf("%x %x %x", value);
 
 格式化字符串漏洞确实存在于代码中，但如果攻击者只是输入一些数据的话就很难利用这个漏洞了。真正的问题在于，程序没有校验用户的输入，就将其用于格式化字符串函数，从而产生了可利用的漏洞入口。但这也需要攻击者精心构造输入才能成功被利用。
 
-LINK
+<Download name="fmtstr_arb_read.zip" href="/static/assets/fmtstr_arb_read.zip" type="Binary" />
 
 ```c showLineNumbers
 #include <stdio.h>
@@ -337,7 +337,7 @@ $ python exp.py
 
 但让我们先以一个简单的程序为例，先看看基本的利用过程。
 
-LINK
+<Download name="fmtstr_arb_write.zip" href="/static/assets/fmtstr_arb_write.zip" type="Binary" />
 
 ```c showLineNumbers
 #include <stdio.h>

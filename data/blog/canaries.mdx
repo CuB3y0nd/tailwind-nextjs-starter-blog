@@ -57,7 +57,7 @@ void win() {
 
 #### 2x01 32-bit
 
-LINK
+<Download name="canary-32.zip" href="/static/assets/canary-32.zip" type="Binary" />
 
 首先，让我们检查一下是否有 Canary。
 
@@ -108,7 +108,9 @@ Leak me
 
 似乎是 `%23$p`。
 
-*注：Canary 对于每个新进程都是随机的，因此不会相同。*
+<Note>
+  Canary 对于每个新进程都是随机的，因此不会相同。
+</Note>
 
 现在让我们用 pwntools 自动抓取 Canary：
 
@@ -214,7 +216,7 @@ p.interactive()
 只要注意：在 64-bit 中，字符串首先进入相关寄存器，每个地址可以容纳 8 字节，因此偏移量可能不同。
 </Note>
 
-LINK
+<Download name="canary-64.zip" href="/static/assets/canary-64.zip" type="Binary" />
 
 ### 1x02 暴力破解 Canary
 
