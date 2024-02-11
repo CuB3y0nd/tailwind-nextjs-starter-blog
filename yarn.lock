@@ -2283,6 +2283,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fancyapps/ui@npm:^5.0.33":
+  version: 5.0.33
+  resolution: "@fancyapps/ui@npm:5.0.33"
+  checksum: 5b924926ce972df07606424e7a38b02f7957f8e7aa60b3ba460de82a377a906e8c5dde384d099f0696bf995e0d327c89360f415570a6ef0d51c96da361a8a36f
+  languageName: node
+  linkType: hard
+
 "@fontsource/lxgw-wenkai@npm:^5.0.1":
   version: 5.0.1
   resolution: "@fontsource/lxgw-wenkai@npm:5.0.1"
@@ -11317,6 +11324,7 @@ __metadata:
   resolution: "tailwind-nextjs-starter-blog@workspace:."
   dependencies:
     "@catppuccin/tailwindcss": ^0.1.6
+    "@fancyapps/ui": ^5.0.33
     "@fontsource/lxgw-wenkai": ^5.0.1
     "@next/bundle-analyzer": 14.0.3
     "@svgr/webpack": ^8.0.1
