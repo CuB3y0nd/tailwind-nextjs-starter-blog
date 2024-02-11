@@ -24,7 +24,7 @@ ASLR (**A**ddress **S**pace **L**ayout **R**andomisation) 代表地址空间布�
 
 当函数执行结束后，它们不会从内存中被删除，而是被忽略并重写。通过格式化字符串可能会获取到这些遗留内容之一，但它们很可能已经失效，并不可靠。因此你获取的值可能根本不存在。即使存在，偏移量也很可能不同（不同的 libc 具有不同的大小，导致函数之间的偏移量也不同）。你可能会幸运的获取到正确的值，但你不应该期望偏移量保持一致。
 
-更可靠的方法是读取 [特定函数的 GOT 条目](https://www.cubeyond.net/plt-and-got/#1x02-s-格式化字符串)。
+更可靠的方法是读取 [特定函数的 GOT 条目](https://www.cubeyond.net/blog/pwn-notes/stack/aslr/plt-and-got#1x02-s-%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2)。
 
 ## 0x03 双重检验
 

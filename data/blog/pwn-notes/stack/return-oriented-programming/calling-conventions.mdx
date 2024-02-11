@@ -162,7 +162,7 @@ Dump of assembler code for function main:
 End of assembler dump.
 ```
 
-我们发现 64-bit 和 32-bit 在传参上不一样了。正如我在这篇 [博客](https://www.cubeyond.net/blog/32-bit-vs-64-bit) 中所说的，参数被移至 `rdi`（这里的反汇编中写的是 `edi`，但 `edi` 只是 `rdi` 的低 32 bits 寄存器。原因是我们传入的参数只有 32 bits 大小，所以改为 `EDI` 可以节省内存）。如果我们再次中断 `vuln`，我们可以使用以下命令检查 `rdi`：
+我们发现 64-bit 和 32-bit 在传参上不一样了。正如我在这篇 [博客](https://www.cubeyond.net/blog/pwn-notes/stack/32-bit-vs-64-bit) 中所说的，参数被移至 `rdi`（这里的反汇编中写的是 `edi`，但 `edi` 只是 `rdi` 的低 32 bits 寄存器。原因是我们传入的参数只有 32 bits 大小，所以改为 `EDI` 可以节省内存）。如果我们再次中断 `vuln`，我们可以使用以下命令检查 `rdi`：
 
 ```
 $ regs rdi

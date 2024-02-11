@@ -29,7 +29,7 @@ authors: ['default']
 
 ## 0x01 计算溢出 Padding
 
-这可以通过简单的试验和错误找到。我们可以发送可变数量的字符，将 `Segmentation Fault` 消息和 pwndbg 结合使用，来判断我们何时覆盖了 EIP 。有一种比简单的暴力破解更好的方法：[德布鲁因（De Bruijn）序列](https://www.cubeyond.net/de-bruijn-sequences/)，为了方便起见，现在我们直接使用已经计算出的溢出 Padding。
+这可以通过简单的试验和错误找到。我们可以发送可变数量的字符，将 `Segmentation Fault` 消息和 pwndbg 结合使用，来判断我们何时覆盖了 EIP 。有一种比简单的暴力破解更好的方法：[德布鲁因（De Bruijn）序列](https://www.cubeyond.net/blog/pwn-notes/stack/de-bruijn-sequences)，为了方便起见，现在我们直接使用已经计算出的溢出 Padding。
 
 <Note>
   除了覆盖 EIP 之外，还可能会因其他原因而出现分段错误。使用调试器确保 `溢出 Padding` 正确。
@@ -57,7 +57,7 @@ $ i fun
 
 ## 0x03 编写地址
 
-最后一个难题是弄清楚如何发送我们想要的地址。在 [二进制漏洞利用简介](https://www.cubeyond.net/stack-introduction/)中，我们发送的 `A` 变成了 `0x41` —— 这是 `A` 的 `ASCII 码`。所以解决方案很简单——我们只要找到 `ASCII` 码为 `0x08`、`0x04`、`0x91` 和 `0xc3` 的字符即可。
+最后一个难题是弄清楚如何发送我们想要的地址。在 [二进制漏洞利用简介](https://www.cubeyond.net/blog/pwn-notes/stack/stack-introduction)中，我们发送的 `A` 变成了 `0x41` —— 这是 `A` 的 `ASCII 码`。所以解决方案很简单——我们只要找到 `ASCII` 码为 `0x08`、`0x04`、`0x91` 和 `0xc3` 的字符即可。
 
 这比你想象的要简单得多，因为我们可以在 Python 中将它们指定为十六进制。
 
