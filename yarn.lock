@@ -3176,7 +3176,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tailwindcss/typography@npm:^0.5.9":
+"@tailwindcss/typography@npm:^0.5.10":
   version: 0.5.10
   resolution: "@tailwindcss/typography@npm:0.5.10"
   dependencies:
@@ -11329,7 +11329,7 @@ __metadata:
     "@next/bundle-analyzer": 14.0.3
     "@svgr/webpack": ^8.0.1
     "@tailwindcss/forms": ^0.5.4
-    "@tailwindcss/typography": ^0.5.9
+    "@tailwindcss/typography": ^0.5.10
     "@types/mdx": ^2.0.5
     "@types/react": ^18.2.14
     "@typescript-eslint/eslint-plugin": ^6.1.0

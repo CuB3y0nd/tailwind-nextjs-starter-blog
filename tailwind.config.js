@@ -67,5 +67,9 @@ module.exports = {
       }),
     },
   },
-  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography'), require('@catppuccin/tailwindcss')],
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+    require('@catppuccin/tailwindcss')
+  ],
 }
