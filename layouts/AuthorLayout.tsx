@@ -39,10 +39,10 @@ export default function AuthorLayout({ children, content }: Props) {
               <Link href={`mailto:${email}`}>
                 <Mail size={24} strokeWidth={2} />
               </Link>
-              <Link href={github} target="_blank">
+              <Link href={`${github}`} target="_blank">
                 <Github size={24} strokeWidth={2} />
               </Link>
-              <Link href={twitter} target="_blank">
+              <Link href={`${twitter}`} target="_blank">
                 <Twitter size={24} strokeWidth={2} />
               </Link>
             </div>
