@@ -3,7 +3,7 @@ import type { Authors } from 'contentlayer/generated'
 import Image from '@/components/Image'
 import siteMetadata from '@/data/siteMetadata'
 import Comments from '@/components/CommentsWithoutProperty'
-import Link from 'next/link';
+import Link from '@/components/Link'
 import { Mail, Github, Twitter } from 'lucide-react';
 
 interface Props {
