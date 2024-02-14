@@ -1,9 +1,10 @@
 import { ReactNode } from 'react'
 import type { Authors } from 'contentlayer/generated'
-import SocialIcon from '@/components/social-icons'
 import Image from '@/components/Image'
 import siteMetadata from '@/data/siteMetadata'
 import Comments from '@/components/CommentsWithoutProperty'
+import Link from 'next/link';
+import { Mail, Github, Twitter } from 'lucide-react';
 
 interface Props {
   children: ReactNode
@@ -35,9 +36,15 @@ export default function AuthorLayout({ children, content }: Props) {
             <h3 className="pb-2 pt-4 text-2xl font-bold leading-8 tracking-tight">{name}</h3>
             <div className="text-gray-500 dark:text-gray-400">{occupation}</div>
             <div className="flex space-x-3 pt-6">
-              <SocialIcon kind="mail" href={`mailto:${email}`} />
-              <SocialIcon kind="github" href={github} />
-              <SocialIcon kind="twitter" href={twitter} />
+              <Link href={`mailto:${email}`}>
+                <Mail size={24} strokeWidth={2} />
+              </Link>
+              <Link href={github} target="_blank">
+                <Github size={24} strokeWidth={2} />
+              </Link>
+              <Link href={twitter} target="_blank">
+                <Twitter size={24} strokeWidth={2} />
+              </Link>
             </div>
           </div>
           <div className="prose max-w-none pb-8 pt-8 dark:prose-invert xl:col-span-2">
