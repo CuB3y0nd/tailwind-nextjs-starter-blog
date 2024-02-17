@@ -33,7 +33,7 @@ const ScrollTopAndComment = () => {
         <button
           aria-label="Scroll To Comment"
           onClick={handleScrollToComment}
-          className="p-2 text-black transition-all dark:text-white rounded-full bg-gray-200 dark:bg-zinc-700 animate-bounce"
+          className="p-2 text-black transition-all dark:text-white rounded-full dark:bg-zinc-700 animate-bounce"
         >
           <MessagesSquare className="hover:text-[#6366f1] dark:hover:text-green-500" />
         </button>
@@ -41,7 +41,7 @@ const ScrollTopAndComment = () => {
       <button
         aria-label="Scroll To Top"
         onClick={handleScrollTop}
-        className="p-2 text-black transition-all dark:text-white rounded-full bg-gray-200 dark:bg-zinc-700 animate-bounce"
+        className="p-2 text-black transition-all dark:text-white rounded-full dark:bg-zinc-700 animate-bounce"
       >
         <ChevronsUp className="hover:text-[#6366f1] dark:hover:text-green-500" />
       </button>
