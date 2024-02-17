@@ -84,9 +84,9 @@ const siteMetadata = {
     // },
   },
   navidrome: {
-    user: process.env.NAVIDROME_U,
-    token: process.env.NAVIDROME_T,
-    salt: process.env.NAVIDROME_S,
+    user: 'CuB3y0nd',
+    token: 'f7c910abea606ae12d859b73da9b76a1',
+    salt: '5bd5d0',
     format: 'json',
     version: '1.16.1',
     client: 'API',
