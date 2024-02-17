@@ -1,7 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import type { NavidromeNowPlayingData } from '~/types/server';
+import siteMetadata from '@/data/siteMetadata'
+
+interface NavidromeNowPlayingData {
+  id: string;
+  title?: string;
+  artist?: string;
+  coverArt?: string;
+}
 
 const API_BASE_URL = 'https://music.cubeyond.net/rest/';
 const GET_NOW_PLAYING_URL = `${API_BASE_URL}getNowPlaying.view`;
@@ -10,12 +17,12 @@ const CREATE_SHARE_URL = `${API_BASE_URL}createShare.view`;
 const GET_COVER_ART_URL = `${API_BASE_URL}getCoverArt`;
 
 const NAVIDROME_API_PARAMS = new URLSearchParams({
-  u: process.env.NAVIDROME_U,
-  t: process.env.NAVIDROME_T,
-  s: process.env.NAVIDROME_S,
-  f: 'json',
-  v: '1.8.0',
-  c: 'API',
+  u: siteMetadata.navidrome.user,
+  t: siteMetadata.navidrome.token,
+  s: siteMetadata.navidrome.salt,
+  f: siteMetadata.navidrome.format,
+  v: siteMetadata.navidrome.version,
+  c: siteMetadata.navidrome.client,
 });
 
 const NavidromeNowPlaying: React.FC = () => {

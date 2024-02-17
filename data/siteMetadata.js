@@ -83,6 +83,14 @@ const siteMetadata = {
     //   indexName: 'docsearch',
     // },
   },
+  navidrome: {
+    user: process.env.NAVIDROME_U,
+    token: process.env.NAVIDROME_T,
+    salt: process.env.NAVIDROME_S,
+    format: 'json',
+    version: '1.16.1',
+    client: 'API',
+  },
 }
 
 module.exports = siteMetadata
