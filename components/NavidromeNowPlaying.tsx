@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import NavidromeNowPlayingData from '~/types/server';
+import type { NavidromeNowPlayingData } from '~/types/server';
 
 const API_BASE_URL = 'https://music.cubeyond.net/rest/';
 const GET_NOW_PLAYING_URL = `${API_BASE_URL}getNowPlaying.view`;
@@ -10,9 +10,9 @@ const CREATE_SHARE_URL = `${API_BASE_URL}createShare.view`;
 const GET_COVER_ART_URL = `${API_BASE_URL}getCoverArt`;
 
 const NAVIDROME_API_PARAMS = new URLSearchParams({
-  u: 'CuB3y0nd',
-  t: 'f7c910abea606ae12d859b73da9b76a1',
-  s: '5bd5d0',
+  u: process.env.NAVIDROME_U,
+  t: process.env.NAVIDROME_T,
+  s: process.env.NAVIDROME_S,
   f: 'json',
   v: '1.8.0',
   c: 'API',
