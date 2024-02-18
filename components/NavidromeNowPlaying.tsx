@@ -97,7 +97,9 @@ const NavidromeNowPlaying: React.FC = () => {
     <div className="w-full p-4 text-center sm:p-8">
       <div className="items-center justify-center space-y-4 sm:flex sm:space-y-0 sm:space-x-4">
         {isLoading ? (
-          <p>Loading...</p>
+          <div className="w-auto text-text dark:text-text-dark inline-flex items-center justify-center px-4 py-2.5 rounded-md border-2 border-solid bg-transparent bg-opacity-20 dark:bg-opacity-20 transition duration-500 hover:scale-105 hover:rounded-md border-gray-300 dark:border-gray-700 hover:border-green-500 dark:hover:border-green-500 hover:bg-surface0 dark:hover:bg-surface0-dark">
+            <p>Loading currenty playing song...</p>
+          </div>
         ) : nowPlaying ? (
           <a className="w-auto text-text dark:text-text-dark inline-flex items-center justify-center px-4 py-2.5 rounded-md border-2 border-solid bg-transparent bg-opacity-20 dark:bg-opacity-20 transition duration-500 hover:scale-105 hover:rounded-md border-gray-300 dark:border-gray-700 hover:border-green-500 dark:hover:border-green-500 hover:bg-surface0 dark:hover:bg-surface0-dark" target="_blank" href={shareLink || '#'}>
             <img className="mr-3" alt="Music Cover" width="40" height="40" decoding="async" data-nimg="1" style={{ color: `transparent` }} src={`${GET_COVER_ART_URL}?id=${nowPlaying?.coverArt}&${NAVIDROME_API_PARAMS}`} />
