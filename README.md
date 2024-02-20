@@ -148,7 +148,7 @@ See [Next.js on Netlify](https://docs.netlify.com/integrations/frameworks/next-j
 
 **Note**: Deploying on Github pages require addition modifications to the base path. Please refer to the FAQ for more information.
 
-## Licence
+## License
 
 [MIT](https://github.com/CuB3y0nd/cubeyond.net/blob/master/LICENSE) © [CuB3y0nd](https://www.cubeyond.net)
 
