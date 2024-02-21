@@ -37,13 +37,13 @@ export default function AuthorLayout({ children, content }: Props) {
             <div className="text-gray-500 dark:text-gray-400">{occupation}</div>
             <div className="flex space-x-3 pt-6">
               <Link href={`mailto:${email}`}>
-                <Mail size={24} strokeWidth={2} />
+                <Mail className="rotate" size={24} strokeWidth={2} />
               </Link>
               <Link href={`${github}`} target="_blank">
-                <Github size={24} strokeWidth={2} />
+                <Github className="rotate" size={24} strokeWidth={2} />
               </Link>
               <Link href={`${twitter}`} target="_blank">
-                <Twitter size={24} strokeWidth={2} />
+                <Twitter className="rotate" size={24} strokeWidth={2} />
               </Link>
             </div>
           </div>

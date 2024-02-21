@@ -22,6 +22,11 @@
   @apply my-5;
 }
 
+.rotate:hover {
+  transition: transform 0.1s ease-in-out;
+  transform: rotate(15deg);
+}
+
 /* https://stackoverflow.com/questions/61083813/how-to-avoid-internal-autofill-selected-style-to-be-applied */
 input:-webkit-autofill,
 input:-webkit-autofill:focus {
