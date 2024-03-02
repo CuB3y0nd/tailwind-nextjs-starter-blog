@@ -3,6 +3,7 @@ import FriendCard from '@/components/FriendCard'
 import { genPageMetadata } from 'app/seo'
 import siteMetadata from '@/data/siteMetadata'
 import Comments from '@/components/CommentsWithoutProperty'
+import { Important } from '@/components/Admonitions'
 
 export const metadata = genPageMetadata({ title: '友链' })
 
@@ -42,20 +43,15 @@ export default function Friends() {
   name: 'Your name',
   avatar: 'Your avatar link',
   url: 'Your website link,
-  description: 'Your description.',
+  description: 'Your description',
 }
           `}
         </code>
       </pre>
-      <blockquote style={{ borderLeft: '4px solid', padding: '10px' }}>
-        <p>
-          1. 您可以通过 <del>创建 PR</del> 或在评论区按照上述指定的格式进行提交友链。
-        </p>
-        <p>
-          2. 那些不尊重他人劳动成果、无出处转载、有恶意行为的网站请勿前来交流。
-        </p>
-      </blockquote>
-      <br />
+      <Important>
+        <p>1. 您可以通过 <a href="https://github.com/CuB3y0nd/cubeyond.net/edit/master/data/friendsData.ts" target="blank" style={{ color: `#8e91f2` }}><u>创建 PR</u></a> 或在评论区按照上述指定的格式进行提交友链。</p><br />
+        <p>2. 那些不尊重他人劳动成果、无出处转载、有恶意行为的网站请勿前来交流。</p>
+      </Important>
       <center>
         <p>
           <b>网站失效、停止维护、不当内容都可能被取消链接！</b>
