@@ -75,6 +75,10 @@ module.exports = () => {
           protocol: 'https',
           hostname: 's11.ax1x.com',
         },
+        {
+          protocol: 'https',
+          hostname: 's21.ax1x.com',
+        },
       ],
     },
     async headers() {

@@ -1,0 +1,252 @@
+---
+title: "微积分笔记"
+date: '2024-03-29'
+lastmod: '2024-03-31'
+tags: ['Mathematices', 'Calculus']
+draft: false
+summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
+authors: ['default']
+---
+
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure toHeading={3} />
+</div>
+
+## 极限和连续性
+
+### 何为极限？
+
+假设对于函数 $f$ 有：
+
+$\displaystyle \lim _{x\to c} f(x)=L$
+
+即：只要 $x$ 无限接近于 $c$, 则 $f(x)$ 必然无限接近于 $L$。
+
+用 $\varepsilon -\delta$ 语言来描述就是：
+
+$$
+\displaystyle \forall \varepsilon  >0,\ \exists \delta  >0,\ s.t.\ 0<|x−c|< \delta \Longrightarrow |f(x)-L|< \varepsilon 
+$$
+
+说白了就是：无论给定任何一个数字 $\varepsilon (\varepsilon  >0)$，总能找到一个数 $\delta ( \delta  >0)$。使当 $x$ 在 $c$ 的 $\delta$ 范围内时，$f(x)$ 在极限 $L$ 的 $\varepsilon$ 范围内。
+
+---
+
+例：已知 $
+f( x) =\begin{cases}
+2x & x\neq 5\\
+x & x=5
+\end{cases}，
+$ 证明 $\displaystyle \lim _{x\rightarrow 5} f( x) =10$
+
+根据定义，给定任意 $\varepsilon (\varepsilon  >0)$，有 $\delta ( \delta  >0)$。因此，我们本质上是要找到一个 $\delta =function\ of\ \varepsilon $ 的函数。
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{aligned}
+& |x-5| < \delta \Longrightarrow |2x-10|< \varepsilon \\
+& |2x-10| < 2\delta \\
+& 2\delta =\varepsilon \Rightarrow \delta =\frac{\varepsilon }{2}\\
+& |2x-10| < \varepsilon \\
+& \forall \varepsilon  >0,\ \exists \delta  >0 ,\ s.t.\ |x-5|< \delta \Longrightarrow |2x-10|< \varepsilon \ \quad Q.E.D.
+\end{aligned}
+$$
+
+---
+
+### 夹逼定理
+
+设 $I$ 为包含某点 $c$ 的区间，$f, g, h$ 为定义在 $I$ 上的函数。若对于所有属于 $I$ 而不等于 $c$ 的 $x$，有：
+
+ - $g( x) \leqslant f( x) \leqslant h( x)$
+ - $\displaystyle \lim _{x\rightarrow c} g( x) =\lim _{x\rightarrow c} h( x) =L$
+
+则，$\displaystyle \lim _{x\rightarrow c} f( x) =L$。
+
+$g(x)$ 和 $h(x)$ 分别被称为 $f(x)$ 的下界和上界。
+
+#### Proof: $\displaystyle \lim _{\theta \rightarrow 0}\frac{\sin \theta }{\theta } =1$
+
+<center>
+  <Image alt="$\displaystyle \lim _{\theta \rightarrow 0}\frac{\sin \theta }{\theta } =1$ 的证明" src="https://s21.ax1x.com/2024/03/31/pFTzdy9.png" width={1385} height={550} />
+</center>
+
+#### Proof: $\displaystyle \lim _{\theta \rightarrow 0}\frac{1-\cos \theta }{\theta } =0$
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{aligned}
+\lim _{\theta \rightarrow 0}\frac{1-\cos \theta }{\theta } & =\lim _{\theta \rightarrow 0}\frac{( 1-\cos \theta )( 1+\cos \theta )}{\theta ( 1+\cos \theta )}\\
+ & =\lim _{\theta \rightarrow 0}\frac{\sin^{2} \theta }{\theta ( 1+\cos \theta )}\\
+ & =\lim _{\theta \rightarrow 0}\frac{\sin \theta }{\theta } \cdot \lim _{\theta \rightarrow 0}\frac{\sin \theta }{1+\cos \theta }\\
+ & =1\cdot 0\\
+ & =0
+ & Q.E.D.
+\end{aligned}
+$$
+
+### 连续性的定义
+
+函数在某一点处连续：$\displaystyle f\ is\ continuous\ at\ x=c\Longleftrightarrow \lim _{x\rightarrow c} f( x) =f( c)$
+
+函数在开区间连续：$f\ is\ continuous\ over\ ( a,\ b) \Longleftrightarrow f\ is\ continuous\ over\ every\ point\ in\ the\ interval$
+
+函数在闭区间连续：$\displaystyle f\ is\ continuous\ over\ [ a,\ b] \Longleftrightarrow f\ is\ continuous\ over\ ( a,\ b) \ and\ \lim _{x\rightarrow a^{+}} f( x) =f( a) ,\ \lim _{x\rightarrow b^{-}} f( x) =f( b)$
+
+### 中值定理
+
+$Suppose\ f\ is\ a\ continuous\ function\ at\ every\ point\ of\ the\ interval\ [ a,\ b]$
+
+ - $f\ will\ take\ on\ every\ value\ between\ f( a) \ and\ f( b) \ over\ the\ interval$
+ - $For\ any\ L\ between\ the\ values\ f( a) \ and\ f( b) ,\ there\ exists\ a\ number\ c\ in\ [ a,\ b] \ for\ which\ f( c) =L$
+
+怎么会有这么简单的定理…
+
+## 导数
+
+### 导数的符号表示
+
+**Lagrange's notation:** $f^{\prime }$
+
+**Leibniz's notation:** $\frac{dy}{dx}$
+
+**Newton's notation:** $\dot{y}$
+
+### 导数的两种定义形式
+
+$\displaystyle f^{\prime }( x) =\lim _{h\rightarrow 0}\frac{f( x+h) -f( x)}{h}$
+
+$\displaystyle f^{\prime }( c) =\lim _{x\rightarrow c}\frac{f( x) -f( c)}{x-c}$
+
+### 可微性
+
+$
+f\ is\ differentiability\ at\ x=c\Longrightarrow f\ is\ continuous\ at\ x=c \\
+f\ is\ not\ continuous\ at\ x=c\Longrightarrow f\ is\ not\ differentiability\ at\ x=c
+$
+
+不可微的三种情况：$
+\begin{cases}
+1.\ not\ continuous\\
+2.\ vertical\ tanget\\
+3.\ sharp\ turn
+\end{cases}
+$
+
+### Proof: Differentiability implies continuity
+
+$\mathnormal{Proof.}$
+
+$Assume:\ f\ differentiability\ at\ x=c$
+
+$
+\begin{array}{l}
+\because f\ differentiability\ at\ x=c\\
+\therefore f^{\prime }( c) =\displaystyle \lim _{x\rightarrow c}\frac{f( x) -f( c)}{x-c}
+\end{array}
+$
+
+$$
+\begin{aligned}
+\lim _{x\rightarrow c}[ f( x) -f( c)] & =\lim _{x\rightarrow c}( x-c) \cdot \frac{f( x) -f( c)}{x-c}\\
+ & =\lim _{x\rightarrow c}( x-c) \cdot \lim _{x\rightarrow c}\frac{f( x) -f( c)}{x-c}\\
+ & =0\cdot f^{\prime }( c)\\
+ & =0\\
+ & \\
+\lim _{x\rightarrow c}[ f( x) -f( c)] & =0\\
+\lim _{x\rightarrow c} f( x) -\lim _{x\rightarrow c} f( c) & =0\\
+\lim _{x\rightarrow c} f( x) -f( c) & =0\\
+\lim _{x\rightarrow c} f( x) & =f( c)
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Justifying the power rule
+
+#### Proof: $\frac{d}{dx}\left( x^{n}\right) =nx^{n-1}$
+
+$\mathnormal{Proof.}$
+
+$\displaystyle \frac{d}{dx}\left( x^{n}\right) =\lim _{\Delta x\rightarrow 0}\frac{( x+\Delta x)^{n} -x^{n}}{\Delta x}$
+
+$According\ to\ Binomial\ theorem:$
+
+$$
+\begin{aligned}
+\displaystyle \lim _{\Delta x\rightarrow 0}\frac{( x+\Delta x)^{n} -x^{n}}{\Delta x} & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\cancel{x^{n}} +\binom{n}{1} x^{n-1} \Delta x+\binom{n}{2} x^{n-2} \Delta x^{2} +...+\binom{n}{n} x^{0} \Delta x^{n}\cancel{-x^{n}}}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\binom{n}{1} x^{n-1} +\cancel{\binom{n}{2} x^{n-2} \Delta x} +...+\cancel{\binom{n}{n} \Delta x^{n-1}}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\binom{n}{1} x^{n-1}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{n!}{\cancel{1!}( n-1) !} x^{n-1}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0} nx^{n-1}
+ & Q.E.D.
+\end{aligned}
+$$
+
+#### Proof: $\frac{d}{dx}\left(\sqrt{x}\right) =\frac{1}{2} x^{-\frac{1}{2}}$
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}\left(\sqrt{x}\right) & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\sqrt{x+\Delta x} -\sqrt{x}}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\left(\sqrt{x+\Delta x} -\sqrt{x}\right)\left(\sqrt{x+\Delta x} +\sqrt{x}\right)}{\Delta x\left(\sqrt{x+\Delta x} +\sqrt{x}\right)}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{1}{\sqrt{x+\Delta x} +\sqrt{x}}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{1}{2\sqrt{x}}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{1}{2} x^{-\frac{1}{2}}
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Justifying the basic derivative rules
+
+#### Proof: Constant rule ($\frac{d}{dx} k=0$)
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{array}{l}
+\because k\ is\ constant\\
+\therefore y\ does\ not\ change\ as\ x\ changes\\
+\therefore f( x+h) -f( x) =0\\
+\therefore \frac{d}{dx} k=\displaystyle \lim _{h\rightarrow 0}\frac{f( x+h) -f( x)}{h} =\lim _{h\rightarrow 0}\frac{0}{h} =0
+\end{array}
+$$
+
+#### Proof: Constant multiple and sum/difference rules
+
+**Constant multiple rule:** $\dfrac{d}{dx}[k\cdot f(x)]=k\cdot\dfrac{d}{dx}f(x)$
+
+**Sum rule:** $\dfrac{d}{dx}[f(x)+g(x)]=\dfrac{d}{dx}f(x)+\dfrac{d}{dx}g(x)$
+
+**Difference rule:** $\dfrac{d}{dx}[f(x)-g(x)]=\dfrac{d}{dx}f(x)-\dfrac{d}{dx}g(x)$
+
+$\mathnormal{Proof.}$
+
+$1.\ f( x) =kg( x) \Longrightarrow f^{\prime }( x) =kg^{\prime }( x)$
+
+$$
+\begin{aligned}
+f^{\prime }( x) & =\displaystyle \lim _{h\rightarrow 0}\frac{f( x+h) -f( x)}{h}\\
+ & =\displaystyle \lim _{h\rightarrow 0}\frac{kg( x+h) -kg( x)}{h}\\
+ & =\displaystyle \lim _{h\rightarrow 0} k\left(\frac{g( x+h) -g( x)}{h}\right)\\
+ & =k\displaystyle \lim _{h\rightarrow 0}\frac{g( x+h) -g( x)}{h}\\
+ & =kg^{\prime }( x)
+ & Q.E.D.
+\end{aligned}
+$$
+
+$2.\ f( x) =g( x) \pm j( x) \Longrightarrow f^{\prime }( x) =g^{\prime }( x) \pm j^{\prime }( x)$
+
+$$
+\begin{aligned}
+f^{\prime }( x) & =\displaystyle \lim _{h\rightarrow 0}\frac{g( x+h) \pm j( x+h) -( g( x) \pm j( x))}{h}\\
+ & =\displaystyle \lim _{h\rightarrow 0}\left(\frac{g( x+h) -g( x)}{h} \pm \frac{j( x+h) -j( x)}{h}\right)\\
+ & =\displaystyle \lim _{h\rightarrow 0}\frac{g( x+h) -g( x)}{h} \pm \lim _{h\rightarrow 0}\frac{j( x+h) -j( x)}{h}\\
+ & =g^{\prime }( x) \pm j^{\prime }( x)
+ & Q.E.D.
+\end{aligned}
+$$
+
+
