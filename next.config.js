@@ -77,7 +77,7 @@ module.exports = () => {
         },
         {
           protocol: 'https',
-          hostname: 's21.ax1x.com',
+          hostname: 'pic.imgdb.cn',
         },
       ],
     },
