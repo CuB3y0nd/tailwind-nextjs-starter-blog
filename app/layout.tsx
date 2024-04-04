@@ -68,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <script async src="http://analytics.cubeyond.net/script.js" data-website-id="d3631f84-1deb-44eb-a398-25f28c8fb0fa"></script>
-      <body className="dark:mocha latte bg-base text-text antialiased">
+      <body className="dark:mocha latte bg-base pl-[calc(100vw-100%)] text-text antialiased">
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
