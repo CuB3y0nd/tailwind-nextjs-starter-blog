@@ -1,0 +1,316 @@
+---
+title: "AviGen Part-1"
+date: '2024-04-04'
+lastmod: '2024-04-05'
+tags: ['AviGen', 'Neural Network', 'Genetic Algorithm']
+draft: false
+summary: "基于神经网络和遗传算法实现的模拟进化"
+authors: ['default']
+---
+
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
+对于本项目，将使用神经网络和遗传算法进行模拟进化。本项目基于原始项目 [Shorelark](https://shorelark.pwy.io)。
+
+下面我将向你介绍一下基本的神经网络和遗传算法的工作原理，然后我们将在 `Rust` 中实现这两种算法，并将我们的应用程序编译为 `WebAssembly`，最终得到：
+
+<center>
+  <Image alt="1" src="https://pic.imgdb.cn/item/660eaea368eb935713c005e6.png" width={916} height={887} />
+</center>
+
+我会分四篇文章记录整个项目的实现，大致如下：
+
+ - 目标（我们要模拟什么，神经网络和遗传算法如何工作）
+ - 实现神经网络
+ - 实现遗传算法
+ - 实现眼睛、大脑和模拟其本身
+
+## 设计
+
+首先明确我们的目标：我们实际上要模拟什么？
+
+总体思路是，我们有一个代表世界的二维平面：
+
+<center>
+  <Image alt="design-1" src="https://pic.imgdb.cn/item/660eb12068eb935713c6a1f4.png" width={251} height={258} />
+</center>
+
+这个世界由鸟类组成：
+
+<center>
+  <Image alt="design-2" src="https://pic.imgdb.cn/item/660eb16568eb935713c76213.png" width={251} height={258} />
+</center>
+
+……和食物（一种抽象的，富含蛋白质和纤维）：
+
+<center>
+  <Image alt="design-3" src="https://pic.imgdb.cn/item/660eb1b968eb935713c854d9.png" width={251} height={258} />
+</center>
+
+每只鸟都有自己的视觉，使它们能够找到食物：
+
+<center>
+  <Image alt="design-4" src="https://pic.imgdb.cn/item/660eb1e968eb935713c8c79d.png" width={251} height={258} />
+</center>
+
+……以及控制鸟的身体（速度和旋转）的大脑。
+
+这个项目的神奇之处在于，我们将采取一条更有趣的路线，而不是将鸟硬编码为某些特定行为（例如「去吃掉你视野中最近的食物」）：
+
+<center><strong>我们的目标是使我们的鸟能够学习和进化！</strong></center>
+
+## 大脑
+
+仔细看，你会发现大脑只不过是一个某些输入到某些输出的函数，例如：
+
+<center>
+  <Image alt="brain-1" src="https://pic.imgdb.cn/item/660eb3c868eb935713cf3221.png" width={270} height={72} />
+</center>
+
+由于我们要实现的鸟只有视觉输入，因此它们的大脑可以近似为：
+
+<center>
+  <Image alt="brain-2" src="https://pic.imgdb.cn/item/660eb42468eb935713d017d7.png" width={185} height={36} />
+</center>
+
+在数学上，我们可以将该函数的输入（鸟的眼睛）表示为一个数组，每个数字（鸟的感光器）描述离最近的物体（食物）的距离：
+
+<center>
+  <Image alt="（0.0 - 视线内没有物体；1.0 - 物体就在面前）" src="https://pic.imgdb.cn/item/660eb4f968eb935713d210bb.png" width={258} height={171} />
+</center>
+
+<Tip>
+  为了简单起见，我们的鸟看不到颜色 - 您可以使用 <a href="https://raytracing.github.io/books/RayTracingInOneWeekend.html" target="blank" style={{ color: `#8e91f2` }}>光线追踪</a> 使眼睛更加真实。
+</Tip>
+
+至于输出，我们可以使函数返回一个有关速度变化和旋转变化 $( \Delta speed,\ \Delta rotation)$ 的元组。
+
+例如，大脑告诉鸟 $(0.1, 45)$ 意味着「速度增加 $0.1$ 个单位并顺时针旋转 $45$ 度」，而 $(0.0, 0)$ 意味着「保持速度和方向不变，稳定前行」。
+
+重要的是，我们使用的是相对值（速度变化量和旋转变化量）。因为鸟的大脑不会意识到自己相对于世界的位置和旋转——传递该信息只会增加大脑的复杂性，吃力不讨好。
+
+最后，让我们谈谈房间里的大象：所以大脑基本上就是 $f( eyes)$，对吗？但是我们如何找出等号后面到底是什么呢？
+
+<center>$f( eyes) =what?$</center>
+
+## 神经网络 (Neural Network) 简介
+
+作为人类同胞的一员的你，你可能知道大脑是通过突触连接的神经元组成的：
+
+<center>
+  <Image alt="我尝试绘制神经元，不按比例" src="https://pic.imgdb.cn/item/660ebba068eb935713e6a439.png" width={86} height={124} />
+</center>
+
+突触在神经元之间传递电信号和化学信号，而神经元决定给定的信号是否应该进一步传播或停止；最终，这使得人们能够识别文字、吃饭睡觉，并在网络上发表刻薄的评论。
+
+由于其固有的复杂性，[生物神经网络](https://en.wikipedia.org/wiki/Biological_neuron_model)并不是最容易模拟的。因此，聪明的人类发明了一类被称为 **人工神经网络 (Artificial Neural Networks)** 的数学结构，它允许使用数学方法近似模拟类似大脑的行为。
+
+人工神经网络（下文统一简称为神经网络）在数据集泛化方面表现突出（例如识别猫的样子），因此它在人脸识别（例如用于相机）、翻译（例如用于 [GNMT](https://en.wikipedia.org/wiki/Google_Neural_Machine_Translation)）方面有着广泛的应用。在我们的例子中，可以控制一些彩色像素以换取少量的 reddit 积分。
+
+对于我们的项目，主要关注 **前馈神经网络 (Feedforward neural network, FFNN)**……
+
+<Note>
+  FFNN 有时也被称为<a href="https://en.wikipedia.org/wiki/Multilayer_perceptron" target="blank" style={{ color: `#8e91f2` }}>多层感知器</a>，它是<a href="https://towardsdatascience.com/a-comprehensive-guide-to-convolutional-neural-networks-the-eli5-way-3bd2b1164a53" target="blank" style={{ color: `#8e91f2` }}>卷积神经网络</a>（例如 <a href="https://en.wikipedia.org/wiki/DeepDream" target="blank" style={{ color: `#8e91f2` }}>DeepDream</a>）的构建块之一。
+</Note>
+
+……它看起来像这样：
+
+<center>
+  <Image alt="多层感知器 (MLP) 的示例，也称为 FFNN" src="https://pic.imgdb.cn/item/660ec19868eb935713f8dadc.png" width={150} height={65} />
+</center>
+
+这是 FFNN 的布局，它具有 **五个突触** 和 **三个神经元**，全部组织为两层：**输入层 (Input Layer)**（左侧）和 **输出层 (Output Layer)**（右侧）。
+
+中间还可能存在别的层，它们被称为 **隐藏层 (Hidden Layers)**——它们提高了网络理解输入数据的能力（想一想：大脑越大，在某种程度上它就可能理解的「越抽象」）。
+
+<Tip>
+  <a href="https://www.youtube.com/watch?v=rA5qnZUXcqo" target="blank" style={{ color: `#8e91f2` }}>类似的过程</a>也发生在你自己的<a href="https://en.wikipedia.org/wiki/Visual_cortex" target="blank" style={{ color: `#8e91f2` }}>视觉皮层</a>内部！
+</Tip>
+
+与生物神经网络（依靠电信号）相反，FFNN 的工作原理是在输入中接受一些 **数字**，并在整个网络中逐层传播（前馈）这些数字；最后一层出现的数字决定网络的最终结果。
+
+例如，如果向网络提供图片的原始像素，你可能会收到这样的响应：
+
+ - $0.0$ - 这张照片不包含正在吃烤冷面的橙色的猫
+ - $0.5$ - 这张照片可能包含一只正在吃烤冷面的橙色的猫
+ - $1.0$ - 这张照片一定包含一只正在吃烤冷面的橙色的猫
+
+网络也可以返回许多值（输出值的数量等于输出层中神经元的数量）：
+
+ - $(0.0, 0.5)$ - 这张照片不包含橙色的猫，但可能包含烤冷面
+ - $(0.5, 0.0)$ - 这张图片可能包含一只橙色的猫，但不包含烤冷面
+
+输入和输出数字的含义取决于你，我们只是想象存在一些神经网络以这种方式运行，但实际上，你需要准备所谓的 **训练数据集 (Training Dataset)**，「鉴于这张图片，你应该返回 $1.0$」，「鉴于这张图片，你应该返回 $0.0$」。
+
+你可以创建一个网络来[识别成熟的苹果](https://www.researchgate.net/publication/320662740_Identification_and_counting_of_mature_apple_fruit_based_on_BP_feed_forward_neural_network)，这完全没有问题！
+
+知道 FFNN 的总体概述后，现在让我们采取下一个主要步骤，了解实现这一切的魔力。
+
+### 神经网络：深入研究
+
+FFNN 依赖于两个构建块：神经元和突触。
+
+神经元（通常用圆圈表示）接受一些输入值，对其进行处理，并返回一些输出值；每个神经元至少有一个输入，最多有一个输出：
+
+<center>
+  <Image alt="具有三个突触的单个神经元" src="https://pic.imgdb.cn/item/660ec19868eb935713f8dadc.png" width={150} height={65} />
+</center>
+
+此外，每个神经元都有一个 **偏置 (Bias)**：
+
+<center>
+  <Image alt="具有三个突触且带注释的偏置值的单个神经元" src="https://pic.imgdb.cn/item/660ec66868eb935713026397.png" width={94} height={45} />
+</center>
+
+偏置就像神经元的 **if** 语句——它允许神经元保持不活动状态（输出零），除非输入足够强（高）。从形式上来说，我们会说偏置可以调节神经元的 **激活阈值 (Activation Threshold)**。
+
+想象一下，你有一个具有三个输入的神经元，每个输入决定它是否看到烤冷面 (1.0) 或没有 (0.0)。现在，如果你想创建一个在看到至少两个烤冷面时激活的神经元，你只需创建一个偏置为 $-1.0$ 的神经元； 这样，你的神经元的「自然」状态将为 $-1.0$（不激活），一个烤冷面时为 $0.0$（仍然不激活），两个时为 $1.0$（激活）。
+
+<Tip>
+  如果我的烤冷面比喻对你没有吸引力，那你可能会认为这个<a href="https://stackoverflow.com/questions/2480650/what-is-the-role-of-the-bias-in-neural-networks" target="blank" style={{ color: `#8e91f2` }}>基于数学的解释</a>对你更有帮助。
+</Tip>
+
+除了神经元之外，我们还有 **突触 (Synapses)**。突触就像一根导线，将一个神经元的输出连接到另一个神经元的输入；每个突触都有一定的 **权重 (Weight)**：
+
+<center>
+  <Image alt="具有三个带注释权重的突触的单个神经元" src="https://pic.imgdb.cn/item/660ec90b68eb93571305763e.png" width={94} height={48} />
+</center>
+
+权重是一个因子（因此每个数字之前都有 「x」号，用以强调其乘法性质），因此权重为：
+
+ - $0.0$ - 意味着突触实际上已经死亡（它不会将任何信息从一个神经元传递到另一个神经元）
+ - $0.3$ - 意味着如果神经元 `A` 返回 $0.7$，神经元 `B` 将收到 $0.7 \cdot 0.3 ~= 0.2$
+ - $1.0$ - 意味着突触实际上是直通的。如果神经元 `A` 返回 $0.7$，神经元 `B` 将收到 $0.7 \cdot 1.0 = 0.7$
+
+记住所有这些知识后，让我们回到我们的网络并用一些随机数填充那些缺失的权重和偏差：
+
+<center>
+  <Image alt="nn-6" src="https://pic.imgdb.cn/item/660eca3e68eb935713060f6e.png" width={150} height={68} />
+</center>
+
+瞧她多么美丽呀，不是吗？哈哈
+
+让我们看看它的想法，比如输入 $(0.5, 0.8)$：
+
+<center>
+  <Image alt="nn-7" src="https://pic.imgdb.cn/item/660ecab368eb9357130642d4.png" width={170} height={68} />
+</center>
+
+重申一下，我们只对最右边神经元（即我们的输出层）的输出值感兴趣。因为它取决于前面的两个神经元（来自输入层的神经元），所以我们将从它们开始。
+
+让我们首先关注左上角的神经元——为了计算其输出，我们首先计算其所有输入的 **加权和**：
+
+$0.5 \cdot 0.2 = 0.1$
+
+……然后，我们加上偏置：
+
+$0.1 - 0.3 = -0.2$
+
+……并通过所谓的激活函数限制该值；激活函数将神经元的输出限制在预定义的范围内，模拟类似 **if** 的行为。
+
+最简单的激活函数是 **修正线性单元 (Rectified Linear Unit, ReLU)**，在 `rust` 中为 [f32::max](https://doc.rust-lang.org/stable/std/primitive.f32.html#method.max)：
+
+<center>
+  <Image alt="nn-8" src="https://pic.imgdb.cn/item/660ece2968eb9357130a0ee2.png" width={66} height={58} />
+</center>
+
+<Note>
+  另一个比较流行的激活函数是 tanh，它的图形看起来略有不同（形如 s）并且具有<a href="https://machinelearningmastery.com/rectified-linear-activation-function-for-deep-learning-neural-networks" target="blank" style={{ color: `#8e91f2` }}>不同的属性</a>。<br />
+
+  激活函数影响网络的输入和输出。例如，与 ReLU 相比，tanh 强制网络处理 $[-1.0, 1.0]$ 范围内的数字，而不是 $[0.0, \infty]$。
+</Note>
+
+正如你所看到的，当我们的带偏置的加权和低于零时，神经元的输出将为 $0.0$。这正是我们当前输出所发生的情况：
+
+$max( -0.2,\ 0.0) =0.0$
+
+不错。现在我们来做另一个：
+
+加权和：$0.8 \cdot 1.0 = 0.8$<br />
+偏置：$0.8 + 0.0 = 0.8$<br />
+激活函数：$max( 0.8,\ 0.0) =0.8$
+
+至此，我们已经完成了输入层：
+
+<center>
+  <Image alt="nn-9" src="https://pic.imgdb.cn/item/660ed07868eb9357130fd59b.png" width={170} height={78} />
+</center>
+
+……这将我们引向最后一个神经元：
+
+加权和：$(0.0 \cdot 0.6) + (0.8 \cdot 0.5) = 0.4$<br />
+偏置：$0.4 + 0.2 = 0.6$<br />
+激活函数：$max( 0.6,\ 0.0) =0.6$
+
+……以及网络的输出本身：
+
+$0.6 \cdot 1.0 = 0.6$
+
+对于 $(0.5, 0.8)$ 的输入，我们的网络输出为 $0.6$。
+
+*（因为这只是在一个完全虚构的网络上的练习，所以这个数字没有任何意义。它只是一些输出值。）*
+
+总的来说，这是最简单的 FFNN 之一。给定适当的权重，它能够解决 [XOR 问题](https://medium.com/@jayeshbahire/the-xor-problem-in-neural-networks-50006411840b)，但可能缺乏引导鸟类的计算能力。
+
+更复杂的 FFNN，例如：
+
+<center>
+  <Image alt="nn-10" src="https://pic.imgdb.cn/item/660ed1f968eb93571312f9ec.png" width={218} height={82} />
+</center>
+
+……工作方式完全相同：只需从左到右，逐个神经元计算输出，直到压缩输出层中的所有数字。
+
+此时你可能会好奇：「等等，我如何知道网络的权重？」，对此有一个简单的答案：
+
+<center>我们将其随机化！</center>
+
+如果你习惯了确定性算法（冒泡排序，有人吗？），这对你来说可能感觉不合逻辑，但对于包含多个神经元的网络来说，事情就是这样的：你交叉手指，随机化初始权重，并利用你所拥有的东西进行工作。
+
+请注意，我说的是初始权重。有了一些非零权重，你可以在网络上应用某些算法来改进它（本质上是教它）。
+
+FFNN 最流行的「教学」算法之一是[反向传播](https://www.youtube.com/watch?v=tIeHLnjs5U8)：
+
+你以「对于这个输入，你应该返回那个输出」的形式向你的网络展示大量的例子（「对于这张抱枕的图片，你应该返回枕头」），并且反向传播慢慢地调整你的网络的权重，直到得到正确的答案。
+
+或者不是。网络可能会陷入[局部最优](https://en.wikipedia.org/wiki/Local_optimum) (Local Optimum) 状态并「只是」停止学习。
+
+另外，如果你发现自己在做神经网络填字游戏，请记住反向传播是[监督学习](https://en.wikipedia.org/wiki/Supervised_learning) (Supervised Learning) 的一个例子。
+
+如果你有一组丰富的标记示例（例如照片或统计数据），则反向传播是一个很好的工具，这就是为什么它不符合我们最初的假设：
+
+我们不是统计学家，世界是一个残酷的地方，我们希望我们的鸟能够自己弄清楚所有的学习。
+
+解决方案？
+
+~生物学~遗传算法和[大数法则](https://en.wikipedia.org/wiki/Law_of_large_numbers)的魔力！
+
+## 遗传算法 (Genetic algorithm) 简介
+
+回顾一下，从数学的角度来看，我们所面临的根本问题是我们有一个由大量 **参数** 定义的函数（[使用神经网络表示](https://en.wikipedia.org/wiki/Universal_approximation_theorem)）：
+
+<center>
+  <Image alt="ga-1" src="https://pic.imgdb.cn/item/660ed60f68eb9357131b5c04.png" width={472} height={359} />
+</center>
+
+*（我没有费心画出所有的权重，但我希望你明白这一点——权重有很多。）*
+
+如果我们用单精度浮点数表示每个参数，那么仅由 3 个神经元和 5 个突触组成的网络就可以定义为多种不同的组合……
+
+$\left( 3.402\cdot 10^{38}\right)^{( 3+5)} \ \sim =\ 1.8\cdot 10^{308}$
+
+<center>[*（有多少个浮点数）*](https://jameshoward.us/2015/09/09/how-many-floating-point-numbers-are-there/)</center>
+
+……宇宙很快就会迎来它的[最终命运](https://en.wikipedia.org/wiki/Heat_death_of_the_universe)，而不会等我们检查完所有这些数。我们当然得变得更聪明！
+
+所有可能的参数集称为 **搜索空间 (Search Space)**。
+
+由于迭代搜索空间寻找单个最佳答案是不可能的，因此我们可以专注于查找次优答案列表这一更简单的任务。
+
+<center>为了做到这一点，我们必须更深入地挖掘。</center>
+
+### 遗传算法：深入研究
+
+TODO
+
