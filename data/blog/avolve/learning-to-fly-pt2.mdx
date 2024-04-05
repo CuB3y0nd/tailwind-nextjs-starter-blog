@@ -553,7 +553,7 @@ impl Neuron {
 
 1. 我们可以更改 `Neuron::propagate()` 以返回错误信息：
 
-```rust:neural-network/src/lib.rs showLineNumbers
+```rust showLineNumbers
 impl Neuron {
     fn propagate(&self, inputs: &[f32]) -> Result<f32, String> {
         if inputs.len() != self.weights.len() {
@@ -571,7 +571,7 @@ impl Neuron {
 
 ……或者，使用我最喜欢的 `crates` 之一——[thiserror](https://github.com/dtolnay/thiserror)：
 
-```rust:neural-network/src/lib.rs showLineNumbers
+```rust showLineNumbers
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Error)]
@@ -601,7 +601,7 @@ impl Neuron {
 
 2. 我们可以使用 `assert_eq!()`/`panic!()`：
 
-```rust:neural-network/src/lib.rs showLineNumbers
+```rust showLineNumbers
 impl Neuron {
     fn propagate(&self, inputs: &[f32]) -> f32 {
         assert_eq!(inputs.len(), self.weights.len());
@@ -754,5 +754,942 @@ impl Neuron {
 
 ## 实现 new()
 
-TODO
+到目前为止，我们太专注于算法，以至于几乎没有考虑构造函数。但如果我们无法创建网络，我们又怎么能够进行操作呢？
+
+我们创建构造函数的第一种方法可以是一个简单的、无操作的函数：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+#[derive(Debug)]
+pub struct Network {
+    layers: Vec<Layer>,
+}
+
+impl Network {
+    pub fn new(layers: Vec<Layer>) -> Self {
+        Self { layers }
+    }
+
+    /* ... */
+}
+```
+
+……但在这种情况下不行。因为，正如我们已经确定的，我们希望将 `Layer` 和 `Neuron` 保留在公共接口之外。
+
+如果你看过我之前的文章，你可能还记得我们谈论了很多关于随机数的内容。所以我们需要类似于这样的东西：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Network {
+    pub fn random() -> Self {
+        todo!()
+    }
+}
+```
+
+为了随机化一个网络，我们需要知道它的层数和每层神经元的数量。它们都可以用一个向量来描述：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Network {
+    pub fn random(neurons_per_layer: Vec<usize>) -> Self {
+        todo!()
+    }
+}
+```
+
+……或者，以更优雅的方式：
+
+```rust:neural-network/src/lib.rs {1-4, 7-9} showLineNumbers
+#[derive(Debug)]
+pub struct LayerTopology {
+    pub neurons: usize,
+}
+
+impl Network {
+    pub fn random(layers: Vec<LayerTopology>) -> Self {
+        todo!()
+    }
+
+    /* ... */
+}
+
+// By the way, notice how creating a separate type allowed us to untangle
+// argument's name to just `layers`.
+//
+// Initially we went with `neurons_per_layer`, because `Vec<usize>` doesn't
+// provide enough information to tell what this `usize` represents - using a
+// separate type makes the intention explicit.
+```
+
+现在，如果你仔细观察神经网络层：
+
+<center>
+  <Image alt="coding-new-1" src="https://pic.imgdb.cn/item/660fcbb668eb935713aff60d.png" width={66} height={113} />
+</center>
+
+……也许你会注意到它实际上是由两个数字定义的：它的输入和输出大小。这是否意味着我们的单字段 `LayerTopology` 是错误的？恰恰相反！
+
+我们所做的，正如我所说的，是利用 **域** 知识。
+
+在一个前馈神经网络中，所有的层都是按顺序连接的，从前到后：
+
+<center>
+  <Image alt="coding-new-2" src="https://pic.imgdb.cn/item/660fcc9568eb935713b1d027.png" width={184} height={130} />
+</center>
+
+……因为 `A` 层的输出是 `B` 层的输入，如果我们选择：
+
+```rust showLineNumbers
+#[derive(Debug)]
+pub struct LayerTopology {
+    pub input_neurons: usize,
+    pub output_neurons: usize,
+}
+```
+
+……那么我们不仅会使我们的接口难以管理，而且更糟糕的是，我们将不得不实现额外的验证，以确保 `layer[0].output_neurons == layer[1].input_neurons` 等条件得到满足。纯属无稽之谈！
+
+注意这个简单的事实，即连续的层必须具有匹配的输入和输出，使我们能够在代码编写之前就简化代码。
+
+一个粗略的实施方法是：
+
+```rust:neural-network/src/lib.rs {3-15} showLineNumbers
+impl Network {
+    pub fn random(layers: Vec<LayerTopology>) -> Self {
+        let mut built_layers = Vec::new();
+
+        for i in 0..(layers.len() - 1) {
+            let input_size = layers[i].neurons;
+            let output_size = layers[i + 1].neurons;
+
+            built_layers.push(Layer::random(
+                input_size,
+                output_size,
+            ));
+        }
+
+        Self { layers: built_layers }
+    }
+}
+```
+
+……现在让我们让它变得更 rustify。你猜当你调用 `Network::random(vec![])` 会发生什么？
+
+```rust:neural-network/src/lib.rs {3-5} showLineNumbers
+impl Network {
+    pub fn random(layers: Vec<LayerTopology>) -> Self {
+        // Network with just one layer is technically doable, but doesn't
+        // make much sense:
+        assert!(layers.len() > 1);
+
+        /* ... */
+    }
+}
+```
+
+好了，更好了。
+
+至于 `for` 循环，通过相邻项迭代是标准库涵盖的另一种模式，通过名为 `.windows()` 的函数实现这一点：
+
+```rust:neural-network/src/lib.rs {5-7} showLineNumbers
+impl Network {
+    pub fn random(layers: Vec<LayerTopology>) -> Self {
+        /* ... */
+
+        for adjacent_layers in layers.windows(2) {
+            let input_size = adjacent_layers[0].neurons;
+            let output_size = adjacent_layers[1].neurons;
+
+            /* ... */
+        }
+
+        /* ... */
+    }
+}
+```
+
+<Note>
+  如果你了解[解构](https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html#destructuring-to-break-apart-values)，你可能会考虑进一步重写此循环：
+
+  ```rust
+  for [fst, snd] in layers.windows(2) {
+      built_layers.push(Layer::random(fst.neurons, snd.neurons));
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……但遗憾的是，编译器表示不行：
+
+  ```plain-text
+  error[E0005]: refutable pattern in `for` loop binding: `&[]`,
+                `&[_]` and `&[_, _, _, ..]` not covered
+   --> src/lib.rs
+    |
+    |     for [fst, snd] in layers.windows(2) {
+    |         ^^^^^^^^^^ patterns `&[]`, `&[_]` and `&[_, _, _, ..]`
+    |                    not covered
+    |
+    = note: the matched value is of type `&[LayerTopology]`
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  编译器并不知道 `.windows(2)` 返回恰好两个元素的数组。在它看来，`.windows(2)` 可能返回大小不一的数组，不一定匹配我们的模式。
+  <br style={{ marginBottom: '0.5em' }} />
+
+  （顺便说一句，这就是可反驳模式的含义：它是一个不匹配所有可能情况的模式。其反义词是不可反驳模式，只有那些在这样的地方才被允许。）
+  <br style={{ marginBottom: '0.5em' }} />
+
+  `Nightly` 版的 `rust`，在稳定了部分 `const` 泛型的情况下，提供了一种解决方案——`.array_windows()`：
+
+  ```rust
+  #![feature(array_windows)]
+
+  for [fst, snd] in layers.array_windows() {
+      built_layers.push(Layer::random(fst.neurons, snd.neurons));
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……但为了简单起见，我们将避开 `const` 泛型，继续使用稳定的函数。
+</Note>
+
+在这种情况下，切换到迭代器对我来说是理所当然的：
+
+```rust:neural-network/src/lib.rs {3-8} showLineNumbers
+impl Network {
+    pub fn random(layers: Vec<LayerTopology>) -> Self {
+        let layers = layers
+            .windows(2)
+            .map(|layers| Layer::random(layers[0].neurons, layers[1].neurons))
+            .collect();
+
+        Self { layers }
+    }
+}
+```
+
+最后一步。当不会使代码变得笨拙时，使用借用而不是获得所有权是一个很好的实践：
+
+```rust:neural-network/src/lib.rs {2} showLineNumbers
+impl Network {
+    pub fn random(layers: &[LayerTopology]) -> Self {
+        /* ... */
+    }
+}
+```
+
+通常，使用借用的值在函数内部不会发生太大变化，但它会使函数更加灵活。也就是说，现在可以通过一个借用数组来进行：
+
+```rust
+let network = Network::random(&[
+    LayerTopology { neurons: 8 },
+    LayerTopology { neurons: 15 },
+    LayerTopology { neurons: 2 },
+]);
+```
+
+……和：
+
+```rust
+let layers = vec![
+    LayerTopology { neurons: 8 },
+    LayerTopology { neurons: 15 },
+    LayerTopology { neurons: 2 },
+];
+
+let network_a = Network::random(&layers);
+let network_b = Network::random(&layers);
+//                              ^ no need to .clone()
+```
+
+接下来是什么？接下来是什么……检查笔记……Ah, `Layer::random()`!
+
+```rust:neural-network/src/lib.rs {2-10} showLineNumbers
+impl Layer {
+    fn random(input_size: usize, output_size: usize) -> Self {
+        let mut neurons = Vec::new();
+
+        for _ in 0..output_size {
+            neurons.push(Neuron::random(input_size));
+        }
+
+        Self { neurons }
+    }
+
+    /* ... */
+}
+```
+
+……或：
+
+```rust:neural-network/src/lib.rs {3-5} showLineNumbers
+impl Layer {
+    fn random(input_size: usize, output_size: usize) -> Self {
+        let neurons = (0..output_size)
+            .map(|_| Neuron::random(input_size))
+            .collect();
+
+        Self { neurons }
+    }
+}
+```
+
+<Note>
+  `|_|`，也被称为<a href="https://www.reddit.com/r/rustjerk/comments/8udbth/a_new_war_begins_choose_your_side" target="blank" style={{ color: `#8e91f2` }}>厕所闭包 LMAO (Toilet Closure)</a>，是一个用于接受它不关心的参数的函数。
+  <br style={{ marginBottom: '0.5em' }} />
+
+  我们也可以写成：
+
+  ```rust
+  .map(|output_neuron_id| Neuron::random(input))
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……但是由于我们不必在任何地方读取此 `output_neuron_id`，因此将参数命名为 `_`（或 `_output_neuron_id`）更惯用，以注释它没有被使用的事实。
+  <br style={{ marginBottom: '0.5em' }} />
+
+  此外，`_` 本身也称为<a href="https://doc.rust-lang.org/reference/patterns.html#destructuring" target="blank" style={{ color: `#8e91f2` }}>占位符 (Placeholder)</a>，它可以在几种不同的上下文中使用：
+
+  ```rust
+  // As a binding:
+  fn ignore_some_arguments(_: usize, b: usize, _: usize) {
+      //                   ^                   ^
+  }
+
+  // ... but not as a name:
+  fn _() {
+  // ^ error: expected identifier, found reserved identifier `_`
+  }
+
+  // As a type:
+  fn load_files(paths: &[&Path]) -> Vec<String> {
+      paths
+          .iter()
+          .map(std::fs::read_to_string)
+          .collect::<Result<_, _>>()
+      //                    ^  ^
+          .unwrap()
+  }
+
+  // ... but only inside expressions:
+  fn what_am_i(foo: _) {
+      //            ^ error: the type placeholder `_` is not allowed
+      //              within types on item signatures
+  }
+  ```
+</Note>
+
+最后：
+
+```rust:neural-network/src/lib.rs {2-10} showLineNumbers
+impl Neuron {
+    fn random(input_size: usize) -> Self {
+        let bias = todo!();
+
+        let weights = (0..input_size)
+            .map(|_| todo!())
+            .collect();
+
+        Self { bias, weights }
+    }
+
+    /* ... */
+}
+```
+
+与 C++ 或 Python 相反，Rust 的标准库不提供任何伪随机数生成器。你知道这意味着什么吗？
+
+<center><strong>It's crates.io time!</strong></center>
+
+一说到伪随机数生成器 (PRNG)，<a href="https://crates.io/crates/rand" target="blank" style={{ color: `#8e91f2` }}>rand</a> 可谓是 rust 的标准，它是一个<a href="https://rust-lang-nursery.github.io/rust-cookbook/algorithms/randomness.html" target="blank" style={{ color: `#8e91f2` }}>用途及其广泛</a>的 crate，不仅可以生成伪随机数，还可以生成其它类型，比如字符串。
+
+为了使用 `rand`，我们必须将其添加到 `Cargo.toml` 中：
+
+```rust:neural-network/Cargo.toml {4} showLineNumbers
+# ...
+
+[dependencies]
+rand = "0.8.5"
+```
+
+……然后：
+
+```rust:neural-network/src/lib.rs {1, 7-8, 11} showLineNumbers
+use rand::Rng;
+
+/* ... */
+
+impl Neuron {
+    fn random(input_size: usize) -> Self {
+        let mut rng = rand::thread_rng();
+        let bias = rng.gen_range(-1.0..=1.0);
+
+        let weights = (0..input_size)
+            .map(|_| rng.gen_range(-1.0..=1.0))
+            .collect();
+
+        Self { bias, weights }
+    }
+}
+```
+
+<Note>
+  `0..3` 是匹配 $[0, 2)$ 的半开区间。<br style={{ marginBottom: '0.5em' }} />
+  `0..=3` 是匹配 $[0, 3]$ 的闭区间。
+</Note>
+
+Neat.
+
+现在，我们如何确保我们的整个网络按预期工作呢？
+
+## 编写测试代码
+
+[纯函数](https://en.wikipedia.org/wiki/Pure_function)是一个给定相同参数时，总是返回相同值的函数。例如，这是一个纯函数：
+
+```rust
+pub fn add(x: usize, y: usize) -> usize {
+    x + y
+}
+```
+
+……而这个不是：
+
+```rust
+pub fn read(path: impl AsRef<Path>) -> String {
+    std::fs::read_to_string(path).unwrap()
+}
+```
+
+<center>*（`add(1, 2)` 将始终返回 `3`，而 `read("file.txt")` 将根据文件当前包含的内容返回不同的字符串。）*</center>
+
+纯函数的好处在于它们可以单独测试：
+
+```rust
+// This test always succeeds
+// (i.e it is *deterministic*)
+#[test]
+fn test_add() {
+    assert_eq!(add(1, 2), 3);
+}
+
+// This test might succeed or it might fail, impossible to anticipate
+// (i.e. it is *indeterministic*)
+#[test]
+fn test_read() {
+    assert_eq!(
+        std::fs::read_to_string("serials-to-watch.txt"),
+        "killing eve",
+    );
+}
+```
+
+不幸的是，我们在 `Neuron::random()` 中生成数字的方式使其成为非纯函数，这可以通过以下方式轻松证明：
+
+```rust
+#[test]
+fn random_is_pure() {
+    let neuron_a = Neuron::random(4);
+    let neuron_b = Neuron::random(4);
+
+    // If `Neuron::random()` was pure, then both neurons would always have
+    // to be the same:
+    assert_eq!(neuron_a, neuron_b);
+}
+```
+
+测试非纯函数很困难，因为我们无法可靠地断言：
+
+```rust:neural-network/src/lib.rs {3-13} showLineNumbers
+/* ... */
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn random() {
+        let neuron = Neuron::random(4);
+
+        assert!(/* what? */);
+    }
+}
+```
+
+我们可以尝试：
+
+```rust
+#[test]
+fn test() {
+    let neuron = Neuron::random(4);
+
+    assert_eq!(neuron.weights.len(), 4);
+}
+```
+
+……但这只是一个无用的测试，它实际上不能证明任何事情。
+
+另一方面，让 `Neuron::random()` 成为一个纯函数似乎……很荒谬？如果结果始终保持不变，那么随机化的意义又何在？
+
+我通常调和两个世界的方式是看不纯度的来源。在这种情况下，它是：
+
+```rust
+impl Neuron {
+    fn random(input_size: usize) -> Self {
+        let mut rng = rand::thread_rng(); // whoopsie
+
+        /* ... */
+    }
+}
+```
+
+如果我们不调用 `thread_rng()`，而是使用随机数发生器接受一个参数：
+
+```rust:neural-network/src/lib.rs {1, 6, 9, 21, 23, 35} showLineNumbers
+use rand::{Rng, RngCore};
+
+/* ... */
+
+impl Network {
+    pub fn random(rng: &mut dyn RngCore, layers: &[LayerTopology]) -> Self {
+        let layers = layers
+            .windows(2)
+            .map(|layers| Layer::random(rng, layers[0].neurons, layers[1].neurons))
+            .collect();
+
+        /* ... */
+    }
+
+    /* ... */
+}
+
+/* ... */
+
+impl Layer {
+    fn random(rng: &mut dyn RngCore, input_size: usize, output_size: usize) -> Self {
+        let neurons = (0..output_size)
+            .map(|_| Neuron::random(rng, input_size))
+            .collect();
+
+        /* ... */
+    }
+
+    /* ... */
+}
+
+/* ... */
+
+impl Neuron {
+    fn random(rng: &mut dyn RngCore, input_size: usize) -> Self {
+        /* ... */
+    }
+
+    /* ... */
+}
+```
+
+……现在，我们可以在测试中使用假的、可预测的 `PRNG`，而用户只需传递他们选择的实际 `PRNG`。
+
+<Note>
+  你可以使用类似的模式来测试程序的输出，如果不是使用：
+
+  ```rust
+  fn do_something() {
+      println!("Doing something...");
+      println!("... done!");
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……你用：
+
+  ```rust
+  fn do_something(stdout: &mut dyn Write) {
+      writeln!(stdout, "Doing something...").unwrap();
+      writeln!(stdout, "... done!").unwrap();
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……然后你就可以很容易地测试输出：
+
+  ```rust
+  #[test]
+  fn ensure_something_happens() {
+      let mut stdout = String::new();
+      do_something(&mut stdout);
+
+      assert_eq!(stdout, "Doing something...\n... done!\n");
+  }
+  ```
+
+  这非常方便。<br style={{ marginBottom: '0.5em' }} />
+
+  无论是 `do_something()` 还是 `random()` 在技术上都不是纯函数，因为它们都缺乏一种叫做<a href="https://en.wikipedia.org/wiki/Referential_transparency" target="blank" style={{ color: `#8e91f2` }}>引用透明性</a>的属性。尽管，如果有人坚持，总是可以使用：
+
+  ```rust
+  fn do_something<W: Write>(stdout: W) -> W {
+      /* ... */
+  }
+  ```
+</Note>
+
+因为 `rand` crate 不提供可预测或可种子的 `PRNG`，所以我们必须使用另一个 crate。我推荐 `rand_chacha`：
+
+```rust:neural-network/Cargo.toml {6-7} showLineNumbers
+# ...
+
+[dependencies]
+rand = "0.8.5"
+
+[dev-dependencies]
+rand_chacha = "0.3.1"
+```
+
+……这使我们能够：
+
+```rust:neural-network/src/lib.rs {4-5, 9-15} showLineNumbers
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::SeedableRng;
+    use rand_chacha::ChaCha8Rng;
+
+    #[test]
+    fn random() {
+        // Because we always use the same seed, our `rng` in here will
+        // always return the same set of values
+        let mut rng = ChaCha8Rng::from_seed(Default::default());
+        let neuron = Neuron::random(&mut rng, 4);
+
+        assert_eq!(neuron.bias, /* ... */);
+        assert_eq!(neuron.weights, &[/* ... */]);
+    }
+}
+```
+
+我们还不知道将返回哪些数字，但找出答案很容易。我们只需从零开始，然后从测试输出中复制粘贴数字：
+
+```rust:neural-network/src/lib.rs {5-6} showLineNumbers
+#[test]
+fn random() {
+    /* ... */
+
+    assert_eq!(neuron.bias, 0.0);
+    assert_eq!(neuron.weights, &[0.0, 0.0, 0.0, 0.0]);
+}
+```
+
+第一次 `cargo test` 给我们带来了：
+
+```plain-text
+thread '...' panicked at 'assertion failed: `(left == right)`
+  left: `-0.6255188`,
+ right: `0.0`
+```
+
+……所以：
+
+```rust:neural-network/src/lib.rs {5} showLineNumbers
+#[test]
+fn random() {
+    /* ... */
+
+    assert_eq!(neuron.bias, -0.6255188);
+
+    /* ... */
+}
+```
+
+另一个 `cargo test`：
+
+```plain-text
+thread '...' panicked at 'assertion failed: `(left == right)`
+  left: `[0.67383957, 0.8181262, 0.26284897, 0.5238807]`,
+ right: `[0.0, 0.0, 0.0, 0.0]`', src/lib.rs:29:5
+```
+
+……我们最终得到：
+
+```rust:neural-network/src/lib.rs {5-8} showLineNumbers
+#[test]
+fn random() {
+    /* ... */
+
+    assert_eq!(
+        neuron.weights,
+        &[0.67383957, 0.8181262, 0.26284897, 0.5238807]
+    );
+}
+```
+
+注意，数字是不同的，这没关系。只要每个 `cargo test` 始终在同一组数字上工作，它们就可以不同（而且它确实如此，因为我们使用了带有恒定种子的 `PRNG`）。
+
+在继续之前，我们还需要讨论一个话题：浮点数不精确性。
+
+我们使用的类型 `f32` 模拟了一个 32 位浮点数，它可以表示 `~1.2*10^-38` 和 `~3.4*10^38` 之间的值。可惜，它不能表示所有这些数字，只能表示一些数字。
+
+例如，使用 `f32` 不能精确地编码 $0.15$，它总是会偏离一点：
+
+```rust
+fn main() {
+    println!("{:.10}", 0.15f32);
+    // prints: 0.1500000060
+}
+```
+
+……$0.45$ 也是同理：
+
+```rust
+fn main() {
+   println!("{:.10}", 0.45f32);
+   // prints: 0.4499999881
+}
+```
+
+通常情况下这并不重要，因为浮点数从未被设计成精确的（只是快速的）。但当它出现问题时，它会像一块从天而降的砖头一样打击你：
+
+```rust
+#[test]
+fn test() {
+    assert_eq!(0.45f32, 0.15 + 0.15 + 0.15);
+}
+```
+
+```plain-text
+thread 'test' panicked at 'assertion failed: `(left == right)`
+  left: `0.45`,
+ right: `0.45000002`'
+```
+
+为了避免重新造轮子，我会给出链接：[What Every Programmer Should Know About Floating-Point Arithmetic](https://floating-point-gui.de/)，如果你还没有阅读过有关浮点数的内容，我鼓励你尝试一下！
+
+那么，如果我们不能精确地比较数字，我们该怎么办？大致比较一下吧！
+
+```rust
+#[test]
+fn test() {
+    let actual: f32 = 0.1 + 0.2;
+    let expected = 0.3;
+
+    assert!((actual - expected).abs() < f32::EPSILON);
+}
+```
+
+这是在所有实现 [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754) 的编程语言中比较浮点数的标准方式（所以，就像所有编程语言一样），与其寻求精确结果，不如用误差范围（也称为容差）来比较两个数字。
+
+因为用这种方式比较数字有些麻烦，所以更舒适的做法是通过宏：
+
+```rust
+macro_rules! assert_almost_eq {
+    ($left:expr, $right:expr) => {
+        let left: f32 = $left;
+        let right: f32 = $right;
+
+        assert!((left - right).abs() < f32::EPSILON);
+    }
+}
+
+#[test]
+fn test() {
+    assert_almost_eq!(0.45f32, 0.15 + 0.15 + 0.15);
+}
+```
+
+……或者，可以使用像 `approx` 这样的 crate：
+
+```rust
+#[test]
+fn test() {
+    approx::assert_relative_eq!(0.45f32, 0.15 + 0.15 + 0.15);
+}
+```
+
+我个人喜欢 `approx`，所以让我们将它添加到我们的神经网络的 `Cargo.toml` 中：
+
+```rust:neural-network/Cargo.toml {5} showLineNumbers
+# ...
+
+[dev-dependencies]
+rand_chacha = "0.3.1"
+approx = "0.5.1"
+```
+
+……然后调整测试代码：
+
+```rust:neural-network/src/lib.rs {2, 11, 13-16} showLineNumbers
+use super::*;
+use approx::assert_relative_eq;
+use rand::SeedableRng;
+use rand_chacha::ChaCha8Rng;
+
+#[test]
+fn random() {
+    let mut rng = ChaCha8Rng::from_seed(Default::default());
+    let neuron = Neuron::random(&mut rng, 4);
+
+    assert_relative_eq!(neuron.bias, -0.6255188);
+
+    assert_relative_eq!(
+        neuron.weights.as_slice(),
+        [0.67383957, 0.8181262, 0.26284897, 0.5238807].as_ref()
+    );
+}
+```
+
+这涵盖了神经元一半的功能。值得庆幸的是，根据我们现在所知道的，为 `Neuron::propagate()` 编写测试会很容易：
+
+```rust:neural-network/src/lib.rs {9-13} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn random() {
+        /* ... */
+    }
+
+    #[test]
+    fn propagate() {
+        todo!()
+    }
+}
+```
+
+<Note>
+  你可能听说过，根据测试的前提条件和期望来命名测试是很有用的。<br style={{ marginBottom: '0.5em' }} />
+
+  通常这是正确的，如果我们正在编写一个商店，那么像这样构建其测试可能会很有用：
+
+  ```rust
+  #[cfg(test)]
+  mod tests {
+      use super::*;
+
+      mod cart {
+          use super::*;
+
+          mod when_user_adds_a_flower_to_their_cart {
+              use super::*;
+
+              #[test]
+              fn user_can_see_this_flower_in_their_cart() {
+                  /* ... */
+              }
+
+              #[test]
+              fn user_can_remove_this_flower_from_their_cart() {
+                  /* ... */
+              }
+
+              mod and_submits_order {
+                  /* ... */
+              }
+
+              mod and_abandons_cart {
+                  /* ... */
+              }
+          }
+      }
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  问题在于我们的 `Neuron` 不是典型的「业务代码」，并且许多「业务代码模式」不太适用于数学代码。如果我们需要考虑一些边缘情况，比如：
+
+  ```rust
+  fn propagate(/* ... */) {
+      if /* ... */ {
+          do_foo()
+      } else {
+          do_bar()
+      }
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……那么，创建两个单独的测试就有意义了：
+
+  ```rust
+  #[cfg(test)]
+  mod tests {
+      use super::*;
+
+      mod propagate {
+          use super::*;
+
+          mod given_neuron_with_foo {
+              use super::*;
+
+              #[test]
+              fn fooifies_it() {
+                  /* ... */
+              }
+          }
+
+          mod given_neuron_thats_bar {
+              use super::*;
+
+              #[test]
+              fn bars_it() {
+                  /* ... */
+              }
+          }
+      }
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……但就我们目前的代码而言，我们最好只是使用简单的 `fn random()` 和 `fn propagate()`。
+</Note>
+
+如何确保 `propagate()` 正确工作呢？通过手动计算预期响应：
+
+```rust:neural-network/src/lib.rs {3-21} showLineNumbers
+#[test]
+fn propagate() {
+    let neuron = Neuron {
+        bias: 0.5,
+        weights: vec![-0.3, 0.8],
+    };
+
+    // Ensures `.max()` (our ReLU) works:
+    assert_relative_eq!(
+        neuron.propagate(&[-10.0, -10.0]),
+        0.0,
+    );
+
+    // `0.5` and `1.0` chosen by a fair dice roll:
+    assert_relative_eq!(
+        neuron.propagate(&[0.5, 1.0]),
+        (-0.3 * 0.5) + (0.8 * 1.0) + 0.5,
+    );
+
+    // We could've written `1.15` right away, but showing the entire
+    // formula makes our intentions clearer
+}
+```
+
+从这一点来看，实现 `Layer` 和 `Network` 的测试变得非常简单，因此已作为读者的练习:-)
+
+## 结语
+
+### 我们究竟创造了什么？
+
+看起来我们所实现的与学习或模拟无关：
+
+ - 眼睛呢？
+ - 负责移动的代码在哪里？
+ - ...
+
+不必担心，最终所有的部分都将拼凑在一起！
+
+同时，随时欢迎[查看源码](https://github.com/CuB3y0nd/avolve/tree/master/neural-network)。
+
+### 为什么我们的设计会显得臃肿？
+
+当你从头开始搜索 `python neural network from scratch` 时，你会发现很多文章将 FFNN 封装在几行 Python 代码中。与它们相比，我们的设计显得有些夸张，为什么会这样呢？
+
+这是因为通过这种方式我们能学到更多东西。我们本可以使用 [nalgebra](https://nalgebra.org) 将我们的网络编写成当前大小的十分之一，也可以使用任何[现有的 crate](https://www.arewelearningyet.com/neural-networks)之一实现它。但重要的不是目的地，而是旅程本身！
+
+### 下一步如何？
+
+目前，我们手头已经有了一个基本的 FFNN。在下一篇文章中，我们将实现遗传算法，并将其连接到我们的神经网络。最后一篇文章将是关于如何使用 `WebAssembly` 将我们的 crates 组合在一起，最终得到我们的杰作：Avolve。
 
