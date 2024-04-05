@@ -1,0 +1,758 @@
+---
+title: "Avolve Part-2"
+date: '2024-04-05'
+lastmod: '2024-04-05'
+tags: ['Avolve', 'Neural Network', 'Genetic Algorithm']
+draft: false
+summary: "基于神经网络和遗传算法实现的模拟进化 Part-2"
+authors: ['default']
+---
+
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
+这是 Avolve 系列的第二部分，我们使用 **神经网络** 和 **遗传算法** 编写模拟进化代码：
+
+在这篇文章中，我们将为我们的项目奠定基础，并实现一个基本的前馈神经网络，该网络稍后将作为鸟的大脑。
+
+系好安全带，我们要开始了！
+
+## 初始步骤
+
+哦，开始一个新项目的乐趣！
+
+```bash
+mkdir avolve
+cd avolve
+
+# If you're using Git, it's also the time for:
+git init
+```
+
+首先，我们必须确定我们使用的工具链版本。否则，如果你碰巧安装了较旧的工具链，则代码的某些部分将无法工作。
+
+截至 2024.03.27，Rust 的最新稳定版本是 1.77.1，所以让我们创建一个名为 `rust-toolchain` 的文件，其中包含：
+
+```rust:rust-toolchain {1} showLineNumbers
+1.77.1
+```
+
+现在，对于更困难的部分，我们必须决定项目的结构如何安排。因为我们的项目将由许多独立的子模块（例如神经网络和遗传算法）组成，所以[Cargo 工作空间](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html)会派上用场：
+
+```rust:Cargo.toml {1-6} showLineNumbers
+[workspace]
+resolver = "2"
+
+members = [
+    "neural-network",
+]
+```
+
+这意味着我们不会立即创建 `src/main.rs`，而是创建一个名为 `libs` 的目录并将我们的库 (Crates) 放在那里：
+
+```bash
+cargo new neural-network --name neural-network --lib
+```
+
+<Note>
+  组织工作区的方法有很多。你可以将所有内容储存到名为 `crates` 的目录中，而不是将所有内容保存在名为 libs 的目录中；或者，你也可以创建两个单独的目录，一个用于 `application-crate`，另一个用于 `library-crate`。<br style={{ marginBottom: '0.5em' }} />对此没有标准指南，请跟随你的直觉。
+</Note>
+
+## 实现 propagate()
+
+是时候开始谈正事了。
+
+我们将从上往下开始，创建一个模拟整个网络的结构，它将为我们提供一个入口点；让我们打开 `lib.rs` 并写入：
+
+```rust:neural-network/src/lib.rs {1-2} showLineNumbers
+#[derive(Debug)]
+pub struct Network;
+```
+
+神经网络最关键的操作是传播数字：
+
+<center>
+  <Image alt="coding-propagate-1" src="https://pic.imgdb.cn/item/660f97ba68eb93571340f127.png" width={189} height={146} />
+</center>
+
+……所以：
+
+```rust:neural-network/src/lib.rs {4-8} showLineNumbers
+#[derive(Debug)]
+pub struct Network;
+
+impl Network {
+    pub fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        todo!()
+    }
+}
+```
+
+<Note>
+  虽然某些语言允许将「暂未实现」的函数留空：
+
+  ```c
+  int get_berry_number() {
+    // TODO solve the paradox
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  但这在 rust 是错误的：
+
+  ```rust
+  fn berry_number() -> usize {
+    // TODO solve the paradox
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ```plain-text
+  error[E0308]: mismatched types
+   --> src/lib.rs
+    |
+  1 | fn berry_number() -> usize {
+    |    ------------      ^^^^^ expected `usize`, found `()`
+    |    |
+    |    implicitly returns `()` as its body has no tail or `return`
+    |    expression
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  这是因为 rust 中几乎所有内容都是表达式：
+
+  ```rust
+  let value = if condition {
+      "computer says yass"
+  } else {
+      "computer says no"
+  };
+
+  let value = loop {
+      break 123;
+  };
+
+  let value = {
+      // empty block is an expression, too
+  };
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……所以 rust 看到的实际是：
+
+  ```rust
+  fn berry_number() -> usize {
+      return ();
+  }  
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  `()` 被称为单元类型。<br style={{ marginBottom: '0.5em' }} />
+
+  为了解决这个问题，rust 提供了两个宏：`todo!()` 和它的老表弟 `unimplemented!()`。<br style={{ marginBottom: '0.5em' }} />
+
+  这两个宏都允许编译代码，并且在运行中遇到时会导致应用程序安全崩溃：<br style={{ marginBottom: '0.5em' }} />
+
+  ```plain-text
+  thread 'main' panicked at 'not yet implemented'
+  ```
+</Note>
+
+网络是由众多的层构建的：
+
+<center>
+  <Image alt="coding-propagate-2" src="https://pic.imgdb.cn/item/660f9def68eb9357134d5ee5.png" width={184} height={113} />
+</center>
+
+……所以：
+
+```rust:neural-network/src/lib.rs {1-7} showLineNumbers
+#[derive(Debug)]
+pub struct Network {
+  layers: Vec<Layer>,
+}
+
+#[derive(Debug)]
+struct Layer;
+```
+
+层是由神经元构建的：
+
+<center>
+  <Image alt="coding-propagate-3" src="https://pic.imgdb.cn/item/660f9f3f68eb935713509efa.png" width={122} height={82} />
+</center>
+
+……传递神经元：
+
+```rust:neural-network/src/lib.rs {2-4} showLineNumbers
+#[derive(Debug)]
+struct Layer {
+  neurons: Vec<Neuron>,
+}
+```
+
+最终，神经元包含偏置和输出权重：
+
+<center>
+  <Image alt="coding-propagate-4" src="https://pic.imgdb.cn/item/660fa03668eb93571352dae0.png" width={97} height={88} />
+</center>
+
+```rust:neural-network/src/lib.rs {1-5} showLineNumbers
+#[derive(Debug)]
+struct Neuron {
+    bias: f32,
+    weights: Vec<f32>,
+}
+```
+
+初始设计的完整代码：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+#[derive(Debug)]
+pub struct Network {
+    layers: Vec<Layer>,
+}
+
+impl Network {
+    pub fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        todo!()
+    }
+}
+
+#[derive(Debug)]
+struct Layer {
+    neurons: Vec<Neuron>,
+}
+
+#[derive(Debug)]
+struct Neuron {
+    bias: f32,
+    weights: Vec<f32>,
+}
+```
+
+Nice.
+
+<Note>
+  你可能会注意到我们只有两个对象是公共的：`Network` 和 `Network::propagate()`。<br style={{ marginBottom: '0.5em' }} />
+
+  这是因为 `Layer` 和 `Neuron` 只是一个实现细节，我们不会将它们暴露在外，没有这个必要。<br style={{ marginBottom: '0.5em' }} />
+
+  通过这种方法，我们可以在不对下游（我们库的用户）造成破坏性变化的情况下对我们的实现进行更改。<br style={{ marginBottom: '0.5em' }} />
+
+  例如，Real Neural Networks™ 通常使用矩阵实现。如果我们决定重写我们的网络以使用矩阵，那么这不会是一个破坏性的变化：`Network::propagate()` 的签名将保持不变，由于用户无法访问 `Layer` 和 `Neuron`，用户将无法注意到它们其实已经消失了。
+</Note>
+
+接下来，由于数字必须通过每一层，所以我们还需要在那里有一个 `propagate()`：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Layer {
+    fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        todo!()
+    }
+}
+```
+
+有了 `Layer::propagate()`，我们就可以接着实现 `Network::propagate()` 了：
+
+```rust:neural-network/src/lib.rs {3-9} showLineNumbers
+impl Network {
+    pub fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        let mut inputs = inputs;
+
+        for layer in &self.layers {
+            inputs = layer.propagate(inputs);
+        }
+
+        inputs
+    }
+}
+```
+
+这是一段相当令人满意、正确的代码。但它不是惯用的，我们还可以把它写得更好、更质朴！
+
+<center>
+  <Image alt="Ecstasy of Saint Ferris (upon seeing idiomatic code), colorized" src="https://pic.imgdb.cn/item/660fa59d68eb9357135ff3f7.png" width={268} height={185} />
+</center>
+
+首先，这称为隐藏 (Shadowing)，或者叫遮蔽：
+
+```rust:neural-network/src/lib.rs {1} showLineNumbers
+let mut inputs = inputs;
+```
+
+……这是不必要的。我们不妨将 `mut` 赋予函数的参数：
+
+```rust:neural-network/src/lib.rs {2} showLineNumbers
+impl Network {
+    pub fn propagate(&self, mut inputs: Vec<f32>) -> Vec<f32> {
+        for layer in &self.layers {
+            inputs = layer.propagate(inputs);
+        }
+
+        inputs
+    }
+}
+```
+
+<Note>
+  但是，这难道不会迫使我们的调用者传递可变值吗？不会！
+
+  ```rust
+  fn process(mut items: Vec<f32>) {
+      // do something
+  }
+
+  fn main() {
+      let items = vec![1.2, 3.4, 5.6];
+      // ^ no `mut` needed here
+
+      process(items);
+      //      ^ just works
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  原因是我们刚刚引入的 `mut` 出现在所谓的绑定位置：
+
+  ```rust
+  fn foo_1(items: &[f32]) {
+      //   ^^^^^  ------
+      //  binding  type
+      // (immut.) (immut.)
+  }
+
+  fn foo_2(mut items: &[f32]) {
+      //   ^^^^^^^^^  ------
+      //    binding    type
+      //   (mutable) (immut.)
+  }
+
+  fn foo_3(items: &mut [f32]) {
+      //   ^^^^^  ----------
+      //  binding    type
+      // (immut.)  (mutable)
+  }
+
+  fn foo_4(mut items: &mut [f32]) {
+      //   ^^^^^^^^^  ----------
+      //    binding      type
+      //   (mutable)   (mutable)
+  }
+
+  struct Person {
+      name: String,
+      eyeball_radius: usize,
+  }
+
+  fn decompose(Person { name, mut eyeball_radius }: Person) {
+      //       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ------
+      //                     binding                 type
+      // (partially immutable, partially mutable) (immutable)
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……与类型相反，绑定是函数本地的：
+  ```rust
+  fn foo(items: &mut Vec<usize>) {
+      // When a type is mutable, you can modify the thing being
+      // referenced:
+      items.push(1234);
+
+      // But if the binding remains immutable, you cannot modify
+      // *which* thing is referenced:
+      items = some_another_vector;
+      //    ^ error: cannot assign to immutable argument
+  }
+
+  fn bar(mut items: &Vec<usize>) {
+      // On the other hand, when a binding is mutable, you can change
+      // *which* thing is referenced:
+      items = some_another_vector;
+
+      // But if the type remains immutable, you cannot modify the
+      // thing itself:
+      items.push(1234);
+      //   ^^^^^ error: cannot borrow `*items` as mutable, as it is
+      //         behind a `&` reference
+  }
+  ```
+</Note>
+
+我们还可以对代码进行进一步的改进，这种模式称为 **折叠 (Folding)**：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+for layer in &self.layers {
+    inputs = layer.propagate(inputs);
+}
+```
+
+……rust 的标准库为其提供了专用函数：
+
+```rust:neural-network/src/lib.rs {2-5} showLineNumbers
+impl Network {
+    pub fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        self.layers
+            .iter()
+            .fold(inputs, |inputs, layer| layer.propagate(inputs))
+    }
+}
+```
+
+<center>*（有人可能会争论我们的最终代码实际上是否更具可读性，虽然我喜欢内置的组合器，例如 `.fold()`，但是如果你发现它们晦涩难懂，你完全可以使用自己的方式实现！）*</center>
+
+由于闭包，我们甚至不需要 `mut inputs`，现在你可以吹嘘你的代码全都是函数式的，就像 `Haskell` 一样。
+
+让我们继续讨论神经元。单个神经元接受多个输入并返回一个输出，因此：
+
+```rust:neural-network/src/lib.rs {2-5} showLineNumbers
+#[derive(Debug)]
+struct Neuron {
+    bias: f32,
+    weights: Vec<f32>,
+}
+
+impl Neuron {
+    fn propagate(&self, inputs: Vec<f32>) -> f32 {
+        todo!()
+    }
+}
+```
+
+和之前一样，我们可以回溯到实现 `Layer::propagate()`：
+
+```rust:neural-network/src/lib.rs {8-15} showLineNumbers
+#[derive(Debug)]
+struct Layer {
+    neurons: Vec<Neuron>,
+}
+
+impl Layer {
+    fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        let mut outputs = Vec::new();
+
+        for neuron in &self.neurons {
+            let output = neuron.propagate(inputs);
+            outputs.push(output);
+        }
+
+        outputs
+    }
+}
+```
+
+如果我们尝试编译它，我们会遇到第一个 `borrow-checker` 错误：
+
+```plain-text
+error[E0382]: use of moved value: `inputs`
+  --> src/lib.rs
+   |
+   |     fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+   |                         ------ move occurs because `inputs` has
+   |                                type `Vec<f32>`, which does not
+   |                                implement the `Copy` trait
+  ...
+   |             let output = neuron.propagate(inputs);
+   |                                           ^^^^^^
+   |                                value moved here, in previous
+   |                                iteration of loop
+```
+
+显然，编译器是正确的：调用 `neuron.propagate(inputs)` 后，我们失去了对 `inputs` 的所有权，因此我们不能在循环的后续迭代中使用它。
+
+幸运的是，修复很简单，归根结底就是让 `Neuron::propagate()` 在借来的值上工作：
+
+```rust:neural-network/src/lib.rs {6, 17} showLineNumbers
+impl Layer {
+    fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        /* ... */
+
+        for neuron in &self.neurons {
+            let output = neuron.propagate(&inputs);
+            /* ... */
+        }
+
+        /* ... */
+    }
+}
+
+/* ... */
+
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        /* ... */
+    }
+}
+```
+
+重申一下，我们目前的代码是：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Layer {
+    fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        let mut outputs = Vec::new();
+
+        for neuron in &self.neurons {
+            let output = neuron.propagate(&inputs);
+            outputs.push(output);
+        }
+
+        outputs
+    }
+}
+```
+
+……这种特殊的模式称为 **映射 (Mapping)**，标准库为此也提供了一种方法！
+
+```rust:neural-network/src/lib.rs {3-6} showLineNumbers
+impl Layer {
+    fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+        self.neurons
+            .iter()
+            .map(|neuron| neuron.propagate(&inputs))
+            .collect()
+    }
+}
+```
+
+目前我们除了完成 `Neuron::propagate()` 外没有别的可做的了。和以前一样，让我们从一个粗略的版本开始：
+
+```rust:neural-network/src/lib.rs {3-15} showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        let mut output = 0.0;
+
+        for i in 0..inputs.len() {
+            output += inputs[i] * self.weights[i];
+        }
+
+        output += self.bias;
+
+        if output > 0.0 {
+            output
+        } else {
+            0.0
+        }
+    }
+}
+```
+
+该片段包含两个不惯用的结构和一个潜在的错误，让我们从后者开始。
+
+由于我们使用 `inputs` 的长度来迭代 `self.weights`，因此我们遇到了三种边缘情况：
+
+ - 当 `inputs.len() < self.weights.len()`
+ - 当 `inputs.len() == self.weights.len()`
+ - 当 `inputs.len() > self.weights.len()`
+
+我们的代码建立在 `#2` 始终为真的假设上，但这是一个潜在的假设：我们没有在任何地方强制执行它！如果我们错误地传递了更少或更多的输入，我们将会得到一个无效的结果或者崩溃。
+
+我们至少可以通过两种方法来改进它：
+
+1. 我们可以更改 `Neuron::propagate()` 以返回错误信息：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> Result<f32, String> {
+        if inputs.len() != self.weights.len() {
+            return Err(format!(
+                "got {} inputs, but {} inputs were expected",
+                inputs.len(),
+                self.weights.len(),
+            ));
+        }
+
+        /* ... */
+    }
+}
+```
+
+……或者，使用我最喜欢的 `crates` 之一——[thiserror](https://github.com/dtolnay/thiserror)：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("got {got} inputs, but {expected} inputs were expected")]
+    MismatchedInputSize {
+        got: usize,
+        expected: usize,
+    },
+}
+
+/* ... */
+
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> Result<f32> {
+        if inputs.len() != self.weights.len() {
+            return Err(Error::MismatchedInputSize {
+                got: inputs.len(),
+                expected: self.weights.len(),
+            });
+        }
+
+        /* ... */
+    }
+}
+```
+
+2. 我们可以使用 `assert_eq!()`/`panic!()`：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        assert_eq!(inputs.len(), self.weights.len());
+
+        /* ... */
+    }
+}
+```
+
+在大多数情况下，第一种方案更好，因为它允许调用者捕获错误并处理它。但在我们的例子中，根本没必要这样。因为：
+
+ - 如果此断言失败，则意味着我们的实现很可能是错误的，并且用户无法采取任何措施来缓解该问题。
+ - 这只是一个玩具项目，今晚我们已经有了大约五十个其他想法，没有必要浪费我们的时间。
+
+所以：
+
+```rust:neural-network/src/lib.rs {3} showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        assert_eq!(inputs.len(), self.weights.len());
+
+        /* ... */
+    }
+}
+```
+
+至于惯用方法，这个：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        /* ... */
+
+        if output > 0.0 {
+            output
+        } else {
+            0.0
+        }
+    }
+}
+```
+
+……是 `f32::max()` 的变体：
+
+```rust:neural-network/src/lib.rs {5} showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        /* ... */
+
+        output.max(0.0)
+    }
+}
+```
+
+而这个：
+
+```rust:neural-network/src/lib.rs showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        /* ... */
+
+        let mut output = 0.0;
+
+        for i in 0..inputs.len() {
+            output += inputs[i] * self.weights[i];
+        }
+
+        /* ... */
+    }
+}
+```
+
+……可以使用 `.zip()` 简化：
+
+```rust:neural-network/src/lib.rs {7-9} showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        /* ... */
+
+        let mut output = 0.0;
+
+        for (&input, &weight) in inputs.iter().zip(&self.weights) {
+            output += input * weight;
+        }
+
+        /* ... */
+    }
+}
+```
+
+<Note>
+  诸如 `input[i]` 之类的数组索引操作总是会执行所谓的 **边界检查 (bounds check)**。这是一段确保索引位于数组边界内的代码，当它越界时会出现 `panick`：
+
+  ```rust
+  fn main() {
+      let numbers = vec![1];
+      println!("{}", numbers[123]);
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ```plain-text
+  thread 'main' panicked at 'index out of bounds: the len is 1 but
+  the index is 123'
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  当你使用如 `.zip()` 或 `.map()` 这样的组合器而不是索引时，编译器会省略这些检查，使你的代码不仅更易读，而且更快。
+</Note>
+
+……然后使用 `.map()` + `.sum()`：
+
+```rust:neural-network/src/lib.rs {5-9} showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        /* ... */
+
+        let mut output = inputs
+            .iter()
+            .zip(&self.weights)
+            .map(|(input, weight)| input * weight)
+            .sum::<f32>();
+
+        /* ... */
+    }
+}
+```
+
+最后一行中使用的 `::<>` 语法称为 [Turbofish](https://techblog.tonsser.com/posts/what-is-rusts-turbofish)。当编译器无法推断它们时，它允许提供显式通用参数。
+
+……最后：
+
+```rust:neural-network/src/lib.rs {5-11} showLineNumbers
+impl Neuron {
+    fn propagate(&self, inputs: &[f32]) -> f32 {
+        assert_eq!(inputs.len(), self.weights.len());
+
+        let output = inputs
+            .iter()
+            .zip(&self.weights)
+            .map(|(input, weight)| input * weight)
+            .sum::<f32>();
+
+        (self.bias + output).max(0.0)
+    }
+}
+```
+
+毫无疑问，它很漂亮。但是它有用吗？它能识别猫吗？我们可以用它来预测未来的狗狗币价格吗？
+
+## 实现 new()
+
+TODO
+
