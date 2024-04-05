@@ -82,7 +82,7 @@ authors: ['default']
 </center>
 
 <Tip>
-  为了简单起见，我们的鸟看不到颜色 - 您可以使用 <a href="https://raytracing.github.io/books/RayTracingInOneWeekend.html" target="blank" style={{ color: `#8e91f2` }}>光线追踪</a> 使眼睛更加真实。
+  为了简单起见，我们的鸟看不到颜色 - 您可以使用<a href="https://raytracing.github.io/books/RayTracingInOneWeekend.html" target="blank" style={{ color: `#8e91f2` }}>光线追踪</a>使眼睛更加真实。
 </Tip>
 
 至于输出，我们可以使函数返回一个有关速度变化和旋转变化 $( \Delta speed,\ \Delta rotation)$ 的元组。
@@ -213,7 +213,7 @@ $0.1 - 0.3 = -0.2$
 最简单的激活函数是 **修正线性单元 (Rectified Linear Unit, ReLU)**，在 `rust` 中为 [f32::max](https://doc.rust-lang.org/stable/std/primitive.f32.html#method.max)：
 
 <center>
-  <Image alt="nn-8" src="https://pic.imgdb.cn/item/660ece2968eb9357130a0ee2.png" width={66} height={58} />
+  <Image alt="nn-8" src="https://pic.imgdb.cn/item/660f747a68eb935713fcccd9.png" width={220} height={150} />
 </center>
 
 <Note>
@@ -252,7 +252,7 @@ $0.6 \cdot 1.0 = 0.6$
 
 *（因为这只是在一个完全虚构的网络上的练习，所以这个数字没有任何意义。它只是一些输出值。）*
 
-总的来说，这是最简单的 FFNN 之一。给定适当的权重，它能够解决 [XOR 问题](https://medium.com/@jayeshbahire/the-xor-problem-in-neural-networks-50006411840b)，但可能缺乏引导鸟类的计算能力。
+总的来说，这是最简单的 FFNN 之一。给定适当的权重，它能够解决[XOR 问题](https://medium.com/@jayeshbahire/the-xor-problem-in-neural-networks-50006411840b)，但可能缺乏引导鸟类的计算能力。
 
 更复杂的 FFNN，例如：
 
@@ -312,5 +312,134 @@ $\left( 3.402\cdot 10^{38}\right)^{( 3+5)} \ \sim =\ 1.8\cdot 10^{308}$
 
 ### 遗传算法：深入研究
 
-TODO
+这是一株野生胡萝卜，以及它的栽培品种：
+
+<center>
+  <Image alt="carrot" src="https://pic.imgdb.cn/item/660f6ca768eb935713ec8c56.jpg" width={632} height={332} />
+</center>
+
+这种栽培的、广为人知的形式并不是凭空出现的——它是数百年[选择性育种](https://en.wikipedia.org/wiki/Selective_breeding)的结果，考虑到了某些因素，比如主根的质地或颜色。
+
+如果我们能用我们的神经网络做类似的事情，那不是很棒吗？如果我们只是随机创造了一群鸟，并选择性地培育出那些看起来最突出的鸟……
+
+<center><strong>hmmm</strong></center>
+
+事实证明，我们并不是第一个偶然发现这个想法的人。计算机科学中已经存在一个被广泛研究的分支，称为[进化计算](https://en.wikipedia.org/wiki/Evolutionary_computation) (Evolutionary computation)，它的目的就是「按照自然的方式」解决问题。
+
+在所有进化算法中，我们将研究的具体子类称为[遗传算法](https://en.wikipedia.org/wiki/Genetic_algorithm)。
+
+<Important>
+  与神经网络类似，遗传算法也不是一个具体的算法，而是一系列不同的算法；因此，为了避免熬夜，我们将简单介绍一下它的工作原理。
+</Important>
+
+从上到下开始，遗传算法从 **种群 (Population)** 开始：
+
+<center>
+  <Image alt="ga-2" src="https://pic.imgdb.cn/item/660f775068eb93571303f105.png" width={251} height={258} />
+</center>
+
+群体由 **个体 (individuals)**（有时也被称为 **代理 (Agents)**）组成：
+
+<center>
+  <Image alt="ga-3" src="https://pic.imgdb.cn/item/660f77d168eb93571304717e.png" width={23} height={24} />
+</center>
+
+个体（或代理）是给定问题的单一可能解决方案（因此，种群是一些可能解决方案的集合）。
+
+在我们的例子中，每只鸟都会模拟一个大脑（或者整个鸟，如果你喜欢以这种方式可视化），但通常这取决于你要解决的问题：
+ - 比如说，如果你试图[进化出一根天线](https://en.wikipedia.org/wiki/Evolved_antenna)，那么单个个体就是一根天线。
+ - 比如说，如果你尝试[改进一个查询计划](https://www.postgresql.org/docs/8.3/geqo-intro2.html)，那么单个个体将是一个查询计划。
+
+一个个体代表了某种解决方案，但不一定是最好的，甚至不一定是最理想的解决方案。
+
+个体是由 **基因 (Genes)**（统称为 **基因组 (Genome)**）构成的：
+
+<center>
+  <Image alt="用神经网络权重表示的基因组；基因组可能是数字列表、图表或任何其它任何能够模拟问题解决方案的东西" src="https://pic.imgdb.cn/item/660f790068eb935713070493.png" width={312} height={327} />
+</center>
+
+基因是由遗传算法评估和调整的单个参数。
+
+在我们的例子中，每个基因只是一个神经网络的权重，但表示问题的领域并不总是那么简单。
+
+例如，如果你正在解决[旅行商问题](https://en.wikipedia.org/wiki/Travelling_salesman_problem)，其中的基本问题与神经网络无关，那么一个基因可以是一个由 $(x, y)$ 坐标组成的元组，确定旅行商旅程的一部分（因此，一个个体将描述旅行商的整个路径）：
+
+<center>
+  <Image alt="旅行商问题的假设方法。每个方框代表旅行商可能的旅行建议路径" src="https://pic.imgdb.cn/item/660f7a9968eb9357130a2199.png" width={251} height={258} />
+</center>
+
+现在，假设我们有五十只鸟的随机种群。我们将它们传递给遗传算法，会发生什么？
+
+与选择性育种类似，遗传算法首先评估每个个体（每个可能的解决方案），看看哪些是当前种群中最好的。
+
+从生物学上来说，这相当于到你的花园散步并检查哪些胡萝卜是最橙色和最美味的。
+
+可以使用所谓的 **适应度函数 (Fitness Function)** 进行评估，该函数返回一个 **适应度分数 (Fitness Score)**，量化特定个体（即特定解决方案）的好坏程度：
+
+<center>
+  <Image alt="通过主根的颜色和半径来量化胡萝卜的适应度函数示例" src="https://pic.imgdb.cn/item/660f7bb568eb9357130c6dac.png" width={213} height={161} />
+</center>
+
+对于遗传算法而言，创建[可用的适应度函数](https://www.youtube.com/watch?v=7J-DfS52bnI)是最困难的任务之一，因为通常有许多指标可以用来衡量个体。
+
+*（即使是我们容易想象的胡萝卜也至少有三个指标：主根的颜色、半径和味道，必须将它们压缩成一个数字。）*
+
+幸运的是，对于本项目的鸟类来说，我们没有太多选择：我们只能说，一只鸟的好坏取决于它在这 **一代 (Generation)** 人中所吃的食物量。
+
+一只吃了 $30$ 种食物的鸟比只吃了 $20$ 种食物的鸟要好，就这么简单。
+
+<Tip>
+  **否定适应度函数 (Negating a fitness function)** 会使遗传算法返回最差的解决方案而不是最好的解决方案；只是一个有趣的技巧，供以后记住。
+</Tip>
+
+现在，遗传算法的巅峰时刻已经到来：**繁殖 (Reproduction)**！
+
+从广义上讲，繁殖是从当前种群开始建立新种群（希望略有改善）的过程。
+
+这在数学上相当于选择最美味的胡萝卜并播种。
+
+发生的情况是，遗传算法随机选择两个个体（优先考虑适应度得分较高的个体）并使用它们来产生两个新个体（所谓的 **后代 (Offspring)**）：
+
+<center>
+  <Image alt="ga-7" src="https://pic.imgdb.cn/item/660f7dbb68eb93571310c8fc.png" width={251} height={258} />
+</center>
+
+后代是通过获取父母双方的基因组并对其进行 [交叉 (Crossover)](https://en.wikipedia.org/wiki/Chromosomal_crossover) 和 [突变 (Mutation)](https://en.wikipedia.org/wiki/Mutation) 而产生的：
+
+<center>
+  <Image alt="ga-8" src="https://pic.imgdb.cn/item/660f7e9c68eb93571312adcb.png" width={361} height={228} />
+</center>
+
+交叉允许混合两个不同的个体以获得近似的中间解决方案，而突变允许发现初始群体中不存在的新的解决方案。
+
+两个新产生的个体都被推入新种群池中，并且该过程重新开始，直到整个新种群建立；然后当前的种群被丢弃，整个模拟从这个新的（希望得到改进）种群开始。
+
+正如你所看到的，这个过程中有很多随机性：我们从随机群体开始，我们随机化基因的分布方式……所以……
+
+<center>这实际上行不通，不是吗？</center>
+
+## 代码
+
+让我们用一个悬念来结束这篇文章：
+
+```bash
+mkdir AviGen
+```
+
+在 Part-2 中，我们将实现一个有效的、基本的前馈神经网络！
+
+## 参考
+
+以下是我个人认为在了解本文中介绍的主题时有用的一些参考：
+
+### 神经网络
+
+ - [YouTube, 3Blue1Brown - But what is a Neural Network?](https://www.youtube.com/watch?v=aircAruvnKk)
+ - [YouTube, Vsauce - The Stilwell Brain](https://www.youtube.com/watch?v=rA5qnZUXcqo)
+
+### 遗传算法
+
+ - [YouTube, Jeremy Fisher - Genetic Algorithms](https://www.youtube.com/watch?v=7J-DfS52bnI)
+ - [obitko.com - Genetic Algorithms Tutorial](https://www.obitko.com/tutorials/genetic-algorithms/index.php)
+ - [Darrell Whitley - A Genetic Algorithm Tutorial](https://ibug.doc.ic.ac.uk/media/uploads/documents/courses/GeneticAlgorithm-tutorial.pdf)
 
