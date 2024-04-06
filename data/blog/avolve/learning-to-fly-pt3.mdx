@@ -195,15 +195,73 @@ impl GeneticAlgorithm {
 }
 ```
 
+## 实现 Selection
 
+此时，在循环内部，我们必须选择两个个体。它们将成为父母，为我们「生」出一个数字后代。
 
+选择个体被称为遗传算法的[选择阶段 (Selection Stage)](https://en.wikipedia.org/wiki/Selection_(genetic_algorithm))，它应满足以下两个性质：
 
+ - 每个个体被选中的概率都应该是非零的
+ - 一个适应度得分更高的个体平均来说应该比适应度得分更低的个体更频繁地被选中
 
+因为我们必须计算适应度分数，让我们首先考虑一下如何编写计算适应度的函数。我们有两种独特的方法：
 
+1. 将适应度函数作为个体的参数：
 
+```rust:genetic-algorithm/src/lib.rs showLineNumbers
+impl GeneticAlgorithm {
+    pub fn evolve<I>(
+        &self,
+        population: &[I],
+        evaluate_fitness: &dyn Fn(&I) -> f32,
+    ) -> Vec<I> {
+        /* ... */
+    }
+}
+```
 
+2. 将适应度分数作为个体的属性：
 
+```rust:genetic-algorithm/src/lib.rs {1-3, 6-11} showLineNumbers
+pub trait Individual {
+    fn fitness(&self) -> f32;
+}
 
+impl GeneticAlgorithm {
+    pub fn evolve<I>(&self, population: &[I]) -> Vec<I>
+    where
+        I: Individual,
+    {
+        /* ... */
+    }
+}
+```
+
+第一种方法：
+
+ - 允许为一种个体提供许多不同的适应度函数，这对某些人可能会很有用（不过对我们来说并没有什么用）
+ - 需要在每次调用 `.evolve()` 时指定适应度函数，这感觉有点笨拙
+
+第二种方法：
+
+ - 允许将所有与个体相关的属性封装到一个单一的 `trait` 中，让用户更容易发现他们需要提供的内容
+ - 指定不同的适应度函数是可能的，但有点棘手
+
+我的直觉告诉我引入一个 `trait`（正如你稍后会看到的，无论如何我们都需要这样一个 trait），所以就是方法二了。
+
+至于选择方法，我们将使用一种被称为[适应度比例选择 (Fitness Proportionate Selection)](https://www.tutorialspoint.com/genetic_algorithms/genetic_algorithms_parent_selection.htm)（也叫做**轮盘赌选择 (Roulette Wheel Selection)**）的算法，因为它很容易理解。为了理解它的工作原理，让我们想象一下我们有以下三个个体：
+
+| Individual | Fitness score | Fitness score % |
+|:-----------|:--------------|:----------------|
+| A          | 3             | $\frac{3}{1+2+3} =\frac{1}{2} =50\%$ |
+| B          | 2             | $\frac{2}{1+2+3} =\frac{1}{3} =33\%$ |
+| C          | 1             | $\frac{1}{1+2+3} =\frac{1}{6} =16\%$ |
+
+如果我们把它们都放在一个轮盘上，或者说，无论是什么饼图都可以。每个个体都得到一个轮盘的部分，这个部分的大小与它们的适应度分数在整个种群中的比例相等：
+
+<center>
+  <Image alt="一个饼图（它就像一个轮盘），用来说明上面表格中的个体" src="https://pic.imgdb.cn/item/6610dc0368eb9357137ec997.png" width={96} height={85} />
+</center>
 
 
 
