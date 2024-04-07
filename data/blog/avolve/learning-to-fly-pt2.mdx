@@ -40,10 +40,9 @@ git init
 
 现在，对于更困难的部分，我们必须决定项目的结构如何安排。因为我们的项目将由许多独立的子模块（例如神经网络和遗传算法）组成，所以[Cargo 工作空间](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html)会派上用场：
 
-```rust:Cargo.toml {1-6} showLineNumbers
+```rust:Cargo.toml {1-5} showLineNumbers
 [workspace]
 resolver = "2"
-
 members = [
     "neural-network",
 ]
