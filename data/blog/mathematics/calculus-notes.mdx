@@ -1,7 +1,7 @@
 ---
 title: "微积分笔记"
 date: '2024-03-29'
-lastmod: '2024-03-31'
+lastmod: '2024-04-07'
 tags: ['Mathematices', 'Calculus']
 draft: false
 summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
@@ -249,4 +249,33 @@ f^{\prime }( x) & =\displaystyle \lim _{h\rightarrow 0}\frac{g( x+h) \pm j( x+h)
 \end{aligned}
 $$
 
+### Proof the derivatives of sin(x) and cos(x)
+
+Known $\displaystyle \lim _{x\rightarrow 0}\frac{\sin x}{x} =1$ and $\displaystyle \lim _{x\rightarrow 0}\frac{1-\cos x}{x} =0$
+
+$\mathnormal{Proof.}$
+
+$1.\ \frac{d}{dx}[\sin x] =\cos x$
+
+$$
+\begin{aligned}
+\frac{d}{dx}[\sin x] & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\sin( x+\Delta x) -\sin( x)}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\cos x\sin \Delta x+\sin x\cos \Delta x-\sin x}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\left(\frac{\cos x\sin \Delta x}{\Delta x} +\frac{\sin x\cos \Delta x-\sin x}{\Delta x}\right)\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\cos x\left(\frac{\sin \Delta x}{\Delta x}\right) +\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\sin x(\cos \Delta x-1)}{\Delta x}\\
+ & =\cos x\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\sin \Delta x}{\Delta x} -\sin x\displaystyle \lim _{\Delta x\rightarrow 0}\frac{1-\cos \Delta x}{\Delta x}\\
+ & =\cos x\cdot 1-\sin x\cdot 0\\
+ & =\cos x
+\end{aligned}
+$$
+
+$2.\ \frac{d}{dx}[\cos x] =-\sin x$
+
+<center>
+  <Image alt="1" src="https://pic.imgdb.cn/item/66122e7268eb935713987d7f.png" width={1920} height={1080} />
+</center>
+
+### Proof: The derivative of $e^{x}$ is $e^{x}$
+
+TODO
 
