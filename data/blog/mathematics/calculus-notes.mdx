@@ -249,7 +249,7 @@ f^{\prime }( x) & =\displaystyle \lim _{h\rightarrow 0}\frac{g( x+h) \pm j( x+h)
 \end{aligned}
 $$
 
-### Proof the derivatives of sin(x) and cos(x)
+### Proof: The derivatives of sin(x) and cos(x)
 
 Known $\displaystyle \lim _{x\rightarrow 0}\frac{\sin x}{x} =1$ and $\displaystyle \lim _{x\rightarrow 0}\frac{1-\cos x}{x} =0$
 
@@ -266,6 +266,7 @@ $$
  & =\cos x\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\sin \Delta x}{\Delta x} -\sin x\displaystyle \lim _{\Delta x\rightarrow 0}\frac{1-\cos \Delta x}{\Delta x}\\
  & =\cos x\cdot 1-\sin x\cdot 0\\
  & =\cos x
+ & Q.E.D.
 \end{aligned}
 $$
 
@@ -277,5 +278,185 @@ $2.\ \frac{d}{dx}[\cos x] =-\sin x$
 
 ### Proof: The derivative of $e^{x}$ is $e^{x}$
 
-TODO
+Know the limit definition of $\mathbb{e}$ is $e=\displaystyle \lim _{n\rightarrow \infty }\left( 1+\frac{1}{n}\right)^{n} =\displaystyle \lim _{n\rightarrow 0}( 1+n)^{\frac{1}{n}}$ 
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}\left( e^{x}\right) & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{e^{x+\Delta x} -e^{x}}{\Delta x}\\
+ & =e^{x}\displaystyle \lim _{\Delta x\rightarrow 0}\frac{e^{\Delta x} -1}{\Delta x}
+\end{aligned}
+$$
+
+$Let\ n=e^{\Delta x} -1,\ we\ can\ get\ n+1=e^{\Delta x} ,\ such\ that\ \Delta x=\ln( n+1) \ and\ as\ \Delta x\rightarrow 0=n\rightarrow 0$
+
+$We\ can\ rewrite\ to:$
+
+$$
+\begin{aligned}
+\frac{d}{dx}\left( e^{x}\right) & =e^{x}\displaystyle \lim _{n\rightarrow 0}\frac{n}{\ln( n+1)}\\
+ & =e^{x}\displaystyle \lim _{n\rightarrow 0}\frac{\frac{1}{n} n}{\frac{1}{n}\ln( n+1)}\\
+ & =e^{x}\displaystyle \lim _{n\rightarrow 0}\frac{1}{\ln\left[( 1+n)^{\frac{1}{n}}\right]}\\
+ & =e^{x}\frac{1}{\ln\left[\displaystyle \lim _{n\rightarrow 0}( 1+n)^{\frac{1}{n}}\right]}\\
+ & =e^{x}
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Proof: The derivative of $\ln( x)$ is $\frac{1}{x}$
+
+#### Method 1 (Directly from the definition of the derivative as a limit)
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}(\ln x) & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\ln( x+\Delta x) -\ln( x)}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\ln\left(\frac{x+\Delta x}{x}\right)}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\ln\left( 1+\frac{\Delta x}{x}\right)}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{1}{\Delta x}\ln\left( 1+\frac{\Delta x}{x}\right)\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\ln\left[\left( 1+\frac{\Delta x}{x}\right)^{\frac{1}{\Delta x}}\right]
+\end{aligned}
+$$
+
+$Let\ n=\frac{\Delta x}{x} ,\ \Delta x=nx,\ \frac{1}{\Delta x} =\frac{1}{n} \cdot \frac{1}{x} \ and\ as\ \Delta x\rightarrow 0=n\rightarrow 0$
+
+$We\ can\ rewrite\ to:$
+
+$$
+\begin{aligned}
+\displaystyle \lim _{\Delta x\rightarrow 0}\ln\left[\left( 1+\frac{\Delta x}{x}\right)^{\frac{1}{\Delta x}}\right] & =\frac{1}{x}\displaystyle \lim _{n\rightarrow 0}\ln\left[( 1+n)^{\frac{1}{n}}\right]\\
+ & =\frac{1}{x}\ln\left[\displaystyle \lim _{n\rightarrow 0}( 1+n)^{\frac{1}{n}}\right]\\
+ & =\frac{1}{x}
+ & Q.E.D.
+\end{aligned}
+$$
+
+#### Method 2 (Using the fact that $\frac{d}{dx}\left( e^{x}\right) =e^{x}$ and applying implicit differentiation)
+
+$\mathnormal{Proof.}$
+
+$Known\ \frac{d}{dx}\left( e^{x}\right) =e^{x}$
+
+$Let\ y=\ln( x) ,\ we\ can\ get:$
+
+$$
+\begin{aligned}
+\frac{d}{dx}\left( e^{y}\right) & =\frac{d}{dx}( x)\\
+e^{y} \cdot \frac{dy}{dx} & =1\\
+\frac{dy}{dx} & =\frac{1}{e^{y}}\\
+ & =\frac{1}{e^{\ln x}}\\
+ & =\frac{1}{x}
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Proof: The product rule
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}[ f( x) g( x)] & =\displaystyle \lim _{h\rightarrow 0}\frac{f( x+h) g( x+h) -f( x+h) g( x) +f( x+h) g( x) -f( x) g( x)}{h}\\
+ & =\displaystyle \lim _{h\rightarrow 0}\left[ f( x+h)\frac{g( x+h) -g( x)}{h} +g( x)\frac{f( x+h) -f( x)}{h}\right]\\
+ & =\left[\displaystyle \lim _{h\rightarrow 0} f( x+h)\right]\left[\displaystyle \lim _{h\rightarrow 0}\frac{g( x+h) -g( x)}{h}\right] +\left[\displaystyle \lim _{h\rightarrow 0} g( x)\right]\left[\displaystyle \lim _{h\rightarrow 0}\frac{f( x+h) -f( x)}{h}\right]\\
+ & =f( x) g^{\prime }( x) +g( x) f^{\prime }( x)
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Proof: The derivatives of $\tan( x)$、$\cos( x)$、$\sec( x)$ and $\csc( x)$
+
+$\mathnormal{Proof.}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}(\tan x) & =\frac{d}{dx}\left(\frac{\sin x}{\cos x}\right) & \frac{d}{dx}(\cot x) & =\frac{d}{dx}\left(\frac{\cos x}{\sin x}\right)\\
+ & =\frac{\cos^{2} x+\sin^{2} x}{\cos^{2} x} &  & =\frac{-\left(\sin^{2} x+\cos^{2} x\right)}{\sin^{2} x}\\
+ & =\frac{1}{\cos^{2} x} &  & =-\frac{1}{\sin^{2} x}\\
+ & =\sec^{2} x &  & =-\csc^{2} x\\
+\frac{d}{dx}(\sec x) & =\frac{d}{dx}\left(\frac{1}{\cos x}\right) & \frac{d}{dx}(\csc x) & =\frac{d}{dx}\left(\frac{1}{\sin x}\right)\\
+ & =\frac{0\cdot \cos x+1\cdot \sin x}{\cos^{2} x} &  & =\frac{0\cdot \sin x-1\cdot \cos x}{\sin^{2} x}\\
+ & =\frac{\sin x}{\cos^{2} x} &  & =-\frac{\cos x}{\sin^{2} x}\\
+ & =\tan x\cdot \sec x &  & =-\cot x\cdot \csc x
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Proof: The derivatives of $a^{x}$ (For any positive base a)
+
+$\mathnormal{Proof.}$
+
+$Known\ \frac{d}{dx}\left( e^{x}\right) =e^{x}$
+
+$Let\ a=e^{\ln a}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}\left( a^{x}\right) & =\frac{d}{dx}\left[\left( e^{\ln a}\right)^{x}\right]\\
+ & =\frac{d}{dx}\left[ e^{(\ln a) x}\right]\\
+ & =e^{(\ln a) x} \cdot \ln a\\
+ & =a^{x} \cdot \ln a
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Proof: The derivatives of $\log_{a} x$ (For any positive base $a\neq 1$)
+
+$\mathnormal{Proof.}$
+
+$Known\ \frac{d}{dx}(\ln x) =\frac{1}{x}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}(\log_{a} x) & =\frac{d}{dx}\left(\frac{1}{\ln a} \cdot \ln x\right)\\
+ & =\frac{1}{x\ln a}
+ & Q.E.D.
+\end{aligned}
+$$
+
+### Proof: Chain Rule and Quotient Rule
+
+$\mathnormal{Chain\ Rule\ Proof.}$
+
+$$
+\begin{aligned}
+Known:\  & 1.\ If\ a\ function\ is\ differentiable,\ then\ it\ is\ also\ continuous.\\
+ & 2.\ If\ function\ u\ is\ continuous\ at\ x,\ then\ \Delta u\rightarrow 0\ as\ \Delta x\rightarrow 0
+\end{aligned}
+$$
+
+$For\ why\ if\ function\ u\ is\ continuous\ at\ x,\ then\ \Delta u\rightarrow 0\ as\ \Delta x\rightarrow 0$:
+
+<center>
+  <Image alt="1" src="https://pic.imgdb.cn/item/661a87a868eb935713971ab1.png" width={1920} height={1080} />
+</center>
+
+$The\ chain\ rule\ tell\ us:\ \frac{d}{dx}[ y( u( x))] =\frac{dy}{dx} =\frac{dy}{du} \cdot \frac{du}{dx}$
+
+$Assuming\ y,\ u\ differentiable\ at\ x.\ We\ can\ get:$
+
+$$
+\begin{aligned}
+\frac{dy}{dx} & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\Delta y}{\Delta x}\\
+ & =\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\Delta y}{\Delta u} \cdot \frac{\Delta u}{\Delta x}\\
+ & =\left(\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\Delta y}{\Delta u}\right)\left(\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\Delta u}{\Delta x}\right)\\
+ & =\left(\displaystyle \lim _{\Delta u\rightarrow 0}\frac{\Delta y}{\Delta u}\right)\left(\displaystyle \lim _{\Delta x\rightarrow 0}\frac{\Delta u}{\Delta x}\right)\\
+ & =\frac{dy}{du} \cdot \frac{du}{dx}
+ & Q.E.D.
+\end{aligned}
+$$
+
+$\mathnormal{Quotient\ Rule\ Proof.}$
+
+$$
+\begin{aligned}
+\frac{d}{dx}\left[\frac{f( x)}{g( x)}\right] & =\frac{d}{dx}\left[ f( x) \cdot [ g( x)]^{-1}\right]\\
+ & =f^{\prime }( x)[ g( x)]^{-1} -f( x)[ g( x)]^{-2} g^{\prime }( x)\\
+ & =\frac{f^{\prime }( x)}{g( x)} -\frac{f( x) g^{\prime }( x)}{[ g( x)]^{2}}\\
+ & =\frac{f^{\prime }( x) g( x) -f( x) g^{\prime }( x)}{[ g( x)]^{2}}
+ & Q.E.D.
+\end{aligned}
+$$
 
