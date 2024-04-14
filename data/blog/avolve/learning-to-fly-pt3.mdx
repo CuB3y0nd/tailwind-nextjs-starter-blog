@@ -1079,14 +1079,596 @@ where
 
 ## 实现 Crossover
 
+现在我们已经选择了两个父代个体，是时候进入交叉阶段了。
+
+交叉（也称为 **重组 (Recombination)**）需要两个个体并将它们混合，在结果中创建出一个新的解决方案。
+
+<center>
+  <Image alt="coding-crossover-1" src="https://pic.imgdb.cn/item/661b455d68eb9357137af132.png" width={250} height={38} />
+</center>
+
+与简单地创建全新的随机个体相比，交叉在尝试保留知识方面做的十分巧妙。大体思想是混合两个好的解决方案通常会产生一个既新又至少与我们已有的两个解决方案一样好的解决方案，这样就可以在不失去迄今为止发现的最佳解决方案的条件下探索搜索空间。
+
+就像在现实世界中一样，交叉实际上并不发生在个体上，而是发生在它们的 **染色体 (Chromosomes)** 上。这是「解决方案的编码」的一个花哨的词汇：
+
+<center>
+  <Image alt="coding-crossover-2" src="https://pic.imgdb.cn/item/661b473868eb9357137e8d5a.png" width={250} height={38} />
+</center>
+
+染色体通常由基因构成，将染色体建模为 bitset 会很方便：
+
+<center>
+  <Image alt="coding-crossover-3" src="https://pic.imgdb.cn/item/661b484468eb9357137fe46e.png" width={143} height={60} />
+</center>
+
+……有时候使用字符串会更方便：
+
+<center>
+  <Image alt="coding-crossover-4" src="https://pic.imgdb.cn/item/661b48b068eb935713808e73.png" width={143} height={60} />
+</center>
+
+……不过我们将使用我们已经拥有的东西：一堆表示神经网络权重的 `f32` 值：
+
+<center>
+  <Image alt="coding-crossover-5" src="https://pic.imgdb.cn/item/661b48ff68eb935713810ff5.png" width={150} height={60} />
+</center>
+
+```rust:genetic-algorithm/src/lib.rs {1-4} showLineNumbers
+#[derive(Clone, Debug)]
+pub struct Chromosome {
+    genes: Vec<f32>,
+}
+```
+
+我们将提供一些允许查看染色体内部的函数，而不是直接 `public` 基因。这称为封装：
+
+```rust:genetic-algorithm/src/lib.rs {1-13} showLineNumbers
+impl Chromosome {
+    pub fn len(&self) -> usize {
+        self.genes.len()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &f32> {
+        self.genes.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut f32> {
+        self.genes.iter_mut()
+    }
+}
+```
+
+抓住机会，让我们来了解一些标准库中酷炫的 `trait`：
+
+1. [Index](https://doc.rust-lang.org/stable/std/ops/trait.Index.html)允许你在类型上使用 **索引运算符 (Indexing Operator)** ——`[]`：
+
+```rust {1, 5-17} showLineNumbers
+use std::ops::Index;
+
+/* ... */
+
+// ---
+// | this is the type of expression you expect inside the square brackets
+// |
+// | e.g. if you implemented `Index<&str>`, you could write:
+// |   chromosome["yass"]
+// ------- v---v
+impl Index<usize> for Chromosome {
+    type Output = f32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.genes[index]
+    }
+}
+```
+
+2. [FromIterator](https://doc.rust-lang.org/stable/std/iter/trait.FromIterator.html)允许你将结果 `.collect()` 到类型中：
+
+```rust {1-16} showLineNumbers
+// ---
+// | this is the type of the item an iterator should provide in order to be compatible
+// | with our chromosome
+// |
+// | (sometimes it's called the type an iterator *yields*)
+// |
+// | intuitively, since our chromosome is built of of floating-point numbers, we
+// | expect floating-point numbers in here as well
+// -------------- v-v
+impl FromIterator<f32> for Chromosome {
+    fn from_iter<T: IntoIterator<Item = f32>>(iter: T) -> Self {
+        Self {
+            genes: iter.into_iter().collect(),
+        }
+    }
+}
+```
+
+3. 最后，还有一个 [IntoIterator](https://doc.rust-lang.org/stable/std/iter/trait.IntoIterator.html)，它的工作方式相反，是将一个类型转换为一个迭代器：
+
+```rust {1-8} showLineNumbers
+impl IntoIterator for Chromosome {
+    type Item = f32;
+    type IntoIter = std::vec::IntoIter<f32>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.genes.into_iter()
+    }
+}
+```
+
+<Note>
+  `std::vec::IntoIter<f32>` 迭代器只是另一种类型，它实现了 `Iterator` trait。
+
+  ```rust
+  struct Fibonacci {
+      prev: u32,
+      curr: u32,
+  }
+
+  impl Default for Fibonacci {
+      fn default() -> Self {
+          Self { prev: 0, curr: 1 }
+      }
+  }
+
+  impl Iterator for Fibonacci {
+      type Item = u32;
+
+      fn next(&mut self) -> Option<u32> {
+          let next = self.prev + self.curr;
+
+          self.prev = self.curr;
+          self.curr = next;
+
+          Some(self.prev)
+      }
+  }
+
+  fn main() {
+      for number in Fibonacci::default().take(10) {
+          println!("{}", number);
+      }
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  因此，如果你想将类型转换为迭代器，你需要知道目标的可迭代类型是什么。在我们的例子中，由于 `Chromosome` 只是 `Vec` 的 **包装器 (Wrapper)**，目标类型是 `std::vec::IntoIter`：
+
+  ```rust
+  struct Chromosome {
+      genes: Vec<f32>,
+  }
+
+  impl IntoIterator for Chromosome {
+      type Item = f32;
+      type IntoIter = (); // note that we're deliberately using the wrong type here
+
+      fn into_iter(self) -> Self::IntoIter {
+          self.genes.into_iter()
+      }
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ```plain-text
+  error[E0308]: mismatched types
+     |
+     | /* ... */
+     |
+     = note: expected unit type `()`
+                   found struct `std::vec::IntoIter<f32>`
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  然而，命名这种类型并不容易，因为诸如 `.filter()` 或 `.map()` 这样的 **组合器 (Combinators)** 都会影响它：
+
+  ```rust
+  struct Somethinger {
+      values: Vec<f32>,
+  }
+
+  impl IntoIterator for Somethinger {
+      type Item = f32;
+      type IntoIter = ();
+
+      fn into_iter(self) -> Self::IntoIter {
+          self.values
+              .into_iter()
+              .filter(|value| *value > 0.0)
+              .map(|value| value * 10.0)
+      }
+  }
+  ```
+
+  ```plain-text
+  error[E0308]: mismatched types
+     |
+     | /* ... */
+     |
+     = note: expected unit type `()`
+                   found struct `Map<Filter<std::vec::IntoIter<f32>, {closure}>, {closure}>`
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  Nightly Rust 为这个问题提供了一个舒适的解决方案——`impl_trait_in_assoc_type`：
+
+  ```rust
+  #![feature(impl_trait_in_assoc_type)]
+
+  struct Somethinger {
+      values: Vec<f32>,
+  }
+
+  impl IntoIterator for Somethinger {
+      type Item = f32;
+      type IntoIter = impl Iterator<Item = f32>;
+
+      fn into_iter(self) -> Self::IntoIter {
+          self.values
+              .into_iter()
+              .filter(|value| *value > 0.0)
+              .map(|value| value * 10.0)
+      }
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  实质上就是让编译器自行找出类型。但由于我们使用的是稳定的工具链，我们无法使用这个特性。幸运的是，我们也不需要使用它。
+</Note>
+
+正如我之前所说的：
+
+> [...] 交叉实际上并不发生在个体上，而是发生在它们的染色体上 [...]
+
+……这就引出了：
+
+```rust:genetic-algorithm/src/lib.rs {13-14, 26, 39-42} showLineNumbers
+impl<S> GeneticAlgorithm<S>
+where
+    S: SelectionMethod,
+{
+    /* ... */
+
+    pub fn evolve<I>(/* ... */) -> Vec<I>
+    where
+        I: Individual,
+    {
+        (0..population.len())
+            .map(|_| {
+                let parent_a = self.selection_method.select(rng, population).chromosome();
+                let parent_b = self.selection_method.select(rng, population).chromosome();
+
+                /* ... */
+            })
+            .collect()
+    }
+}
+
+/* ... */
+
+pub trait Individual {
+    fn fitness(&self) -> f32;
+    fn chromosome(&self) -> &Chromosome;
+}
+
+/* ... */
+
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    impl Individual for TestIndividual {
+        fn fitness(&self) -> f32 {
+            self.fitness
+        }
+
+        fn chromosome(&self) -> &Chromosome {
+            panic!("not supported for TestIndividual")
+        }
+    }
+
+    /* ... */
+}
+```
+
+至于交叉本身，我们可以通过[很多](https://en.wikipedia.org/wiki/Crossover_(genetic_algorithm)#Examples)算法来实现。通常最好尝试其中的一些算法，并看看哪种对于给定的问题效果最好，但为了简单起见，我们将选择 **均匀交叉算法 (Uniform Crossover)**，它可以用一幅简单的图示来描述：
+
+<center>
+  <Image alt="coding-crossover-6" src="https://pic.imgdb.cn/item/661b80aa68eb935713d56525.png" width={129} height={118} />
+</center>
+
+和之前一样，让我们从一个 trait 开始：
+
+```rust:genetic-algorithm/src/lib.rs {1-8} showLineNumbers
+pub trait CrossoverMethod {
+    fn crossover(
+        &self,
+        rng: &mut dyn RngCore,
+        parent_a: &Chromosome,
+        parent_b: &Chromosome,
+    ) -> Chromosome;
+}
+````
+
+……还有一个基本的实现：
+
+```rust:genetic-algorithm/src/lib.rs {1-26} showLineNumbers
+#[derive(Clone, Debug)]
+pub struct UniformCrossover;
+
+impl CrossoverMethod for UniformCrossover {
+    fn crossover(
+        &self,
+        rng: &mut dyn RngCore,
+        parent_a: &Chromosome,
+        parent_b: &Chromosome,
+    ) -> Chromosome {
+        let mut child = Vec::new();
+        let gene_count = parent_a.len();
+
+        for gene_idx in 0..gene_count {
+            let gene = if rng.gen_bool(0.5) {
+                parent_a[gene_idx]
+            } else {
+                parent_b[gene_idx]
+            };
+
+            child.push(gene);
+        }
+
+        child.into_iter().collect()
+    }
+}
+```
+
+你可能注意到了，这段代码还有一些问题。为此，我们先添加一个断言：
+
+```rust:genetic-algorithm/src/lib.rs {3} showLineNumbers
+impl CrossoverMethod for UniformCrossover {
+    fn crossover(/* ... */) -> Chromosome {
+        assert_eq!(parent_a.len(), parent_b.len());
+
+        /* ... */
+    }
+}
+```
+
+然后，我们可以使用一个组合器。我们之前已经了解到了这个，它是 [.zip()](https://doc.rust-lang.org/stable/std/iter/trait.Iterator.html#method.zip)：
+
+```rust:genetic-algorithm/src/lib.rs {5-9} showLineNumbers
+impl CrossoverMethod for UniformCrossover {
+    fn crossover(/* ... */) -> Chromosome {
+        assert_eq!(parent_a.len(), parent_b.len());
+
+        parent_a
+            .iter()
+            .zip(parent_b.iter())
+            .map(|(&a, &b)| if rng.gen_bool(0.5) { a } else { b })
+            .collect()
+    }
+}
+```
+
+多么整洁的代码呀！
+
+注：通过之前实现的 `.iter()` 和 `FromIterator`，我们能够将此处的代码减少到最少，从而传达使用均匀交叉的本质。
+
+你可能仍然会警觉到某些东西丢失了……嗯……啊，测试！
+
+```rust:genetic-algorithm/src/lib.rs {5-13} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn uniform_crossover() {
+        let mut rng = ChaCha8Rng::from_seed(Default::default());
+        let parent_a = todo!();
+        let parent_b = todo!();
+        let child = UniformCrossover.crossover(&mut rng, &parent_a, &parent_b);
+
+        assert!(/* ... */);
+    }
+}
+```
+
+简单来说，我们想要验证的是 `child` 是 $50\%$ `parent_a` + $50\%$ `parent_b`。
+
+我的建议是生成两个不同的染色体（它们不必是随机的，只需由不同的基因构建）：
+
+```rust:genetic-algorithm/src/lib.rs {9-19} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn uniform_crossover() {
+        /* ... */
+
+        let parent_a: Chromosome = (1..=100).map(|n| n as f32).collect();
+        let parent_b: Chromosome = (1..=100).map(|n| -n as f32).collect();
+
+        // First parent will be:
+        //   [1, 2, /* ... */, 100]
+        //
+        // Second parent will look similar, but with reversed signs:
+        //   [-1, -2, /* ... */, -100]
+        //
+        // Just like in the histogram, the concrete number of genes doesn't
+        // matter - 100 will nicely round up to 100%, that's all
+
+        /* ... */
+    }
+}
+```
+
+……然后比较每个 `child` 的差异有多大：
+
+```rust:genetic-algorithm/src/lib.rs {11-18} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn uniform_crossover() {
+        /* ... */
+
+        let child = UniformCrossover.crossover(&mut rng, &parent_a, &parent_b);
+
+        // Number of genes different between `child` and `parent_a`
+        let diff_a = child.iter().zip(parent_a).filter(|(c, p)| *c != p).count();
+
+        // Number of genes different between `child` and `parent_b`
+        let diff_b = child.iter().zip(parent_b).filter(|(c, p)| *c != p).count();
+
+        assert_eq!(diff_a, 0);
+        assert_eq!(diff_b, 0);
+    }
+}
+```
+
+运行测试，得到：
+
+```plain-text
+thread '...' panicked at 'assertion failed: `(left == right)`
+  left: `49`,
+ right: `0`'
+```
+
+……所以，让我们调整测试：
+
+```rust:genetic-algorithm/src/lib.rs showLineNumbers
+assert_eq!(diff_a, 49);
+```
+
+另一个测试会在第二处断言失败：
+
+```plain-text
+thread '...' panicked at 'assertion failed: `(left == right)`
+  left: `51`,
+ right: `0`'
+```
+
+……同理：
+
+```rust:genetic-algorithm/src/lib.rs showLineNumbers
+assert_eq!(diff_b, 51);
+```
+
+回想一下，我们得到的是：
+
+```rust:genetic-algorithm/src/lib.rs showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn uniform_crossover() {
+        /* ... */
+
+        assert_eq!(diff_a, 49);
+        assert_eq!(diff_b, 51);
+    }
+}
+```
+
+……这意味着我们的 `child` 从 `parent_a` 处遗传了 $49\%$ 的基因，从 `parent_b` 处遗传了 $51\%$ 的基因。这最终证明了我们的均匀交叉算法确实以相同的概率从父母双方中选择基因。
+
+*（我们没有得到精确的 $50\%$ - $50\%$匹配，但这只是由于概率的性质。)*
+
+现在我们可以将 `CrossoverMethod` 传递到 `SelectionMethod`：
+
+```rust:genetic-algorithm/src/lib.rs {3, 10-13, 16} showLineNumbers
+pub struct GeneticAlgorithm<S> {
+    selection_method: S,
+    crossover_method: Box<dyn CrossoverMethod>,
+}
+
+impl<S> GeneticAlgorithm<S>
+where
+    S: SelectionMethod,
+{
+    pub fn new(
+        selection_method: S,
+        crossover_method: impl CrossoverMethod + 'static,
+    ) -> Self {
+        Self {
+            selection_method,
+            crossover_method: Box::new(crossover_method),
+        }
+    }
+
+    /* ... */
+}
+```
+
+<Note>
+  与 `SelectionMethod::select()` 相反，`CrossoverMethod::crossover()` 不包含任何泛型参数，这就是为什么我们可以将其包装在 `Box` 中的<a href="https://doc.rust-lang.org/book/ch17-02-trait-objects.html#object-safety-is-required-for-trait-objects" target="blank" style={{ color: `#8e91f2` }}>原因</a>。另一种方法可能是：
+
+  ```rust
+  pub struct GeneticAlgorithm<S, C> {
+      selection_method: S,
+      crossover_method: C,
+  }
+
+  impl<S, C> GeneticAlgorithm<S, C>
+  where
+      S: SelectionMethod,
+      C: CrossoverMethod,
+  {
+      pub fn new(
+          selection_method: S,
+          crossover_method: C,
+      ) -> Self {
+          Self {
+              selection_method,
+              crossover_method,
+          }
+      }
+
+      /* ... */
+  }
+  ```
+  <br style={{ marginBottom: '0.5em' }} />
+
+  ……这里的权衡与我们之前讨论 `T: Trait` vs `dyn Trait` 时一样（其中 `Box<dyn Trait>` 对应为动态分发）。
+  <br style={{ marginBottom: '0.5em' }} />
+
+  因为 Rust 让在泛型参数上添加基因参数变得非常容易，一些人认为使用 `Box`（它有轻微的性能损失）会使 Rust 代码不符合惯用法。
+  <br style={{ marginBottom: '0.5em' }} />
+
+  我的观点是，`Box` 是一种方便的机制，其潜在的运行时权衡是通过更易于维护的代码来支付的。我建议使用 `Box`，除非基准测试证明它是一个问题，或者除非它使代码难以阅读。
+</Note>
+
+……然后我们可以调用它：
+
+```rust:genetic-algorithm/src/lib.rs {17} showLineNumbers
+impl<S> GeneticAlgorithm<S>
+where
+    S: SelectionMethod,
+{
+    /* ... */
+
+    pub fn evolve<I>(&self, rng: &mut dyn RngCore, population: &[I]) -> Vec<I>
+    where
+        I: Individual,
+    {
+        /* ... */
+
+        (0..population.len())
+            .map(|_| {
+                /* ... */
+
+                let mut child = self.crossover_method.crossover(rng, parent_a, parent_b);
+
+                /* ... */
+            })
+            .collect()
+    }
+}
+```
+
+## 实现 Mutation
+
 TODO
-
-
-
-
-
-
-
-
-
 
