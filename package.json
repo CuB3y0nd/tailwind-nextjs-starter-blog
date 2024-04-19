@@ -1,6 +1,5 @@
 {
   "name": "tailwind-nextjs-starter-blog",
-  "version": "2.1.0",
   "private": true,
   "scripts": {
     "start": "next dev",
@@ -23,6 +22,7 @@
     "esbuild": "0.20.2",
     "github-slugger": "^1.4.0",
     "gray-matter": "^4.0.2",
+    "hast-util-from-html-isomorphic": "^2.0.0",
     "image-size": "1.0.0",
     "lucide-react": "^0.330.0",
     "next": "14.2.1",
