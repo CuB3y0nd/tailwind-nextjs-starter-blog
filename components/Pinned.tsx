@@ -5,6 +5,16 @@ import siteMetadata from '@/data/siteMetadata'
 
 const MAX_DISPLAY = 1
 
+interface Post {
+  slug: string
+  date: string
+  title: string
+  summary?: string | undefined
+  tags: string[]
+  draft?: boolean
+  pinned?: boolean
+}
+
 interface PinnedProps {
   posts: Post[]
 }
