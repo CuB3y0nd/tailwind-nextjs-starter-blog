@@ -2,6 +2,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { slug } from 'github-slugger'
 import { formatDate } from 'pliny/utils/formatDate'
 import { CoreContent } from 'pliny/utils/contentlayer'
@@ -20,6 +21,21 @@ interface ListLayoutProps {
   title: string
   initialDisplayPosts?: CoreContent<Blog>[]
   pagination?: PaginationProps
+}
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+    },
+  },
+}
+
+const item = {
+  hidden: { opacity: 0, x: -25, y: 0 },
+  show: { opacity: 1, x: 0, y: 0 },
 }
 
 function Pagination({ totalPages, currentPage }: PaginationProps) {
@@ -120,11 +136,11 @@ export default function ListLayoutWithTags({
             </div>
           </div>
           <div>
-            <ul>
+            <motion.ul variants={container} initial="hidden" animate="show">
               {displayPosts.map((post) => {
                 const { path, date, title, summary, tags } = post
                 return (
-                  <li key={path} className="py-5">
+                  <motion.li variants={item} key={path} className="py-5">
                     <article className="space-y-2 p-5 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0 rounded-lg shadow-md hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 hover:-translate-y-1 hover:scale-108 duration-300 ...">
                       <dl>
                         <dt className="sr-only">发布于</dt>
@@ -148,10 +164,10 @@ export default function ListLayoutWithTags({
                         </div>
                       </div>
                     </article>
-                  </li>
+                  </motion.li>
                 )
               })}
-            </ul>
+            </motion.ul>
             {pagination && pagination.totalPages > 1 && (
               <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} />
             )}

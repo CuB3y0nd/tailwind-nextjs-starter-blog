@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import { formatDate } from 'pliny/utils/formatDate'
 import { CoreContent } from 'pliny/utils/contentlayer'
@@ -18,6 +19,21 @@ interface ListLayoutProps {
   title: string
   initialDisplayPosts?: CoreContent<Blog>[]
   pagination?: PaginationProps
+}
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+    },
+  },
+}
+
+const item = {
+  hidden: { opacity: 0, x: -25, y: 0 },
+  show: { opacity: 1, x: 0, y: 0 },
 }
 
 function Pagination({ totalPages, currentPage }: PaginationProps) {
@@ -110,12 +126,12 @@ export default function ListLayout({
             </svg>
           </div>
         </div>
-        <ul>
+        <motion.ul variants={container} initial="hidden" animate="show">
           {!filteredBlogPosts.length && 'No posts found.'}
           {displayPosts.map((post) => {
             const { path, date, title, summary, tags } = post
             return (
-              <li key={path} className="py-4">
+              <motion.li variants={item} key={path} className="py-4">
                 <article className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
                   <dl>
                     <dt className="sr-only">发布于</dt>
@@ -139,10 +155,10 @@ export default function ListLayout({
                     </div>
                   </div>
                 </article>
-              </li>
+              </motion.li>
             )
           })}
-        </ul>
+        </motion.ul>
       </div>
       {pagination && pagination.totalPages > 1 && !searchValue && (
         <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} />
