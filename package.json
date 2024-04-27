@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@catppuccin/tailwindcss": "^0.1.6",
+    "@emotion/is-prop-valid": "^1.2.2",
     "@fancyapps/ui": "^5.0.33",
     "@fontsource/lxgw-wenkai": "^5.0.1",
     "@next/bundle-analyzer": "14.2.1",
