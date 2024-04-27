@@ -1,7 +1,7 @@
 ---
 title: 'Arch Linux 双系统 + Bspwm 配置小记'
 date: '2023-07-29'
-lastmod: '2023-08-27'
+lastmod: '2024-04-27'
 tags: ['Linux', 'Bspwm']
 draft: false
 summary: 'Arch Linux 安装笔记'
@@ -414,6 +414,8 @@ nvim /etc/environment
 export GTK_IM_MODULE=fcitx
 export QI_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
+SDL_IM_MODULE=fcitx
+export GLFW_IM_MODULE=ibus
 
 cp /etc/X11/xinit/xinitrc ~/.xinitrc
 nvim ~/.xinitrc
