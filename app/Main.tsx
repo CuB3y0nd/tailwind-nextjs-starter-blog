@@ -1,10 +1,17 @@
 import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import NavidromeNowPlaying from '@/components/NavidromeNowPlaying'
+import { sortPosts, allCoreContent } from 'pliny/utils/contentlayer'
+import { allBlogs } from 'contentlayer/generated'
+import Pinned from '@/components/Pinned'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 
 const MAX_DISPLAY = 4
+
+const sortedPosts = sortPosts(allBlogs)
+const posts = allCoreContent(sortedPosts)
+const pinnedPosts = posts.filter((post) => post.pinned)
 
 export default function Home({ posts }) {
   return (
@@ -43,6 +50,7 @@ export default function Home({ posts }) {
               </svg>
             </a>
           </p>
+          {pinnedPosts.length > 0 && <Pinned posts={pinnedPosts} />}
           <h3 className="font-bold text-2xl md:text-3xl tracking-tight my-4 text-text dark:text-text-dark flex gap-2">
             My Writings
           </h3>
