@@ -3,7 +3,7 @@ const siteMetadata = {
   title: 'CuB3y0nd\'s Portfolio',
   author: 'CuB3y0nd',
   headerTitle: 'CuB3y0nd\'s Writings',
-  description: 'Developer | Cyber Security enthusiast, Pwner',
+  description: 'Developer | Cyber Security enthusiast',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
   siteUrl: 'https://www.cubeyond.net',
