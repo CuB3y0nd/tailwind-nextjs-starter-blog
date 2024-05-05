@@ -18,14 +18,14 @@ export default function Home({ posts }) {
     <>
       <div className="mx-auto max-w-2xl px-4 pt-20 sm:px-6 xl:max-w-4xl xl:px-0">
         <div className="space-y-2 pb-8 pt-6 md:space-y-5">
-          <h1 className="font-bold text-3xl mt-4 md:text-4xl tracking-tight text-text dark:text-text-dark">
+          <h1 className="dark:text-text-dark mt-4 text-3xl font-bold tracking-tight text-text md:text-4xl">
             CuB3y0nd
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             {siteMetadata.description}
           </p>
           {pinnedPosts.length > 0 && <Pinned posts={pinnedPosts} />}
-          <h3 className="font-bold text-2xl md:text-3xl tracking-tight my-4 text-text dark:text-text-dark flex gap-2">
+          <h3 className="dark:text-text-dark my-4 flex gap-2 text-2xl font-bold tracking-tight text-text md:text-3xl">
             My Writings
           </h3>
         </div>
@@ -35,15 +35,12 @@ export default function Home({ posts }) {
             const { slug, date, title, summary, tags } = post
             return (
               <article key={slug}>
-                <div className="flex flex-col h-full transform overflow-hidden rounded-md border-2 border-solid bg-transparent bg-opacity-20 dark:bg-opacity-20 transition duration-500 hover:scale-105 hover:rounded-md border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:bg-surface0 dark:hover:bg-surface0-dark">
-                  <div className="grow p-4 flex flex-col space-y-3">
-                    <div className="space-y-4 grow">
+                <div className="dark:hover:bg-surface0-dark flex h-full transform flex-col overflow-hidden rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 transition duration-500 hover:scale-105 hover:rounded-md hover:border-primary-500 hover:bg-surface0 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-primary-500">
+                  <div className="flex grow flex-col space-y-3 p-4">
+                    <div className="grow space-y-4">
                       <div className="flex items-center gap-2">
                         <h3 className="text-xl font-extrabold leading-8 tracking-tight">
-                          <Link
-                            href={`/blog/${slug}`}
-                            className="text-gray-900 dark:text-gray-100"
-                          >
+                          <Link href={`/blog/${slug}`} className="text-gray-900 dark:text-gray-100">
                             {title}
                           </Link>
                         </h3>
@@ -53,12 +50,12 @@ export default function Home({ posts }) {
                           <Tag key={tag} text={tag} />
                         ))}
                       </div>
-                      <p className="prose text-md max-w-none text-gray-600 dark:text-gray-400">
+                      <p className="text-md prose max-w-none text-gray-600 dark:text-gray-400">
                         {summary}
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-row p-4 gap-2 text-sm">
+                  <div className="flex flex-row gap-2 p-4 text-sm">
                     <p>
                       <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                     </p>

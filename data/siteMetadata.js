@@ -1,8 +1,8 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'CuB3y0nd\'s Portfolio',
+  title: "CuB3y0nd's Portfolio",
   author: 'CuB3y0nd',
-  headerTitle: 'CuB3y0nd\'s Writings',
+  headerTitle: "CuB3y0nd's Writings",
   description: 'Developer | Cyber Security enthusiast',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
@@ -12,6 +12,7 @@ const siteMetadata = {
   socialBanner: '/static/images/twitter-card.png',
   email: 'root@cubeyond.net',
   github: 'https://github.com/CuB3y0nd',
+  x: 'https://twitter.com/x',
   twitter: 'https://twitter.com/CuB3y0nd',
   discord: 'https://discord.gg/JhxANCX65g',
   locale: 'en-US',
