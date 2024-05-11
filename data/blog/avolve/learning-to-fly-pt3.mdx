@@ -1,7 +1,7 @@
 ---
 title: "Avolve Part-3"
 date: '2024-04-06'
-lastmod: '2024-04-07'
+lastmod: '2024-05-11'
 tags: ['Avolve', 'Neural Network', 'Genetic Algorithm']
 draft: false
 summary: "基于神经网络和遗传算法实现的模拟进化 Part-3"
@@ -1670,5 +1670,574 @@ where
 
 ## 实现 Mutation
 
-TODO
+现在我们手头有一条半新的染色体，是时候引入一些多样性了！
+
+突变是继交叉和选择之后的第三个[遗传运算元](https://en.wikipedia.org/wiki/Genetic_operator)，它接受一个染色体并对其引入一个或多个随机变化：
+
+<center>
+  <Image alt="coding-mutation-1" src="https://pic.imgdb.cn/item/663ede220ea9cb140357fb5f.png" width={95} height={118} />
+</center>
+
+就像 The Actual Evolution® 一样，突变的作用是探索在初始群体中不存在的解决方案；它还可以防止算法陷入局部最优解，因为它使得种群在一代又一代之间发生变化。
+
+由于我们已经实现了染色体，突变的实现就如同砍瓜切菜一般轻松。
+
+```rust:genetic-algorithm/src/lib.rs {1-3} showLineNumbers
+pub trait MutationMethod {
+    fn mutate(&self, rng: &mut dyn RngCore, child: &mut Chromosome);
+}
+```
+
+我们将使用高斯突变，这是一种花哨的说法，意思是「我们将从基因组中添加或减去随机数」。与我们的无参数选择方法相反，高斯突变需要指定两个参数：
+
+```rust:genetic-algorithm/src/lib.rs {1-32} showLineNumbers
+#[derive(Clone, Debug)]
+pub struct GaussianMutation {
+    /// Probability of changing a gene:
+    /// - 0.0 = no genes will be touched
+    /// - 1.0 = all genes will be touched
+    chance: f32,
+
+    /// Magnitude of that change:
+    /// - 0.0 = touched genes will not be modified
+    /// - 3.0 = touched genes will be += or -= by at most 3.0
+    coeff: f32,
+}
+
+impl GaussianMutation {
+    pub fn new(chance: f32, coeff: f32) -> Self {
+        assert!(chance >= 0.0 && chance <= 1.0);
+
+        Self { chance, coeff }
+    }
+}
+
+impl MutationMethod for GaussianMutation {
+    fn mutate(&self, rng: &mut dyn RngCore, child: &mut Chromosome) {
+        for gene in child.iter_mut() {
+            let sign = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
+
+            if rng.gen_bool(self.chance as f64) {
+                *gene += sign * self.coeff * rng.gen::<f32>();
+            }
+        }
+    }
+}
+```
+
+至于测试，与其像以前那样使用 `fn test()`，这次我想展示一种略有不同的方法。让我们谈谈边缘情况：
+
+```rust:genetic-algorithm/src/lib.rs {5-53} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    mod gaussian_mutation {
+        mod given_zero_chance {
+            mod and_zero_coefficient {
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    todo!();
+                }
+            }
+
+            mod and_nonzero_coefficient {
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    todo!();
+                }
+            }
+        }
+
+        mod given_fifty_fifty_chance {
+            mod and_zero_coefficient {
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    todo!();
+                }
+            }
+
+            mod and_nonzero_coefficient {
+                #[test]
+                fn slightly_changes_the_original_chromosome() {
+                    todo!();
+                }
+            }
+        }
+
+        mod given_max_chance {
+            mod and_zero_coefficient {
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    todo!();
+                }
+            }
+
+            mod and_nonzero_coefficient {
+                #[test]
+                fn entirely_changes_the_original_chromosome() {
+                    todo!();
+                }
+            }
+        }
+    }
+}
+```
+
+我花了一段时间才习惯以这种方式命名测试，但最终我发现这种约定非常有用，我不得不提它；像这样结构化的测试比一百万条注释更有价值，因为测试（与注释相反）不会随着时间的推移而过时。
+
+在实现时，为了避免复制粘贴，让我们创建一个辅助函数：
+
+```rust:genetic-algorithm/src/lib.rs {6-15} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    mod gaussian_mutation {
+        use super::*;
+
+        fn actual(chance: f32, coeff: f32) -> Vec<f32> {
+            let mut rng = ChaCha8Rng::from_seed(Default::default());
+            let mut child = vec![1.0, 2.0, 3.0, 4.0, 5.0].into_iter().collect();
+
+            GaussianMutation::new(chance, coeff).mutate(&mut rng, &mut child);
+
+            child.into_iter().collect()
+        }
+
+        /* ... */
+    }
+}
+```
+
+……有了它，剩下的就很简单了：
+
+```rust:genetic-algorithm/Cargo.toml {5} showLineNumbers
+# ...
+
+[dev-dependencies]
+rand_chacha = "0.3.1"
+approx = "0.5.1"
+```
+
+```rust:genetic-algorithm/src/lib.rs {9-14, 16-17, 20-23, 28, 32-35} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    mod gaussian_mutation {
+        /* ... */
+
+        mod given_zero_chance {
+            use approx::assert_relative_eq;
+
+            fn actual(coeff: f32) -> Vec<f32> {
+                super::actual(0.0, coeff)
+            }
+
+            mod and_zero_coefficient {
+                use super::*;
+
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    let actual = actual(0.0);
+                    let expected = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+
+                    assert_relative_eq!(actual.as_slice(), expected.as_slice());
+                }
+            }
+
+            mod and_nonzero_coefficient {
+                use super::*;
+
+                #[test]
+                fn does_not_change_the_original_chromosome() {
+                    let actual = actual(0.5);
+                    let expected = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+
+                    assert_relative_eq!(actual.as_slice(), expected.as_slice());
+                }
+            }
+        }
+
+        /* ... */
+    }
+}
+```
+
+实现剩余的测试遵循我们到目前为止学到的内容，所以，我将其留给读者作为练习 :)
+
+现在我们可以在 ` SelectionMethod` 旁边传递 `MutationMethod` 了。在 `MutationMethod::mutate()` 内部没有泛型，所以让我们不要犹豫使用 `Box` 吧：
+
+```rust:genetic-algorithm/src/lib.rs {4, 14, 19} showLineNumbers
+pub struct GeneticAlgorithm<S> {
+    selection_method: S,
+    crossover_method: Box<dyn CrossoverMethod>,
+    mutation_method: Box<dyn MutationMethod>,
+}
+
+impl<S> GeneticAlgorithm<S>
+where
+    S: SelectionMethod,
+{
+    pub fn new(
+        selection_method: S,
+        crossover_method: impl CrossoverMethod + 'static,
+        mutation_method: impl MutationMethod + 'static,
+    ) -> Self {
+        Self {
+            selection_method,
+            crossover_method: Box::new(crossover_method),
+            mutation_method: Box::new(mutation_method),
+        }
+    }
+
+    /* ... */
+}
+```
+
+……然后：
+
+```rust:genetic-algorithm/src/lib.rs {17} showLineNumbers
+impl<S> GeneticAlgorithm<S>
+where
+    S: SelectionMethod,
+{
+    /* ... */
+
+    pub fn evolve<I>(/* ... */) -> Vec<I>
+    where
+        I: Individual,
+    {
+        /* ... */
+
+        (0..population.len())
+            .map(|_| {
+                /* ... */
+
+                self.mutation_method.mutate(rng, &mut child);
+
+                /* ... */
+            })
+            .collect()
+    }
+}
+```
+
+## 实现 Individuals
+
+我们的 `child` 是 `Chromosome` 类型，而我们返回的是 `Vec<I>` 类型，所以我们还缺少将基因型转换回个体的能力：
+
+```rust:genetic-algorithm/src/lib.rs {2, 14-17} showLineNumbers
+pub trait Individual {
+    fn create(chromosome: Chromosome) -> Self;
+
+    /* ... */
+}
+
+/* ... */
+
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    impl Individual for TestIndividual {
+        fn create(chromosome: Chromosome) -> Self {
+           todo!()
+        }
+
+        /* ... */
+    }
+}
+```
+
+……然后：
+
+```rust:genetic-algorithm/src/lib.rs {21} showLineNumbers
+impl<S> GeneticAlgorithm<S>
+where
+    S: SelectionMethod,
+{
+    /* ... */
+
+    pub fn evolve<I>(&self, rng: &mut dyn RngCore, population: &[I]) -> Vec<I>
+    where
+        I: Individual,
+    {
+        assert!(!population.is_empty());
+
+        (0..population.len())
+            .map(|_| {
+                let parent_a = self.selection_method.select(rng, population).chromosome();
+                let parent_b = self.selection_method.select(rng, population).chromosome();
+                let mut child = self.crossover_method.crossover(rng, parent_a, parent_b);
+
+                self.mutation_method.mutate(rng, &mut child);
+
+                I::create(child)
+            })
+            .collect()
+    }
+}
+```
+
+## 测试
+
+有了 `.evolve()` 方法之后，现在是时候进行可能是这篇文章中最令人兴奋的部分了：测试将向所有人证明我们的 `.evolve()` 方法有效，并且我们知道我们在做什么。
+
+我们将首先调整我们的 `TestIndividual`，以便它不再使用 `panic!()`，而是实际实现 `::create()` 和 `.chromosome()` 方法。
+
+有些测试，例如对于 `RouletteWheelSelection` 的测试，根本不关心基因，所以我们可以发明一种不需要修改那些已经工作的测试的解决方案。
+
+我的建议是将 `TestIndividual` 从结构体更改为包含两个不同的变体枚举：
+
+```rust:genetic-algorithm/src/lib.rs {5-47} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[derive(Clone, Debug)]
+    enum TestIndividual {
+        /// For tests that require access to the chromosome
+        WithChromosome { chromosome: Chromosome },
+
+        /// For tests that don't require access to the chromosome
+        WithFitness { fitness: f32 },
+    }
+
+    impl TestIndividual {
+        fn new(fitness: f32) -> Self {
+            Self::WithFitness { fitness }
+        }
+    }
+
+    impl Individual for TestIndividual {
+        fn create(chromosome: Chromosome) -> Self {
+            Self::WithChromosome { chromosome }
+        }
+
+        fn chromosome(&self) -> &Chromosome {
+            match self {
+                Self::WithChromosome { chromosome } => chromosome,
+
+                Self::WithFitness { .. } => {
+                    panic!("not supported for TestIndividual::WithFitness")
+                }
+            }
+        }
+
+        fn fitness(&self) -> f32 {
+            match self {
+                Self::WithChromosome { chromosome } => {
+                    chromosome.iter().sum()
+
+                    // ^ the simplest fitness function ever - we're just
+                    // summing all the genes together
+                }
+
+                Self::WithFitness { fitness } => *fitness,
+            }
+        }
+    }
+
+    /* ... */
+}
+```
+
+<center>*（除了枚举之外，你也可以创建两个单独的类型，例如 `TestIndividualWithChromosome` 和 `TestIndividualWithFitness`，但对我来说，这种方式感觉有点过于[商业化](https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition)）*</center>
+
+既然我们已经在这里了，让我们派生 `PartialEq`，它马上会派上用场：
+
+```rust:genetic-algorithm/src/lib.rs {5, 12-16} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[derive(Clone, Debug, PartialEq)]
+    pub enum TestIndividual {
+        /* ... */
+    }
+
+    /* ... */
+
+    impl PartialEq for Chromosome {
+        fn eq(&self, other: &Self) -> bool {
+            approx::relative_eq!(self.genes.as_slice(), other.genes.as_slice())
+        }
+    }
+
+    /* ... */
+}
+```
+至于测试，也没什么可怕的。我们将从几个个体开始，经过几代的进化，看看它们最终是什么样子：
+
+```rust:genetic-algorithm/src/lib.rs {5-34} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn genetic_algorithm() {
+        let mut rng = ChaCha8Rng::from_seed(Default::default());
+
+        let ga = GeneticAlgorithm::new(
+            RouletteWheelSelection,
+            UniformCrossover,
+            GaussianMutation::new(0.5, 0.5),
+        );
+
+        let mut population = vec![
+            /* TODO */
+        ];
+
+        // We're running `.evolve()` a few times, so that the differences between the
+        // input and output population are easier to spot.
+        //
+        // No particular reason for a number of 10 - this test would be fine for 5, 20 or
+        // even 1000 generations - the only thing that'd change is the magnitude of the
+        // difference between the populations.
+        for _ in 0..10 {
+            population = ga.evolve(&mut rng, &population);
+        }
+
+        let expected_population = vec![
+            /* TODO */
+        ];
+
+        assert_eq!(population, expected_population);
+    }
+
+    /* ... */
+}
+```
+
+我们将同时创建几个个体，因此辅助函数是必须的：
+
+```rust:genetic-algorithm/src/lib.rs {7-9} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn genetic_algorithm() {
+        fn individual(genes: &[f32]) -> TestIndividual {
+            TestIndividual::create(genes.iter().cloned().collect())
+        }
+
+        /* ... */
+    }
+
+    /* ... */
+}
+```
+
+……现在：
+
+```rust:genetic-algorithm/src/lib.rs {9-14, 18-23} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn genetic_algorithm() {
+        /* ... */
+
+        let mut population = vec![
+            individual(&[0.0, 0.0, 0.0]),
+            individual(&[1.0, 1.0, 1.0]),
+            individual(&[1.0, 2.0, 1.0]),
+            individual(&[1.0, 2.0, 4.0]),
+        ];
+
+        /* ... */
+
+        let expected_population = vec![
+            individual(&[0.0, 0.0, 0.0, 0.0]),
+            individual(&[0.0, 0.0, 0.0, 0.0]),
+            individual(&[0.0, 0.0, 0.0, 0.0]),
+            individual(&[0.0, 0.0, 0.0, 0.0]),
+        ];
+
+        /* ... */
+    }
+}
+```
+
+<center>*（与以前一样，没有理由让 4 个个体拥有 3 个基因。只是感觉维持这种数量是合理的；两个个体可能太少了，百分之一可能太多了。）*</center>
+
+你是否听到有人唱着愤怒的歌曲？这是 `cargo test`，由于 ` expected_population` 被清零而失败了：
+
+```plain-text
+thread '...' panicked at 'assertion failed: `(left == right)`
+  left: `[WithChromosome { ... }, WithChromosome { ... }, ... ]`,
+ right: `[WithChromosome { ... }, WithChromosome { ... }, ... ]`,
+```
+
+利用这个输出，我们可以将实际基因从左侧复制到期望的种群中：
+
+```rust:genetic-algorithm/src/lib.rs {9-14} showLineNumbers
+#[cfg(test)]
+mod tests {
+    /* ... */
+
+    #[test]
+    fn genetic_algorithm() {
+        /* ... */
+
+        let expected_population = vec![
+            individual(&[0.44769490, 2.0648358, 4.3058133]),
+            individual(&[1.21268670, 1.5538777, 2.8869110]),
+            individual(&[1.06176780, 2.2657390, 4.4287640]),
+            individual(&[0.95909685, 2.4618788, 4.0247330]),
+        ];
+
+        /* ... */
+    }
+}
+```
+
+可以肯定的是，我们已经得到了一些输出。但我们如何知道这四个个体实际上比我们起初拥有的四个个体更好呢？
+
+好吧，我们可以比较它们的适应度分数！
+
+```rust:genetic-algorithm/src/lib.rs showLineNumbers
+// In this case, `fitness score` means `average of the genes`, as per our implemetation
+// inside `TestIndividual::fitness()`
+
+let population = vec![
+    individual(&[/* ... */]), // fitness = 0.0
+    individual(&[/* ... */]), // fitness = 1.0
+    individual(&[/* ... */]), // fitness ~= 1.33
+    individual(&[/* ... */]), // fitness ~= 2.33
+];
+
+let expected_population = vec![
+    individual(&[/* ... */]), // fitness ~= 6.8
+    individual(&[/* ... */]), // fitness ~= 5.7
+    individual(&[/* ... */]), // fitness ~= 7.8
+    individual(&[/* ... */]), // fitness ~= 7.4
+];
+```
+
+它成功了！
+
+适应度分数越高，意味着个体变得更好，一切都按预期进行了：
+
+1. 由于轮盘赌选择，最差的解决方案 `[0.0, 0.0, 0.0]` 被丢弃了。
+2. 由于均匀交叉，平均适应度得分从 3.5 增长到 7.0！
+3. 由于高斯突变，我们看到了在初始种群中不存在的基因。
+
+你不必相信我，尝试注释掉算法的各个部分：
+
+```rust
+// self.mutation_method.mutate(rng, &mut child);
+```
+
+……然后看看它如何影响输出种群。
+
+## 结语
+
+到目前为止，我们已经实现了两个独立的组件：神经网络和遗传算法。
+
+在即将到来的本系列的最后一篇文章中，我们将集成这两个算法，并实现一个时髦的用户界面，让我们能够看到浮点数列表之外的东西。正如承诺的那样，这就是 JavaScript 和 WebAssembly 将发挥作用的地方。
 
