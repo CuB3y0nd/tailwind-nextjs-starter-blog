@@ -6,7 +6,7 @@ import SearchButton from './SearchButton'
 
 const Header = () => {
   return (
-    <header className="dark:bg-base-dark/50 fixed left-0 right-0 top-0 z-40 bg-base/50 saturate-100 backdrop-blur-[10px]">
+    <header className="dark:bg-base-dark/50 bg-base/50 fixed left-0 right-0 top-0 z-40 saturate-100 backdrop-blur-[10px]">
       <div className="mx-auto flex h-[60px] max-w-5xl items-center justify-between px-8">
         <div>
           <a aria-label="CuB3y0nd" href="/">
@@ -40,7 +40,7 @@ const Header = () => {
                 <Link
                   key={link.title}
                   href={link.href}
-                  className="dark:text-text-dark dark:hover:bg-surface0-dark rounded px-2 py-1 text-text hover:bg-surface0 sm:px-3 sm:py-2"
+                  className="dark:text-text-dark dark:hover:bg-surface0-dark text-text hover:bg-surface0 rounded px-2 py-1 sm:px-3 sm:py-2"
                 >
                   {link.title}
                 </Link>
