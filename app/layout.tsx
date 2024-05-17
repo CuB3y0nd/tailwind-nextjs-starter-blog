@@ -1,7 +1,7 @@
 import 'css/tailwind.css'
 import 'pliny/search/algolia.css'
 
-import '@fontsource/lxgw-wenkai';
+import '@fontsource/lxgw-wenkai'
 import { Analytics, AnalyticsConfig } from 'pliny/analytics'
 import { SearchProvider, SearchConfig } from 'pliny/search'
 import Header from '@/components/Header'
@@ -53,11 +53,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang={siteMetadata.language}
-      className={`scroll-smooth`}
-      suppressHydrationWarning
-    >
+    <html lang={siteMetadata.language} className={`scroll-smooth`} suppressHydrationWarning>
       <link rel="apple-touch-icon" sizes="76x76" href="/static/favicons/apple-touch-icon.png" />
       <link rel="icon" type="image/png" sizes="32x32" href="/static/favicons/favicon-32x32.png" />
       <link rel="icon" type="image/png" sizes="16x16" href="/static/favicons/favicon-16x16.png" />
@@ -67,8 +63,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <script async src="http://analytics.cubeyond.net/script.js" data-website-id="d3631f84-1deb-44eb-a398-25f28c8fb0fa"></script>
-      <body className="dark:mocha latte bg-base pl-[calc(100vw-100%)] text-text antialiased">
+      <script
+        async
+        src="http://analytics.cubeyond.net/script.js"
+        data-website-id="d3631f84-1deb-44eb-a398-25f28c8fb0fa"
+      ></script>
+      <body className="/* dark:mocha latte */ bg-base text-text pl-[calc(100vw-100%)] antialiased">
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>

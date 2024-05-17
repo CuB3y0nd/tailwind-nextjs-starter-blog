@@ -1635,15 +1635,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@catppuccin/tailwindcss@npm:^0.1.6":
-  version: 0.1.6
-  resolution: "@catppuccin/tailwindcss@npm:0.1.6"
-  peerDependencies:
-    tailwindcss: ">=3.0.0"
-  checksum: ebe58218abf33a6786bd0227b94c25ae0292ecc8f267c3d34947aae4662d221837ee5389f6023cc0aae478f9a9c817549993ba66058090dfeab0ae5da090e981
-  languageName: node
-  linkType: hard
-
 "@citation-js/core@npm:^0.7.1":
   version: 0.7.9
   resolution: "@citation-js/core@npm:0.7.9"
@@ -10983,7 +10974,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tailwind-nextjs-starter-blog@workspace:."
   dependencies:
-    "@catppuccin/tailwindcss": ^0.1.6
     "@emotion/is-prop-valid": ^1.2.2
     "@fancyapps/ui": ^5.0.33
     "@fontsource/lxgw-wenkai": ^5.0.1

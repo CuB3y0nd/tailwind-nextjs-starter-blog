@@ -48,6 +48,12 @@ module.exports = {
             code: {
               color: theme('colors.indigo.500'),
             },
+            'code::before': {
+              content: 'none',
+            },
+            'code::after': {
+              content: 'none',
+            },
           },
         },
         invert: {
@@ -62,6 +68,9 @@ module.exports = {
             'h1,h2,h3,h4,h5,h6': {
               color: theme('colors.gray.100'),
             },
+            pre: {
+              backgroundColor: theme('colors.gray.900'),
+            },
           },
         },
       }),
@@ -70,6 +79,6 @@ module.exports = {
   plugins: [
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
-    require('@catppuccin/tailwindcss')
+    // require('@catppuccin/tailwindcss'),
   ],
 }
