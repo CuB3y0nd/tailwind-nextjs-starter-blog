@@ -66,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <script
         async
         src="http://analytics.cubeyond.net/script.js"
-        data-website-id="d3631f84-1deb-44eb-a398-25f28c8fb0fa"
+        data-website-id="9de28658-93bc-40c8-a4a2-365022c09b43"
       ></script>
       <body className="/* dark:mocha latte */ bg-base text-text pl-[calc(100vw-100%)] antialiased">
         <ThemeProviders>
