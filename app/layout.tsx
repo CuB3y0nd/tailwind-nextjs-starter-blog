@@ -1,5 +1,6 @@
 import 'css/tailwind.css'
 import 'pliny/search/algolia.css'
+import 'remark-github-blockquote-alert/alert.css'
 
 import '@fontsource/lxgw-wenkai'
 import { Analytics, AnalyticsConfig } from 'pliny/analytics'
