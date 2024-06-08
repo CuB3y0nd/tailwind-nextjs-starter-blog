@@ -1,7 +1,7 @@
 ---
 title: "Avolve Part-3"
 date: '2024-04-06'
-lastmod: '2024-05-11'
+lastmod: '2024-06-08'
 tags: ['Avolve', 'Neural Network', 'Genetic Algorithm']
 draft: false
 summary: "基于神经网络和遗传算法实现的模拟进化 Part-3"
@@ -36,9 +36,8 @@ authors: ['default']
 
 我们的问题是，我们有一个对象，一个神经网络——它由大量参数定义。它们的数量如此之多，即使是对于最小的网络，我们也不可能在有生之年穷尽它们的所有组合。
 
-<Note>
-  所有可能的参数通常被称为**搜索空间 (Search Space)**；一个博学的人可能会说：我们的问题的搜索空间非常巨大，然后他就逃跑了。
-</Note>
+> [!NOTE]
+> 所有可能的参数通常被称为**搜索空间 (Search Space)**；一个博学的人可能会说：我们的问题的搜索空间非常巨大，然后他就逃跑了。
 
 我们可以模仿自然的方式：如果我们从一堆随机的 **次优 (Suboptimal)** 解开始，我们可以尝试改进它们，随着时间的推移，逐渐获得更好的答案。
 
@@ -48,11 +47,10 @@ authors: ['default']
   <Image alt="遗传算法概述；从顶部开始顺时针方向：(1) 使用适应度函数估计当前解决方案，(2) 执行交叉和突变，(3) 在新的、改进的种群上重新开始整个过程" src="https://pic.imgdb.cn/item/6610bbc268eb93571339b797.png" width={230} height={189} />
 </center>
 
-<Note>
-  由于遗传算法涉及到处理随机数，它是一种<a href="https://en.wikipedia.org/wiki/Randomized_algorithm" target="blank" style={{ color: `#8e91f2` }}>随机化算法</a>的例子。<br style={{ marginBottom: '0.5em' }} />
-
-  随机化算法通过牺牲准确性来换取性能。它并不总是返回最佳答案，但通常会得到 Pretty Close Pretty Cheaply ® 的结果。<br style={{ marginBottom: '0.5em' }} />
-</Note>
+> [!NOTE]
+> 由于遗传算法涉及到处理随机数，它是一种<a href="https://en.wikipedia.org/wiki/Randomized_algorithm" target="blank" style={{ color: `#8e91f2` }}>随机化算法</a>的例子。
+>
+> 随机化算法通过牺牲准确性来换取性能。它并不总是返回最佳答案，但通常会得到 Pretty Close Pretty Cheaply ® 的结果。
 
 蔬菜供应商才不希望你知道这一点，其实有一个基于遗传算法的简单程序就可以帮助你成为一个胡萝卜大亨：
 
@@ -120,49 +118,43 @@ impl GeneticAlgorithm {
 }
 ```
 
-<Note>
-  `I` 代表个体，至于 Rust 的术语：
-
-  ```rust
-  // visibility  generics   _ function parameters
-  // |          _|     ____|  (or just "parameters")
-  // |         |      |
-  // v-v       v-----vv----------v
-     pub fn foo<'a, T>(bar: &'a T) { /* ... */ }
-  //            ^^  ^  ^--------^
-  //            |   |  |
-  //            |   |  function parameter
-  //            |   |  (or just "parameter")
-  //            |   type parameter
-  //            lifetime parameter
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  <center>https://doc.rust-lang.org/reference/items/functions.html</center>
-  <br style={{ marginBottom: '0.5em' }} />
-
-  如果你想向别人描述这个签名，你会说：
-  <br style={{ marginBottom: '0.5em' }} />
-
-  `public` 函数 `foo` 是泛型的，泛型参数包括生命周期 `'a` 和类型 `T`，它接受一个名为 `bar` 的参数，该参数是对 `T` 类型的引用。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  这是函数的定义，另一方面，你 **调用 (Invoke)** 函数的地方被称为 **调用点 (Call Site)**，你在那里指定的值称为 **参数 (Arguments)**：
-
-  ```rust
-  // v-----------------------v call site
-     foo::<'static, f32>(&1.0);
-  //       ^-----^  ^-^  ^--^
-  //       |        |    |
-  //       |        |    function argument
-  //       |        |    (or just "argument")
-  //       |        type argument
-  //       lifetime argument
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  大多数这种术语（例如 `argument` 和 `parameter` 之间的区别）在所有编程语言中都是通用的，因此值得记住。
-</Note>
+> [!NOTE]
+> `I` 代表个体，至于 Rust 的术语：
+>
+> ```rust
+> // visibility  generics   _ function parameters
+> // |          _|     ____|  (or just "parameters")
+> // |         |      |
+> // v-v       v-----vv----------v
+>    pub fn foo<'a, T>(bar: &'a T) { /* ... */ }
+> //            ^^  ^  ^--------^
+> //            |   |  |
+> //            |   |  function parameter
+> //            |   |  (or just "parameter")
+> //            |   type parameter
+> //            lifetime parameter
+> ```
+>
+> <center>https://doc.rust-lang.org/reference/items/functions.html</center>
+>
+> 如果你想向别人描述这个签名，你会说：
+>
+> `public` 函数 `foo` 是泛型的，泛型参数包括生命周期 `'a` 和类型 `T`，它接受一个名为 `bar` 的参数，该参数是对 `T` 类型的引用。
+>
+> 这是函数的定义，另一方面，你 **调用 (Invoke)** 函数的地方被称为 **调用点 (Call Site)**，你在那里指定的值称为 **参数 (Arguments)**：
+>
+> ```rust
+> // v-----------------------v call site
+>    foo::<'static, f32>(&1.0);
+> //       ^-----^  ^-^  ^--^
+> //       |        |    |
+> //       |        |    function argument
+> //       |        |    (or just "argument")
+> //       |        type argument
+> //       lifetime argument
+> ```
+>
+> 大多数这种术语（例如 `argument` 和 `parameter` 之间的区别）在所有编程语言中都是通用的，因此值得记住。
 
 吸取过去的教训，让我们不要忘记前置条件：
 
@@ -269,30 +261,24 @@ impl GeneticAlgorithm {
   <Image alt="coding-selection-2" src="https://pic.imgdb.cn/item/6611ce9068eb935713f352d9.png" width={147} height={245} />
 </center>
 
-<Important>
-  实际上，轮盘赌选择在实践中被人们认为不太好。这是因为它允许最优秀的个体主导模拟。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  假设你的遗传算法找到了一个比其它解决方案都要好的多的解决方案：
-
-  <center>
-    <Image alt="coding-selection-3" src="https://pic.imgdb.cn/item/6611cfb968eb935713f46859.png" width={96} height={85} />
-  </center>
-
-  ……在这种情况下，轮盘赌选择将在 `99%` 的情况下愉快地选择这个绿色解决方案，使其余的个体成为一支复制粘贴的绿色克隆大军。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  你可能会想：但找到最好的解决方案难道不是重点吗？
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……确实如此。但重要的是要记住，由遗传算法找到的解决方案始终是迄今为止最好的。如果你过早地放弃了一个看似不太有希望的解决方案，那你永远不会知道是否通过调整一些参数会使它在长期内成为一个更好的解决方案。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  换一种说法：拥有更多多样化的人类，就有更大的机会其中一个恰好是天才。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  为简单起见，我们将继续使用轮盘赌选择。但如果你感觉冒险，我只想说 `Rank Selection` 是一种不会表现出这种主导行为的算法示例，并且它也同样适用于我们的小鸟！
-</Important>
+> [!IMPORTANT]
+> 实际上，轮盘赌选择在实践中被人们认为不太好。这是因为它允许最优秀的个体主导模拟。
+>
+> 假设你的遗传算法找到了一个比其它解决方案都要好的多的解决方案：
+>
+> <center>
+>   <Image alt="coding-selection-3" src="https://pic.imgdb.cn/item/6611cfb968eb935713f46859.png" width={96} height={85} />
+> </center>
+>
+> ……在这种情况下，轮盘赌选择将在 `99%` 的情况下愉快地选择这个绿色解决方案，使其余的个体成为一支复制粘贴的绿色克隆大军。
+>
+> 你可能会想：但找到最好的解决方案难道不是重点吗？
+>
+> ……确实如此。但重要的是要记住，由遗传算法找到的解决方案始终是迄今为止最好的。如果你过早地放弃了一个看似不太有希望的解决方案，那你永远不会知道是否通过调整一些参数会使它在长期内成为一个更好的解决方案。
+>
+> 换一种说法：拥有更多多样化的人类，就有更大的机会其中一个恰好是天才。
+>
+> 为简单起见，我们将继续使用轮盘赌选择。但如果你感觉冒险，我只想说 `Rank Selection` 是一种不会表现出这种主导行为的算法示例，并且它也同样适用于我们的小鸟！
 
 为了践行通用性的承诺，我们不会将库硬编码为使用轮盘赌选择，而是创建一个 `trait`，这样用户就可以提供他们喜欢的任何算法：
 
@@ -324,9 +310,8 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 ```
 
-<Note>
-  工作空间中的每个 crate 都有自己的依赖关系集。我们之前添加到 `neural-network/Cargo.toml` 中的 `rand` 不会自动与工作空间中的其它 crate 共享。
-</Note>
+> [!NOTE]
+> 工作空间中的每个 crate 都有自己的依赖关系集。我们之前添加到 `neural-network/Cargo.toml` 中的 `rand` 不会自动与工作空间中的其它 crate 共享。
 
 从我们之前使用 `thread_rng()` 的麻烦中吸取教训，让我们通过参数传递 `PRNG`：
 
@@ -344,177 +329,163 @@ pub trait SelectionMethod {
 
 瞧瞧，多么美丽的一个签名呀 :D
 
-<Note>
-  你可能想知道为什么我们不进一步将 `select()` 也泛化为 PRNG：
-
-  ```rust
-  pub trait SelectionMethod {
-      fn select<'a, R, I>(
-         &self,
-         rng: &mut R,
-         population: &'a [I],
-      ) -> &'a I
-      where
-          R: RngCore,
-          I: Individual;
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  首先，让我们了解一下术语：
-
-  1. `dyn Trait`、`&dyn Trait` 和 `&mut dyn Trait` 都意味着**动态分发 (Dynamic Dispatch)**
-  2. `T`、`&T` 和 `&mut T` 都意味着**静态分发 (Static Dispatch)**
-  <br style={{ marginBottom: '0.5em' }} />
-
-  分发是编译器回答泛型类型的「我们应该跳到哪里？」这个问题的方式。
-
-  ```rust
-  fn foo() {
-     bar();
-
-     // ^ compiling this call is easy, because it always jumps into `bar`
-  }
-
-  fn bar() {
-     println!("yas queen");
-  }
-
-  fn method(obj: &dyn SomeTrait) {
-      obj.method();
-
-      // ^ compiling this call is harder, because there's no single function
-      //   this refers to - each implementation of `SomeTrait` provides its
-      //   own `fn method(&self) { ... }`
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  举个例子，让我们考虑这个 `trait` 及其两个实现：
-
-  ```rust
-  trait Animal {
-      fn kind(&self) -> &'static str;
-  }
-
-  // --
-
-  struct Chinchilla;
-
-  impl Animal for Chinchilla {
-      fn kind(&self) -> &'static str {
-          "chinchilla"
-      }
-  }
-
-  // --
-
-  struct Viscacha;
-
-  impl Animal for Viscacha {
-      fn kind(&self) -> &'static str {
-          "viscacha"
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  如果你想创建一个函数来输出任何动物的种类，你可以这样做：
-
-  ```rust
-  // Using static dispatch (aka static polymorphism):
-  fn print_kind_static<A>(animal: &A)
-  where
-      A: Animal,
-  {
-      println!("{}", animal.kind());
-  }
-
-  // Using dynamic dispatch (aka dynamic polymorphism, aka runtime polymorphism):
-  fn print_kind_dynamic(animal: &dyn Animal) {
-      println!("{}", animal.kind());
-  }
-
-  fn main() {
-      print_kind_static(&Chinchilla);
-      print_kind_static(&Viscacha);
-
-      print_kind_dynamic(&Chinchilla);
-      print_kind_dynamic(&Viscacha);
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  这两个函数看起来都很相似。那么区别在哪呢？
-  <br style={{ marginBottom: '0.5em' }} />
-
-  `print_kind_static()` 使用了一种被称为 **单态化 (Monomorphization)** 的技术。这意味着对于每个传递给该函数的动物，编译器都会透明地生成一个对于该函数专用的、「复制粘贴」的版本：
-
-  ```rust
-  fn print_kind_static__chinchilla(animal: &Chinchilla) {
-      println!("{}", Chinchilla::kind(animal));
-  }
-
-  fn print_kind_static__viscacha(animal: &Viscacha) {
-      println!("{}", Viscacha::kind(animal));
-  }
-
-  fn main() {
-      print_kind_static__chinchilla(&Chinchilla);
-      print_kind_static__viscacha(&Viscacha);
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  此时，你可以明白为什么它被称为静态分发。在底层，编译器用静态类型替换动态 traits。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  单态化的缺点是编译速度稍慢（编译器不是只处理一个函数，而是必须处理其中的许多函数），但通常它会在运行时产生更快、更优的代码。对于每秒调用这种泛型函数数百万次的应用程序来说，这可能会产生明显的差异。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  另一方面，`print_kind_dynamic()` 使用了一种称为 **虚函数表 (vtable)** 的技术，其中每个实现都会创建一个专用表，映射到具体的函数：
-
-  ```rust
-  // (this is pseudo-Rust, just to show the concept)
-
-  struct AnimalVtable {
-      // Reference to a specific `kind()` function
-      kind: fn(*const ()) -> &'static str,
-  }
-
-  const CHINCHILLA_VTABLE: AnimalVtable = AnimalVtable {
-      kind: Chinchilla::kind,
-  };
-
-  const VISCACHA_VTABLE: AnimalVtable = AnimalVtable {
-      kind: Viscacha::kind,
-  };
-
-  fn print_kind_dynamic(
-      animal_obj: *const (),
-      animal_vtable: &AnimalVtable,
-  ) {
-      println!("{}", animal_vtable.kind(animal_obj));
-  }
-
-  fn main() {
-      print_kind_dynamic(&Chinchilla, &CHINCHILLA_VTABLE);
-      print_kind_dynamic(&Viscacha, &VISCACHA_VTABLE);
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  由于所有实现都可以通过 `AnimalVtable` 描述，因此，`print_kind_dynamic()` 不必被单态化。根据底层类型，编译器将简单地传递不同的 `vtable`。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  在这种情况下，缺点是每次调用 `print_kind_dynamic()` 时，它都必须经过这个额外的「代理表」，理论上它要比 `print_kind_static()` 慢。但通常情况下，这种差异并不重要。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  回到最初的问题：为什么不使用 `where R: RngCore`？
-  <br style={{ marginBottom: '0.5em' }} />
-
-  因为我们不会每秒调用此方法一百万次，所以这里的额外麻烦是不值得的。
-</Note>
+> [!NOTE]
+> 你可能想知道为什么我们不进一步将 `select()` 也泛化为 PRNG：
+>
+> ```rust
+> pub trait SelectionMethod {
+>     fn select<'a, R, I>(
+>        &self,
+>        rng: &mut R,
+>        population: &'a [I],
+>     ) -> &'a I
+>     where
+>         R: RngCore,
+>         I: Individual;
+> }
+> ```
+>
+> 首先，让我们了解一下术语：
+>
+> 1. `dyn Trait`、`&dyn Trait` 和 `&mut dyn Trait` 都意味着**动态分发 (Dynamic Dispatch)**
+> 2. `T`、`&T` 和 `&mut T` 都意味着**静态分发 (Static Dispatch)**
+>
+> 分发是编译器回答泛型类型的「我们应该跳到哪里？」这个问题的方式。
+>
+> ```rust
+> fn foo() {
+>    bar();
+>
+>    // ^ compiling this call is easy, because it always jumps into `bar`
+> }
+>
+> fn bar() {
+>    println!("yas queen");
+> }
+>
+> fn method(obj: &dyn SomeTrait) {
+>     obj.method();
+>
+>     // ^ compiling this call is harder, because there's no single function
+>     //   this refers to - each implementation of `SomeTrait` provides its
+>     //   own `fn method(&self) { ... }`
+> }
+> ```
+>
+> 举个例子，让我们考虑这个 `trait` 及其两个实现：
+>
+> ```rust
+> trait Animal {
+>     fn kind(&self) -> &'static str;
+> }
+>
+> // --
+>
+> struct Chinchilla;
+>
+> impl Animal for Chinchilla {
+>     fn kind(&self) -> &'static str {
+>         "chinchilla"
+>     }
+> }
+>
+> // --
+>
+> struct Viscacha;
+>
+> impl Animal for Viscacha {
+>     fn kind(&self) -> &'static str {
+>         "viscacha"
+>     }
+> }
+> ```
+>
+> 如果你想创建一个函数来输出任何动物的种类，你可以这样做：
+>
+> ```rust
+> // Using static dispatch (aka static polymorphism):
+> fn print_kind_static<A>(animal: &A)
+> where
+>     A: Animal,
+> {
+>     println!("{}", animal.kind());
+> }
+>
+> // Using dynamic dispatch (aka dynamic polymorphism, aka runtime polymorphism):
+> fn print_kind_dynamic(animal: &dyn Animal) {
+>     println!("{}", animal.kind());
+> }
+>
+> fn main() {
+>     print_kind_static(&Chinchilla);
+>     print_kind_static(&Viscacha);
+>
+>     print_kind_dynamic(&Chinchilla);
+>     print_kind_dynamic(&Viscacha);
+> }
+> ```
+>
+> 这两个函数看起来都很相似。那么区别在哪呢？
+>
+> `print_kind_static()` 使用了一种被称为 **单态化 (Monomorphization)** 的技术。这意味着对于每个传递给该函数的动物，编译器都会透明地生成一个对于该函数专用的、「复制粘贴」的版本：
+>
+> ```rust
+> fn print_kind_static__chinchilla(animal: &Chinchilla) {
+>     println!("{}", Chinchilla::kind(animal));
+> }
+>
+> fn print_kind_static__viscacha(animal: &Viscacha) {
+>     println!("{}", Viscacha::kind(animal));
+> }
+>
+> fn main() {
+>     print_kind_static__chinchilla(&Chinchilla);
+>     print_kind_static__viscacha(&Viscacha);
+> }
+> ```
+>
+> 此时，你可以明白为什么它被称为静态分发。在底层，编译器用静态类型替换动态 traits。
+>
+> 单态化的缺点是编译速度稍慢（编译器不是只处理一个函数，而是必须处理其中的许多函数），但通常它会在运行时产生更快、更优的代码。对于每秒调用这种泛型函数数百万次的应用程序来说，这可能会产生明显的差异。
+>
+> 另一方面，`print_kind_dynamic()` 使用了一种称为 **虚函数表 (vtable)** 的技术，其中每个实现都会创建一个专用表，映射到具体的函数：
+>
+> ```rust
+> // (this is pseudo-Rust, just to show the concept)
+>
+> struct AnimalVtable {
+>     // Reference to a specific `kind()` function
+>     kind: fn(*const ()) -> &'static str,
+> }
+>
+> const CHINCHILLA_VTABLE: AnimalVtable = AnimalVtable {
+>     kind: Chinchilla::kind,
+> };
+>
+> const VISCACHA_VTABLE: AnimalVtable = AnimalVtable {
+>     kind: Viscacha::kind,
+> };
+>
+> fn print_kind_dynamic(
+>     animal_obj: *const (),
+>     animal_vtable: &AnimalVtable,
+> ) {
+>     println!("{}", animal_vtable.kind(animal_obj));
+> }
+>
+> fn main() {
+>     print_kind_dynamic(&Chinchilla, &CHINCHILLA_VTABLE);
+>     print_kind_dynamic(&Viscacha, &VISCACHA_VTABLE);
+> }
+> ```
+>
+> 由于所有实现都可以通过 `AnimalVtable` 描述，因此，`print_kind_dynamic()` 不必被单态化。根据底层类型，编译器将简单地传递不同的 `vtable`。
+>
+> 在这种情况下，缺点是每次调用 `print_kind_dynamic()` 时，它都必须经过这个额外的「代理表」，理论上它要比 `print_kind_static()` 慢。但通常情况下，这种差异并不重要。
+>
+> 回到最初的问题：为什么不使用 `where R: RngCore`？
+>
+> 因为我们不会每秒调用此方法一百万次，所以这里的额外麻烦是不值得的。
 
 至于实现：
 
@@ -758,56 +729,49 @@ mod tests {
 }
 ```
 
-<Note>
-  注意，在构建直方图时，我们将适应度分数从 `f32` 转换为 `i32`：
-
-  ```rust
-  let fitness = RouletteWheelSelection
-      .select(&mut rng, &population)
-      .fitness() as i32;
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  我们必须这样做，因为 rust 中的浮点数没有实现 `Ord` trait，这使得无法将它们用作 `BTreeMap` 的键：
-
-  ```rust
-  use std::collections::BTreeMap;
-
-  fn main() {
-      let mut map = BTreeMap::new();
-      map.insert(1.0, "one point zero");
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ```plain-text
-  error[E0277]: the trait bound `{float}: Ord` is not satisfied
-    |
-    |     map.insert(1.0, "one point zero");
-    |         ^^^^^^ the trait `Ord` is not implemented for `{float}`
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  原因是，根据 [IEEE 754](https://floating-point-gui.de) 标准定义的浮点数不是[全序集合 (Totally Ordered Set)](https://en.wikipedia.org/wiki/Total_order)。比较 [NaN](https://en.wikipedia.org/wiki/NaN#Comparison_with_NaN) 是有问题的，因为：
-
-  ```plain-text
-  NaN != NaN
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  在实践中这意味着，如果你能够将一个 `NaN` 插入到映射中，你不仅无法将其取回，而且这还可能破坏 `BTreeMap` 的内部数据结构，使得无法检索任何其它项目。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  *（顺便说一句，这对于自定义的 `Ord` 和 `PartialOrd` 实现也是如此。如果它们不满足[非对称性](https://en.wikipedia.org/wiki/Asymmetry#In_mathematics)和[传递性](https://simple.wikipedia.org/wiki/Transitivity_(mathematics))，那么你将会遇到麻烦。）*
-  <br style={{ marginBottom: '0.5em' }} />
-
-  如果你想进一步探索这个主题：
-
-   - https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html
-   - https://www.reddit.com/r/rust/comments/cbrpll/why_doesnt_stdcmpord_is_implemented_for_floats
-   - https://www.reddit.com/r/rust/comments/29kia3/no_ord_for_f32
-   - https://stackoverflow.com/questions/26489701/why-does-rust-not-implement-total-ordering-via-the-ord-trait-for-f64-and-f32
-</Note>
+> [!NOTE]
+> 注意，在构建直方图时，我们将适应度分数从 `f32` 转换为 `i32`：
+>
+> ```rust
+> let fitness = RouletteWheelSelection
+>     .select(&mut rng, &population)
+>     .fitness() as i32;
+> ```
+>
+> 我们必须这样做，因为 rust 中的浮点数没有实现 `Ord` trait，这使得无法将它们用作 `BTreeMap` 的键：
+>
+> ```rust
+> use std::collections::BTreeMap;
+>
+> fn main() {
+>     let mut map = BTreeMap::new();
+>     map.insert(1.0, "one point zero");
+> }
+> ```
+>
+> ```plain-text
+> error[E0277]: the trait bound `{float}: Ord` is not satisfied
+>   |
+>   |     map.insert(1.0, "one point zero");
+>   |         ^^^^^^ the trait `Ord` is not implemented for `{float}`
+> ```
+>
+> 原因是，根据 [IEEE 754](https://floating-point-gui.de) 标准定义的浮点数不是[全序集合 (Totally Ordered Set)](https://en.wikipedia.org/wiki/Total_order)。比较 [NaN](https://en.wikipedia.org/wiki/NaN#Comparison_with_NaN) 是有问题的，因为：
+>
+> ```plain-text
+> NaN != NaN
+> ```
+>
+> 在实践中这意味着，如果你能够将一个 `NaN` 插入到映射中，你不仅无法将其取回，而且这还可能破坏 `BTreeMap` 的内部数据结构，使得无法检索任何其它项目。
+>
+> *（顺便说一句，这对于自定义的 `Ord` 和 `PartialOrd` 实现也是如此。如果它们不满足[非对称性](https://en.wikipedia.org/wiki/Asymmetry#In_mathematics)和[传递性](https://simple.wikipedia.org/wiki/Transitivity_(mathematics))，那么你将会遇到麻烦。）*
+>
+> 如果你想进一步探索这个主题：
+>
+>  - https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html
+>  - https://www.reddit.com/r/rust/comments/cbrpll/why_doesnt_stdcmpord_is_implemented_for_floats
+>  - https://www.reddit.com/r/rust/comments/29kia3/no_ord_for_f32
+>  - https://stackoverflow.com/questions/26489701/why-does-rust-not-implement-total-ordering-via-the-ord-trait-for-f64-and-f32
 
 `cargo test`（或者如果你在工作空间的目录中，使用 `cargo test --workspace`）返回：
 
@@ -958,124 +922,115 @@ where
 }
 ```
 
-<Note>
-  你可能会想知道为什么我们通过参数传递 `rng` 而不是通过构造函数传递它。毕竟，随机数生成器不会在每次演化时更改！
-  <br style={{ marginBottom: '0.5em' }} />
-
-  这个决定更加微妙，让我们探索一下我们可以编写这段代码的其它方式：
-
-  1. 通过构造函数接受拥有的 PRNG：
-
-  ```rust
-  pub struct GeneticAlgorithm<R> {
-      rng: R,
-  }
-
-  impl<R> GeneticAlgorithm<R>
-  where
-      R: RngCore,
-  {
-      pub fn new(rng: R) -> Self {
-          Self { rng }
-      }
-  }
-  ```
-
-  2. 通过构造函数接受借用的 PRNG：
-
-  ```rust
-  pub struct GeneticAlgorithm<'r> {
-      rng: &'r mut dyn RngCore,
-  }
-
-  impl<'r> GeneticAlgorithm<'r> {
-      pub fn new(rng: &'r mut dyn RngCore) -> Self {
-          Self { rng }
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  第一种方法是我会建议在 C# 或 Java 中使用的方法。但在 Rust 中情况不同，因为如果我们将 `rng` 移动到构造函数中，我们将无法在应用程序的其它位置使用它：
-
-  ```rust
-  fn main() {
-      let rng = /* ... */;
-      let ga = GeneticAlgorithm::new(rng);
-
-      // oh no, we can't use this `rng` anymore!
-      if rng.gen_bool() {
-          /* ... */
-      } else {
-          /* ... */
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  你可以争论同样的情况已经发生在 `SelectionMethod` 上：
-
-  ```rust
-  fn main() {
-      let sp = RouletteWheelSelection::new();
-      let ga = GeneticAlgorithm::new(sp);
-
-      // oh no, we can't use this `sp` anymore!
-      if sp.something() {
-          /* ... */
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……但在我看来，`Rng` 是一个更具有通用性的 trait。在 `GeneticAlgorithm` 之外使用它是有意义的，而对于 `SelectionMethod` 则不能这样说。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  总而言之，你可以说这是一个牵强的解释。选择一个「更通用」的 trait 只不过是一种直觉。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  至于 `&mut dyn RngCore` 变体，我认为它是最糟糕的。因为它需要对 `rng` 进行唯一借用 (`&mut`)，所以它不仅「锁定」了 PRNG，还使其在遗传算法的生命周期内不能被其它地方使用：
-
-  ```rust
-  fn main() {
-      let rng = /* ... */;
-      let ga = GeneticAlgorithm::new(&mut rng);
-
-      // oh no, we still can't use this `rng`!
-      let population = if rng.gen_bool() {
-          /* ... */
-      } else {
-          /* ... */
-      };
-
-      ga.evolve(population);
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……它也会阻止其它有效的用例，例如：
-
-  ```rust
-  struct Simulation {
-      rng: ChaCha8Rng,
-      ga: GeneticAlgoritm<'whats_this_lifetime??>,
-  }
-
-  impl Simulation {
-      pub fn new_chacha() -> Self {
-          let rng = ChaCha8Rng::from_seed(Default::default());
-          let ga = GeneticAlgorithm::new(&mut rng);
-
-          Self { rng, ga } // whoopsie
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  顺便说一下，这被称为 **自引用结构 (Self-referential Struct)**：
-   - https://stackoverflow.com/questions/32300132/why-cant-i-store-a-value-and-a-reference-to-that-value-in-the-same-struct
-   - https://boats.gitlab.io/blog/post/2018-01-25-async-i-self-referential-structs
-</Note>
+> [!NOTE]
+> 你可能会想知道为什么我们通过参数传递 `rng` 而不是通过构造函数传递它。毕竟，随机数生成器不会在每次演化时更改！
+>
+> 这个决定更加微妙，让我们探索一下我们可以编写这段代码的其它方式：
+>
+> 1. 通过构造函数接受拥有的 PRNG：
+>
+> ```rust
+> pub struct GeneticAlgorithm<R> {
+>     rng: R,
+> }
+>
+> impl<R> GeneticAlgorithm<R>
+> where
+>     R: RngCore,
+> {
+>     pub fn new(rng: R) -> Self {
+>         Self { rng }
+>     }
+> }
+> ```
+>
+> 2. 通过构造函数接受借用的 PRNG：
+>
+> ```rust
+> pub struct GeneticAlgorithm<'r> {
+>     rng: &'r mut dyn RngCore,
+> }
+>
+> impl<'r> GeneticAlgorithm<'r> {
+>     pub fn new(rng: &'r mut dyn RngCore) -> Self {
+>         Self { rng }
+>     }
+> }
+> ```
+>
+> 第一种方法是我会建议在 C# 或 Java 中使用的方法。但在 Rust 中情况不同，因为如果我们将 `rng` 移动到构造函数中，我们将无法在应用程序的其它位置使用它：
+>
+> ```rust
+> fn main() {
+>     let rng = /* ... */;
+>     let ga = GeneticAlgorithm::new(rng);
+>
+>     // oh no, we can't use this `rng` anymore!
+>     if rng.gen_bool() {
+>         /* ... */
+>     } else {
+>         /* ... */
+>     }
+> }
+> ```
+>
+> 你可以争论同样的情况已经发生在 `SelectionMethod` 上：
+>
+> ```rust
+> fn main() {
+>     let sp = RouletteWheelSelection::new();
+>     let ga = GeneticAlgorithm::new(sp);
+>
+>     // oh no, we can't use this `sp` anymore!
+>     if sp.something() {
+>         /* ... */
+>     }
+> }
+> ```
+>
+> ……但在我看来，`Rng` 是一个更具有通用性的 trait。在 `GeneticAlgorithm` 之外使用它是有意义的，而对于 `SelectionMethod` 则不能这样说。
+>
+> 总而言之，你可以说这是一个牵强的解释。选择一个「更通用」的 trait 只不过是一种直觉。
+>
+> 至于 `&mut dyn RngCore` 变体，我认为它是最糟糕的。因为它需要对 `rng` 进行唯一借用 (`&mut`)，所以它不仅「锁定」了 PRNG，还使其在遗传算法的生命周期内不能被其它地方使用：
+>
+> ```rust
+> fn main() {
+>     let rng = /* ... */;
+>     let ga = GeneticAlgorithm::new(&mut rng);
+>
+>     // oh no, we still can't use this `rng`!
+>     let population = if rng.gen_bool() {
+>         /* ... */
+>     } else {
+>         /* ... */
+>     };
+>
+>     ga.evolve(population);
+> }
+> ```
+>
+> ……它也会阻止其它有效的用例，例如：
+>
+> ```rust
+> struct Simulation {
+>     rng: ChaCha8Rng,
+>     ga: GeneticAlgoritm<'whats_this_lifetime??>,
+> }
+>
+> impl Simulation {
+>     pub fn new_chacha() -> Self {
+>         let rng = ChaCha8Rng::from_seed(Default::default());
+>         let ga = GeneticAlgorithm::new(&mut rng);
+>
+>         Self { rng, ga } // whoopsie
+>     }
+> }
+> ```
+>
+> 顺便说一下，这被称为 **自引用结构 (Self-referential Struct)**：
+>  - https://stackoverflow.com/questions/32300132/why-cant-i-store-a-value-and-a-reference-to-that-value-in-the-same-struct
+>  - https://boats.gitlab.io/blog/post/2018-01-25-async-i-self-referential-structs
 
 ## 实现 Crossover
 
@@ -1196,125 +1151,119 @@ impl IntoIterator for Chromosome {
 }
 ```
 
-<Note>
-  `std::vec::IntoIter<f32>` 迭代器只是另一种类型，它实现了 `Iterator` trait。
-
-  ```rust
-  struct Fibonacci {
-      prev: u32,
-      curr: u32,
-  }
-
-  impl Default for Fibonacci {
-      fn default() -> Self {
-          Self { prev: 0, curr: 1 }
-      }
-  }
-
-  impl Iterator for Fibonacci {
-      type Item = u32;
-
-      fn next(&mut self) -> Option<u32> {
-          let next = self.prev + self.curr;
-
-          self.prev = self.curr;
-          self.curr = next;
-
-          Some(self.prev)
-      }
-  }
-
-  fn main() {
-      for number in Fibonacci::default().take(10) {
-          println!("{}", number);
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  因此，如果你想将类型转换为迭代器，你需要知道目标的可迭代类型是什么。在我们的例子中，由于 `Chromosome` 只是 `Vec` 的 **包装器 (Wrapper)**，目标类型是 `std::vec::IntoIter`：
-
-  ```rust
-  struct Chromosome {
-      genes: Vec<f32>,
-  }
-
-  impl IntoIterator for Chromosome {
-      type Item = f32;
-      type IntoIter = (); // note that we're deliberately using the wrong type here
-
-      fn into_iter(self) -> Self::IntoIter {
-          self.genes.into_iter()
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ```plain-text
-  error[E0308]: mismatched types
-     |
-     | /* ... */
-     |
-     = note: expected unit type `()`
-                   found struct `std::vec::IntoIter<f32>`
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  然而，命名这种类型并不容易，因为诸如 `.filter()` 或 `.map()` 这样的 **组合器 (Combinators)** 都会影响它：
-
-  ```rust
-  struct Somethinger {
-      values: Vec<f32>,
-  }
-
-  impl IntoIterator for Somethinger {
-      type Item = f32;
-      type IntoIter = ();
-
-      fn into_iter(self) -> Self::IntoIter {
-          self.values
-              .into_iter()
-              .filter(|value| *value > 0.0)
-              .map(|value| value * 10.0)
-      }
-  }
-  ```
-
-  ```plain-text
-  error[E0308]: mismatched types
-     |
-     | /* ... */
-     |
-     = note: expected unit type `()`
-                   found struct `Map<Filter<std::vec::IntoIter<f32>, {closure}>, {closure}>`
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  Nightly Rust 为这个问题提供了一个舒适的解决方案——`impl_trait_in_assoc_type`：
-
-  ```rust
-  #![feature(impl_trait_in_assoc_type)]
-
-  struct Somethinger {
-      values: Vec<f32>,
-  }
-
-  impl IntoIterator for Somethinger {
-      type Item = f32;
-      type IntoIter = impl Iterator<Item = f32>;
-
-      fn into_iter(self) -> Self::IntoIter {
-          self.values
-              .into_iter()
-              .filter(|value| *value > 0.0)
-              .map(|value| value * 10.0)
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  实质上就是让编译器自行找出类型。但由于我们使用的是稳定的工具链，我们无法使用这个特性。幸运的是，我们也不需要使用它。
-</Note>
+> [!NOTE]
+> `std::vec::IntoIter<f32>` 迭代器只是另一种类型，它实现了 `Iterator` trait。
+>
+> ```rust
+> struct Fibonacci {
+>     prev: u32,
+>     curr: u32,
+> }
+>
+> impl Default for Fibonacci {
+>     fn default() -> Self {
+>         Self { prev: 0, curr: 1 }
+>     }
+> }
+>
+> impl Iterator for Fibonacci {
+>     type Item = u32;
+>
+>     fn next(&mut self) -> Option<u32> {
+>         let next = self.prev + self.curr;
+>
+>         self.prev = self.curr;
+>         self.curr = next;
+>
+>         Some(self.prev)
+>     }
+> }
+>
+> fn main() {
+>     for number in Fibonacci::default().take(10) {
+>         println!("{}", number);
+>     }
+> }
+> ```
+>
+> 因此，如果你想将类型转换为迭代器，你需要知道目标的可迭代类型是什么。在我们的例子中，由于 `Chromosome` 只是 `Vec` 的 **包装器 (Wrapper)**，目标类型是 `std::vec::IntoIter`：
+>
+> ```rust
+> struct Chromosome {
+>     genes: Vec<f32>,
+> }
+>
+> impl IntoIterator for Chromosome {
+>     type Item = f32;
+>     type IntoIter = (); // note that we're deliberately using the wrong type here
+>
+>     fn into_iter(self) -> Self::IntoIter {
+>         self.genes.into_iter()
+>     }
+> }
+> ```
+>
+> ```plain-text
+> error[E0308]: mismatched types
+>    |
+>    | /* ... */
+>    |
+>    = note: expected unit type `()`
+>                  found struct `std::vec::IntoIter<f32>`
+> ```
+>
+> 然而，命名这种类型并不容易，因为诸如 `.filter()` 或 `.map()` 这样的 **组合器 (Combinators)** 都会影响它：
+>
+> ```rust
+> struct Somethinger {
+>     values: Vec<f32>,
+> }
+>
+> impl IntoIterator for Somethinger {
+>     type Item = f32;
+>     type IntoIter = ();
+>
+>     fn into_iter(self) -> Self::IntoIter {
+>         self.values
+>             .into_iter()
+>             .filter(|value| *value > 0.0)
+>             .map(|value| value * 10.0)
+>     }
+> }
+> ```
+>
+> ```plain-text
+> error[E0308]: mismatched types
+>    |
+>    | /* ... */
+>    |
+>    = note: expected unit type `()`
+>                  found struct `Map<Filter<std::vec::IntoIter<f32>, {closure}>, {closure}>`
+> ```
+>
+> Nightly Rust 为这个问题提供了一个舒适的解决方案——`impl_trait_in_assoc_type`：
+>
+> ```rust
+> #![feature(impl_trait_in_assoc_type)]
+>
+> struct Somethinger {
+>     values: Vec<f32>,
+> }
+>
+> impl IntoIterator for Somethinger {
+>     type Item = f32;
+>     type IntoIter = impl Iterator<Item = f32>;
+>
+>     fn into_iter(self) -> Self::IntoIter {
+>         self.values
+>             .into_iter()
+>             .filter(|value| *value > 0.0)
+>             .map(|value| value * 10.0)
+>     }
+> }
+> ```
+>
+> 实质上就是让编译器自行找出类型。但由于我们使用的是稳定的工具链，我们无法使用这个特性。幸运的是，我们也不需要使用它。
 
 正如我之前所说的：
 
@@ -1602,43 +1551,39 @@ where
 }
 ```
 
-<Note>
-  与 `SelectionMethod::select()` 相反，`CrossoverMethod::crossover()` 不包含任何泛型参数，这就是为什么我们可以将其包装在 `Box` 中的<a href="https://doc.rust-lang.org/book/ch17-02-trait-objects.html#object-safety-is-required-for-trait-objects" target="blank" style={{ color: `#8e91f2` }}>原因</a>。另一种方法可能是：
-
-  ```rust
-  pub struct GeneticAlgorithm<S, C> {
-      selection_method: S,
-      crossover_method: C,
-  }
-
-  impl<S, C> GeneticAlgorithm<S, C>
-  where
-      S: SelectionMethod,
-      C: CrossoverMethod,
-  {
-      pub fn new(
-          selection_method: S,
-          crossover_method: C,
-      ) -> Self {
-          Self {
-              selection_method,
-              crossover_method,
-          }
-      }
-
-      /* ... */
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……这里的权衡与我们之前讨论 `T: Trait` vs `dyn Trait` 时一样（其中 `Box<dyn Trait>` 对应为动态分发）。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  因为 Rust 让在泛型参数上添加基因参数变得非常容易，一些人认为使用 `Box`（它有轻微的性能损失）会使 Rust 代码不符合惯用法。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  我的观点是，`Box` 是一种方便的机制，其潜在的运行时权衡是通过更易于维护的代码来支付的。我建议使用 `Box`，除非基准测试证明它是一个问题，或者除非它使代码难以阅读。
-</Note>
+> [!NOTE]
+> 与 `SelectionMethod::select()` 相反，`CrossoverMethod::crossover()` 不包含任何泛型参数，这就是为什么我们可以将其包装在 `Box` 中的<a href="https://doc.rust-lang.org/book/ch17-02-trait-objects.html#object-safety-is-required-for-trait-objects" target="blank" style={{ color: `#8e91f2` }}>原因</a>。另一种方法可能是：
+>
+> ```rust
+> pub struct GeneticAlgorithm<S, C> {
+>     selection_method: S,
+>     crossover_method: C,
+> }
+>
+> impl<S, C> GeneticAlgorithm<S, C>
+> where
+>     S: SelectionMethod,
+>     C: CrossoverMethod,
+> {
+>     pub fn new(
+>         selection_method: S,
+>         crossover_method: C,
+>     ) -> Self {
+>         Self {
+>             selection_method,
+>             crossover_method,
+>         }
+>     }
+>
+>     /* ... */
+> }
+> ```
+>
+> ……这里的权衡与我们之前讨论 `T: Trait` vs `dyn Trait` 时一样（其中 `Box<dyn Trait>` 对应为动态分发）。
+>
+> 因为 Rust 让在泛型参数上添加基因参数变得非常容易，一些人认为使用 `Box`（它有轻微的性能损失）会使 Rust 代码不符合惯用法。
+>
+> 我的观点是，`Box` 是一种方便的机制，其潜在的运行时权衡是通过更易于维护的代码来支付的。我建议使用 `Box`，除非基准测试证明它是一个问题，或者除非它使代码难以阅读。
 
 ……然后我们可以调用它：
 

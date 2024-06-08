@@ -1,7 +1,7 @@
 ---
 title: "Avolve Part-2"
 date: '2024-04-05'
-lastmod: '2024-04-05'
+lastmod: '2024-06-08'
 tags: ['Avolve', 'Neural Network', 'Genetic Algorithm']
 draft: false
 summary: "基于神经网络和遗传算法实现的模拟进化 Part-2"
@@ -54,9 +54,10 @@ members = [
 cargo new neural-network --name neural-network --lib
 ```
 
-<Note>
-  组织工作区的方法有很多。你可以将所有内容储存到名为 `crates` 的目录中，而不是将所有内容保存在名为 libs 的目录中；或者，你也可以创建两个单独的目录，一个用于 `application-crate`，另一个用于 `library-crate`。<br style={{ marginBottom: '0.5em' }} />对此没有标准指南，请跟随你的直觉。
-</Note>
+> [!NOTE]
+> 组织工作区的方法有很多。你可以将所有内容储存到名为 `crates` 的目录中，而不是将所有内容保存在名为 libs 的目录中；或者，你也可以创建两个单独的目录，一个用于 `application-crate`，另一个用于 `library-crate`。
+>
+> 对此没有标准指南，请跟随你的直觉。
 
 ## 实现 propagate()
 
@@ -88,75 +89,69 @@ impl Network {
 }
 ```
 
-<Note>
-  虽然某些语言允许将「暂未实现」的函数留空：
-
-  ```c
-  int get_berry_number() {
-    // TODO solve the paradox
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  但这在 rust 是错误的：
-
-  ```rust
-  fn berry_number() -> usize {
-    // TODO solve the paradox
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ```plain-text
-  error[E0308]: mismatched types
-   --> src/lib.rs
-    |
-  1 | fn berry_number() -> usize {
-    |    ------------      ^^^^^ expected `usize`, found `()`
-    |    |
-    |    implicitly returns `()` as its body has no tail or `return`
-    |    expression
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  这是因为 rust 中几乎所有内容都是表达式：
-
-  ```rust
-  let value = if condition {
-      "computer says yass"
-  } else {
-      "computer says no"
-  };
-
-  let value = loop {
-      break 123;
-  };
-
-  let value = {
-      // empty block is an expression, too
-  };
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……所以 rust 看到的实际是：
-
-  ```rust
-  fn berry_number() -> usize {
-      return ();
-  }  
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  `()` 被称为单元类型。<br style={{ marginBottom: '0.5em' }} />
-
-  为了解决这个问题，rust 提供了两个宏：`todo!()` 和它的老表弟 `unimplemented!()`。<br style={{ marginBottom: '0.5em' }} />
-
-  这两个宏都允许编译代码，并且在运行中遇到时会导致应用程序安全崩溃：<br style={{ marginBottom: '0.5em' }} />
-
-  ```plain-text
-  thread 'main' panicked at 'not yet implemented'
-  ```
-</Note>
+> [!NOTE]
+> 虽然某些语言允许将「暂未实现」的函数留空：
+>
+> ```c
+> int get_berry_number() {
+>   // TODO solve the paradox
+> }
+> ```
+>
+> 但这在 rust 是错误的：
+>
+> ```rust
+> fn berry_number() -> usize {
+>   // TODO solve the paradox
+> }
+> ```
+>
+> ```plain-text
+> error[E0308]: mismatched types
+>  --> src/lib.rs
+>   |
+> 1 | fn berry_number() -> usize {
+>   |    ------------      ^^^^^ expected `usize`, found `()`
+>   |    |
+>   |    implicitly returns `()` as its body has no tail or `return`
+>   |    expression
+> ```
+>
+> 这是因为 rust 中几乎所有内容都是表达式：
+>
+> ```rust
+> let value = if condition {
+>     "computer says yass"
+> } else {
+>     "computer says no"
+> };
+>
+> let value = loop {
+>     break 123;
+> };
+>
+> let value = {
+>     // empty block is an expression, too
+> };
+> ```
+>
+> ……所以 rust 看到的实际是：
+>
+> ```rust
+> fn berry_number() -> usize {
+>     return ();
+> }
+> ```
+>
+> `()` 被称为单元类型。
+>
+> 为了解决这个问题，rust 提供了两个宏：`todo!()` 和它的老表弟 `unimplemented!()`。
+>
+> 这两个宏都允许编译代码，并且在运行中遇到时会导致应用程序安全崩溃：
+>
+> ```plain-text
+> thread 'main' panicked at 'not yet implemented'
+> ```
 
 网络是由众多的层构建的：
 
@@ -233,15 +228,14 @@ struct Neuron {
 
 Nice.
 
-<Note>
-  你可能会注意到我们只有两个对象是公共的：`Network` 和 `Network::propagate()`。<br style={{ marginBottom: '0.5em' }} />
-
-  这是因为 `Layer` 和 `Neuron` 只是一个实现细节，我们不会将它们暴露在外，没有这个必要。<br style={{ marginBottom: '0.5em' }} />
-
-  通过这种方法，我们可以在不对下游（我们库的用户）造成破坏性变化的情况下对我们的实现进行更改。<br style={{ marginBottom: '0.5em' }} />
-
-  例如，Real Neural Networks™ 通常使用矩阵实现。如果我们决定重写我们的网络以使用矩阵，那么这不会是一个破坏性的变化：`Network::propagate()` 的签名将保持不变，由于用户无法访问 `Layer` 和 `Neuron`，用户将无法注意到它们其实已经消失了。
-</Note>
+> [!NOTE]
+> 你可能会注意到我们只有两个对象是公共的：`Network` 和 `Network::propagate()`。
+>
+> 这是因为 `Layer` 和 `Neuron` 只是一个实现细节，我们不会将它们暴露在外，没有这个必要。
+>
+> 通过这种方法，我们可以在不对下游（我们库的用户）造成破坏性变化的情况下对我们的实现进行更改。
+>
+> 例如，Real Neural Networks™ 通常使用矩阵实现。如果我们决定重写我们的网络以使用矩阵，那么这不会是一个破坏性的变化：`Network::propagate()` 的签名将保持不变，由于用户无法访问 `Layer` 和 `Neuron`，用户将无法注意到它们其实已经消失了。
 
 接下来，由于数字必须通过每一层，所以我们还需要在那里有一个 `propagate()`：
 
@@ -295,90 +289,87 @@ impl Network {
 }
 ```
 
-<Note>
-  但是，这难道不会迫使我们的调用者传递可变值吗？不会！
-
-  ```rust
-  fn process(mut items: Vec<f32>) {
-      // do something
-  }
-
-  fn main() {
-      let items = vec![1.2, 3.4, 5.6];
-      // ^ no `mut` needed here
-
-      process(items);
-      //      ^ just works
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  原因是我们刚刚引入的 `mut` 出现在所谓的绑定位置：
-
-  ```rust
-  fn foo_1(items: &[f32]) {
-      //   ^^^^^  ------
-      //  binding  type
-      // (immut.) (immut.)
-  }
-
-  fn foo_2(mut items: &[f32]) {
-      //   ^^^^^^^^^  ------
-      //    binding    type
-      //   (mutable) (immut.)
-  }
-
-  fn foo_3(items: &mut [f32]) {
-      //   ^^^^^  ----------
-      //  binding    type
-      // (immut.)  (mutable)
-  }
-
-  fn foo_4(mut items: &mut [f32]) {
-      //   ^^^^^^^^^  ----------
-      //    binding      type
-      //   (mutable)   (mutable)
-  }
-
-  struct Person {
-      name: String,
-      eyeball_radius: usize,
-  }
-
-  fn decompose(Person { name, mut eyeball_radius }: Person) {
-      //       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ------
-      //                     binding                 type
-      // (partially immutable, partially mutable) (immutable)
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……与类型相反，绑定是函数本地的：
-  ```rust
-  fn foo(items: &mut Vec<usize>) {
-      // When a type is mutable, you can modify the thing being
-      // referenced:
-      items.push(1234);
-
-      // But if the binding remains immutable, you cannot modify
-      // *which* thing is referenced:
-      items = some_another_vector;
-      //    ^ error: cannot assign to immutable argument
-  }
-
-  fn bar(mut items: &Vec<usize>) {
-      // On the other hand, when a binding is mutable, you can change
-      // *which* thing is referenced:
-      items = some_another_vector;
-
-      // But if the type remains immutable, you cannot modify the
-      // thing itself:
-      items.push(1234);
-      //   ^^^^^ error: cannot borrow `*items` as mutable, as it is
-      //         behind a `&` reference
-  }
-  ```
-</Note>
+> [!NOTE]
+> 但是，这难道不会迫使我们的调用者传递可变值吗？不会！
+>
+> ```rust
+> fn process(mut items: Vec<f32>) {
+>     // do something
+> }
+>
+> fn main() {
+>     let items = vec![1.2, 3.4, 5.6];
+>     // ^ no `mut` needed here
+>
+>     process(items);
+>     //      ^ just works
+> }
+> ```
+>
+> 原因是我们刚刚引入的 `mut` 出现在所谓的绑定位置：
+>
+> ```rust
+> fn foo_1(items: &[f32]) {
+>     //   ^^^^^  ------
+>     //  binding  type
+>     // (immut.) (immut.)
+> }
+>
+> fn foo_2(mut items: &[f32]) {
+>     //   ^^^^^^^^^  ------
+>     //    binding    type
+>     //   (mutable) (immut.)
+> }
+>
+> fn foo_3(items: &mut [f32]) {
+>     //   ^^^^^  ----------
+>     //  binding    type
+>     // (immut.)  (mutable)
+> }
+>
+> fn foo_4(mut items: &mut [f32]) {
+>     //   ^^^^^^^^^  ----------
+>     //    binding      type
+>     //   (mutable)   (mutable)
+> }
+>
+> struct Person {
+>     name: String,
+>     eyeball_radius: usize,
+> }
+>
+> fn decompose(Person { name, mut eyeball_radius }: Person) {
+>     //       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ------
+>     //                     binding                 type
+>     // (partially immutable, partially mutable) (immutable)
+> }
+> ```
+>
+> ……与类型相反，绑定是函数本地的：
+> ```rust
+> fn foo(items: &mut Vec<usize>) {
+>     // When a type is mutable, you can modify the thing being
+>     // referenced:
+>     items.push(1234);
+>
+>     // But if the binding remains immutable, you cannot modify
+>     // *which* thing is referenced:
+>     items = some_another_vector;
+>     //    ^ error: cannot assign to immutable argument
+> }
+>
+> fn bar(mut items: &Vec<usize>) {
+>     // On the other hand, when a binding is mutable, you can change
+>     // *which* thing is referenced:
+>     items = some_another_vector;
+>
+>     // But if the type remains immutable, you cannot modify the
+>     // thing itself:
+>     items.push(1234);
+>     //   ^^^^^ error: cannot borrow `*items` as mutable, as it is
+>     //         behind a `&` reference
+> }
+> ```
 
 我们还可以对代码进行进一步的改进，这种模式称为 **折叠 (Folding)**：
 
@@ -691,25 +682,22 @@ impl Neuron {
 }
 ```
 
-<Note>
-  诸如 `input[i]` 之类的数组索引操作总是会执行所谓的 **边界检查 (bounds check)**。这是一段确保索引位于数组边界内的代码，当它越界时会出现 `panick`：
-
-  ```rust
-  fn main() {
-      let numbers = vec![1];
-      println!("{}", numbers[123]);
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ```plain-text
-  thread 'main' panicked at 'index out of bounds: the len is 1 but
-  the index is 123'
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  当你使用如 `.zip()` 或 `.map()` 这样的组合器而不是索引时，编译器会省略这些检查，使你的代码不仅更易读，而且更快。
-</Note>
+> [!NOTE]
+> 诸如 `input[i]` 之类的数组索引操作总是会执行所谓的 **边界检查 (bounds check)**。这是一段确保索引位于数组边界内的代码，当它越界时会出现 `panick`：
+>
+> ```rust
+> fn main() {
+>     let numbers = vec![1];
+>     println!("{}", numbers[123]);
+> }
+> ```
+>
+> ```plain-text
+> thread 'main' panicked at 'index out of bounds: the len is 1 but
+> the index is 123'
+> ```
+>
+> 当你使用如 `.zip()` 或 `.map()` 这样的组合器而不是索引时，编译器会省略这些检查，使你的代码不仅更易读，而且更快。
 
 ……然后使用 `.map()` + `.sum()`：
 
@@ -905,50 +893,44 @@ impl Network {
 }
 ```
 
-<Note>
-  如果你了解[解构](https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html#destructuring-to-break-apart-values)，你可能会考虑进一步重写此循环：
-
-  ```rust
-  for [fst, snd] in layers.windows(2) {
-      built_layers.push(Layer::random(fst.neurons, snd.neurons));
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……但遗憾的是，编译器表示不行：
-
-  ```plain-text
-  error[E0005]: refutable pattern in `for` loop binding: `&[]`,
-                `&[_]` and `&[_, _, _, ..]` not covered
-   --> src/lib.rs
-    |
-    |     for [fst, snd] in layers.windows(2) {
-    |         ^^^^^^^^^^ patterns `&[]`, `&[_]` and `&[_, _, _, ..]`
-    |                    not covered
-    |
-    = note: the matched value is of type `&[LayerTopology]`
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  编译器并不知道 `.windows(2)` 返回恰好两个元素的数组。在它看来，`.windows(2)` 可能返回大小不一的数组，不一定匹配我们的模式。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  （顺便说一句，这就是可反驳模式的含义：它是一个不匹配所有可能情况的模式。其反义词是不可反驳模式，只有那些在这样的地方才被允许。）
-  <br style={{ marginBottom: '0.5em' }} />
-
-  `Nightly` 版的 `rust`，在稳定了部分 `const` 泛型的情况下，提供了一种解决方案——`.array_windows()`：
-
-  ```rust
-  #![feature(array_windows)]
-
-  for [fst, snd] in layers.array_windows() {
-      built_layers.push(Layer::random(fst.neurons, snd.neurons));
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……但为了简单起见，我们将避开 `const` 泛型，继续使用稳定的函数。
-</Note>
+> [!NOTE]
+> 如果你了解[解构](https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html#destructuring-to-break-apart-values)，你可能会考虑进一步重写此循环：
+>
+> ```rust
+> for [fst, snd] in layers.windows(2) {
+>     built_layers.push(Layer::random(fst.neurons, snd.neurons));
+> }
+> ```
+>
+> ……但遗憾的是，编译器表示不行：
+>
+> ```plain-text
+> error[E0005]: refutable pattern in `for` loop binding: `&[]`,
+>               `&[_]` and `&[_, _, _, ..]` not covered
+>  --> src/lib.rs
+>   |
+>   |     for [fst, snd] in layers.windows(2) {
+>   |         ^^^^^^^^^^ patterns `&[]`, `&[_]` and `&[_, _, _, ..]`
+>   |                    not covered
+>   |
+>   = note: the matched value is of type `&[LayerTopology]`
+> ```
+>
+> 编译器并不知道 `.windows(2)` 返回恰好两个元素的数组。在它看来，`.windows(2)` 可能返回大小不一的数组，不一定匹配我们的模式。
+>
+> （顺便说一句，这就是可反驳模式的含义：它是一个不匹配所有可能情况的模式。其反义词是不可反驳模式，只有那些在这样的地方才被允许。）
+>
+> `Nightly` 版的 `rust`，在稳定了部分 `const` 泛型的情况下，提供了一种解决方案——`.array_windows()`：
+>
+> ```rust
+> #![feature(array_windows)]
+>
+> for [fst, snd] in layers.array_windows() {
+>     built_layers.push(Layer::random(fst.neurons, snd.neurons));
+> }
+> ```
+>
+> ……但为了简单起见，我们将避开 `const` 泛型，继续使用稳定的函数。
 
 在这种情况下，切换到迭代器对我来说是理所当然的：
 
@@ -1031,50 +1013,46 @@ impl Layer {
 }
 ```
 
-<Note>
-  `|_| ()`，也被称为<a href="https://www.reddit.com/r/rustjerk/comments/8udbth/a_new_war_begins_choose_your_side" target="blank" style={{ color: `#8e91f2` }}>厕所闭包 LMAO (Toilet Closure)</a>，是一个用于接受它不关心的参数的函数。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  我们也可以写成：
-
-  ```rust
-  .map(|output_neuron_id| Neuron::random(input))
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……但是由于我们不必在任何地方读取此 `output_neuron_id`，因此将参数命名为 `_`（或 `_output_neuron_id`）更惯用，以注释它没有被使用的事实。
-  <br style={{ marginBottom: '0.5em' }} />
-
-  此外，`_` 本身也称为<a href="https://doc.rust-lang.org/reference/patterns.html#destructuring" target="blank" style={{ color: `#8e91f2` }}>占位符 (Placeholder)</a>，它可以在几种不同的上下文中使用：
-
-  ```rust
-  // As a binding:
-  fn ignore_some_arguments(_: usize, b: usize, _: usize) {
-      //                   ^                   ^
-  }
-
-  // ... but not as a name:
-  fn _() {
-  // ^ error: expected identifier, found reserved identifier `_`
-  }
-
-  // As a type:
-  fn load_files(paths: &[&Path]) -> Vec<String> {
-      paths
-          .iter()
-          .map(std::fs::read_to_string)
-          .collect::<Result<_, _>>()
-      //                    ^  ^
-          .unwrap()
-  }
-
-  // ... but only inside expressions:
-  fn what_am_i(foo: _) {
-      //            ^ error: the type placeholder `_` is not allowed
-      //              within types on item signatures
-  }
-  ```
-</Note>
+> [!NOTE]
+> `|_| ()`，也被称为<a href="https://www.reddit.com/r/rustjerk/comments/8udbth/a_new_war_begins_choose_your_side" target="blank" style={{ color: `#8e91f2` }}>厕所闭包 LMAO (Toilet Closure)</a>，是一个用于接受它不关心的参数的函数。
+>
+> 我们也可以写成：
+>
+> ```rust
+> .map(|output_neuron_id| Neuron::random(input))
+> ```
+>
+> ……但是由于我们不必在任何地方读取此 `output_neuron_id`，因此将参数命名为 `_`（或 `_output_neuron_id`）更惯用，以注释它没有被使用的事实。
+>
+> 此外，`_` 本身也称为<a href="https://doc.rust-lang.org/reference/patterns.html#destructuring" target="blank" style={{ color: `#8e91f2` }}>占位符 (Placeholder)</a>，它可以在几种不同的上下文中使用：
+>
+> ```rust
+> // As a binding:
+> fn ignore_some_arguments(_: usize, b: usize, _: usize) {
+>     //                   ^                   ^
+> }
+>
+> // ... but not as a name:
+> fn _() {
+> // ^ error: expected identifier, found reserved identifier `_`
+> }
+>
+> // As a type:
+> fn load_files(paths: &[&Path]) -> Vec<String> {
+>     paths
+>         .iter()
+>         .map(std::fs::read_to_string)
+>         .collect::<Result<_, _>>()
+>     //                    ^  ^
+>         .unwrap()
+> }
+>
+> // ... but only inside expressions:
+> fn what_am_i(foo: _) {
+>     //            ^ error: the type placeholder `_` is not allowed
+>     //              within types on item signatures
+> }
+> ```
 
 最后：
 
@@ -1130,10 +1108,10 @@ impl Neuron {
 }
 ```
 
-<Note>
-  `0..3` 是匹配 $[0, 2)$ 的半开区间。<br style={{ marginBottom: '0.5em' }} />
-  `0..=3` 是匹配 $[0, 3]$ 的闭区间。
-</Note>
+> [!NOTE]
+> `0..3` 是匹配 $[0, 2)$ 的半开区间。
+>
+> `0..=3` 是匹配 $[0, 3]$ 的闭区间。
 
 Neat.
 
@@ -1286,49 +1264,46 @@ impl Neuron {
 
 ……现在，我们可以在测试中使用假的、可预测的 `PRNG`，而用户只需传递他们选择的实际 `PRNG`。
 
-<Note>
-  你可以使用类似的模式来测试程序的输出，如果不是使用：
-
-  ```rust
-  fn do_something() {
-      println!("Doing something...");
-      println!("... done!");
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……你用：
-
-  ```rust
-  fn do_something(stdout: &mut dyn Write) {
-      writeln!(stdout, "Doing something...").unwrap();
-      writeln!(stdout, "... done!").unwrap();
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……然后你就可以很容易地测试输出：
-
-  ```rust
-  #[test]
-  fn ensure_something_happens() {
-      let mut stdout = String::new();
-      do_something(&mut stdout);
-
-      assert_eq!(stdout, "Doing something...\n... done!\n");
-  }
-  ```
-
-  这非常方便。<br style={{ marginBottom: '0.5em' }} />
-
-  无论是 `do_something()` 还是 `random()` 在技术上都不是纯函数，因为它们都缺乏一种叫做<a href="https://en.wikipedia.org/wiki/Referential_transparency" target="blank" style={{ color: `#8e91f2` }}>引用透明性</a>的属性。尽管，如果有人坚持，总是可以使用：
-
-  ```rust
-  fn do_something<W: Write>(stdout: W) -> W {
-      /* ... */
-  }
-  ```
-</Note>
+> [!NOTE]
+> 你可以使用类似的模式来测试程序的输出，如果不是使用：
+>
+> ```rust
+> fn do_something() {
+>     println!("Doing something...");
+>     println!("... done!");
+> }
+> ```
+>
+> ……你用：
+>
+> ```rust
+> fn do_something(stdout: &mut dyn Write) {
+>     writeln!(stdout, "Doing something...").unwrap();
+>     writeln!(stdout, "... done!").unwrap();
+> }
+> ```
+>
+> ……然后你就可以很容易地测试输出：
+>
+> ```rust
+> #[test]
+> fn ensure_something_happens() {
+>     let mut stdout = String::new();
+>     do_something(&mut stdout);
+>
+>     assert_eq!(stdout, "Doing something...\n... done!\n");
+> }
+> ```
+>
+> 这非常方便。
+>
+> 无论是 `do_something()` 还是 `random()` 在技术上都不是纯函数，因为它们都缺乏一种叫做<a href="https://en.wikipedia.org/wiki/Referential_transparency" target="blank" style={{ color: `#8e91f2` }}>引用透明性</a>的属性。尽管，如果有人坚持，总是可以使用：
+>
+> ```rust
+> fn do_something<W: Write>(stdout: W) -> W {
+>     /* ... */
+> }
+> ```
 
 因为 `rand` crate 不提供可预测或可种子的 `PRNG`，所以我们必须使用另一个 crate。我推荐 `rand_chacha`：
 
@@ -1552,92 +1527,88 @@ mod tests {
 }
 ```
 
-<Note>
-  你可能听说过，根据测试的前提条件和期望来命名测试是很有用的。<br style={{ marginBottom: '0.5em' }} />
-
-  通常这是正确的，如果我们正在编写一个商店，那么像这样构建其测试可能会很有用：
-
-  ```rust
-  #[cfg(test)]
-  mod tests {
-      use super::*;
-
-      mod cart {
-          use super::*;
-
-          mod when_user_adds_a_flower_to_their_cart {
-              use super::*;
-
-              #[test]
-              fn user_can_see_this_flower_in_their_cart() {
-                  /* ... */
-              }
-
-              #[test]
-              fn user_can_remove_this_flower_from_their_cart() {
-                  /* ... */
-              }
-
-              mod and_submits_order {
-                  /* ... */
-              }
-
-              mod and_abandons_cart {
-                  /* ... */
-              }
-          }
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  问题在于我们的 `Neuron` 不是典型的「业务代码」，并且许多「业务代码模式」不太适用于数学代码。如果我们需要考虑一些边缘情况，比如：
-
-  ```rust
-  fn propagate(/* ... */) {
-      if /* ... */ {
-          do_foo()
-      } else {
-          do_bar()
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……那么，创建两个单独的测试就有意义了：
-
-  ```rust
-  #[cfg(test)]
-  mod tests {
-      use super::*;
-
-      mod propagate {
-          use super::*;
-
-          mod given_neuron_with_foo {
-              use super::*;
-
-              #[test]
-              fn fooifies_it() {
-                  /* ... */
-              }
-          }
-
-          mod given_neuron_thats_bar {
-              use super::*;
-
-              #[test]
-              fn bars_it() {
-                  /* ... */
-              }
-          }
-      }
-  }
-  ```
-  <br style={{ marginBottom: '0.5em' }} />
-
-  ……但就我们目前的代码而言，我们最好只是使用简单的 `fn random()` 和 `fn propagate()`。
-</Note>
+> [!NOTE]
+> 你可能听说过，根据测试的前提条件和期望来命名测试是很有用的。
+>
+> 通常这是正确的，如果我们正在编写一个商店，那么像这样构建其测试可能会很有用：
+>
+> ```rust
+> #[cfg(test)]
+> mod tests {
+>     use super::*;
+>
+>     mod cart {
+>         use super::*;
+>
+>         mod when_user_adds_a_flower_to_their_cart {
+>             use super::*;
+>
+>             #[test]
+>             fn user_can_see_this_flower_in_their_cart() {
+>                 /* ... */
+>             }
+>
+>             #[test]
+>             fn user_can_remove_this_flower_from_their_cart() {
+>                 /* ... */
+>             }
+>
+>             mod and_submits_order {
+>                 /* ... */
+>             }
+>
+>             mod and_abandons_cart {
+>                 /* ... */
+>             }
+>         }
+>     }
+> }
+> ```
+>
+> 问题在于我们的 `Neuron` 不是典型的「业务代码」，并且许多「业务代码模式」不太适用于数学代码。如果我们需要考虑一些边缘情况，比如：
+>
+> ```rust
+> fn propagate(/* ... */) {
+>     if /* ... */ {
+>         do_foo()
+>     } else {
+>         do_bar()
+>     }
+> }
+> ```
+>
+> ……那么，创建两个单独的测试就有意义了：
+>
+> ```rust
+> #[cfg(test)]
+> mod tests {
+>     use super::*;
+>
+>     mod propagate {
+>         use super::*;
+>
+>         mod given_neuron_with_foo {
+>             use super::*;
+>
+>             #[test]
+>             fn fooifies_it() {
+>                 /* ... */
+>             }
+>         }
+>
+>         mod given_neuron_thats_bar {
+>             use super::*;
+>
+>             #[test]
+>             fn bars_it() {
+>                 /* ... */
+>             }
+>         }
+>     }
+> }
+> ```
+>
+> ……但就我们目前的代码而言，我们最好只是使用简单的 `fn random()` 和 `fn propagate()`。
 
 如何确保 `propagate()` 正确工作呢？通过手动计算预期响应：
 

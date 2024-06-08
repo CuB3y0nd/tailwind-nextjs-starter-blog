@@ -1,7 +1,7 @@
 ---
 title: "Avolve Part-1"
 date: '2024-04-04'
-lastmod: '2024-04-05'
+lastmod: '2024-06-08'
 tags: ['Avolve', 'Neural Network', 'Genetic Algorithm']
 draft: false
 summary: "基于神经网络和遗传算法实现的模拟进化 Part-1"
@@ -81,9 +81,8 @@ authors: ['default']
   <Image alt="（0.0 - 视线内没有物体；1.0 - 物体就在面前）" src="https://pic.imgdb.cn/item/660eb4f968eb935713d210bb.png" width={258} height={171} />
 </center>
 
-<Tip>
-  为了简单起见，我们的鸟看不到颜色 - 您可以使用<a href="https://raytracing.github.io/books/RayTracingInOneWeekend.html" target="blank" style={{ color: `#8e91f2` }}>光线追踪</a>使眼睛更加真实。
-</Tip>
+> [!TIP]
+> 为了简单起见，我们的鸟看不到颜色 - 您可以使用<a href="https://raytracing.github.io/books/RayTracingInOneWeekend.html" target="blank" style={{ color: `#8e91f2` }}>光线追踪</a>使眼睛更加真实。
 
 至于输出，我们可以使函数返回一个有关速度变化和旋转变化 $( \Delta speed,\ \Delta rotation)$ 的元组。
 
@@ -111,9 +110,8 @@ authors: ['default']
 
 对于我们的项目，主要关注 **前馈神经网络 (Feedforward neural network, FFNN)**……
 
-<Note>
-  FFNN 有时也被称为<a href="https://en.wikipedia.org/wiki/Multilayer_perceptron" target="blank" style={{ color: `#8e91f2` }}>多层感知器</a>，它是<a href="https://towardsdatascience.com/a-comprehensive-guide-to-convolutional-neural-networks-the-eli5-way-3bd2b1164a53" target="blank" style={{ color: `#8e91f2` }}>卷积神经网络</a>（例如 <a href="https://en.wikipedia.org/wiki/DeepDream" target="blank" style={{ color: `#8e91f2` }}>DeepDream</a>）的构建块之一。
-</Note>
+> [!NOTE]
+> FFNN 有时也被称为<a href="https://en.wikipedia.org/wiki/Multilayer_perceptron" target="blank" style={{ color: `#8e91f2` }}>多层感知器</a>，它是<a href="https://towardsdatascience.com/a-comprehensive-guide-to-convolutional-neural-networks-the-eli5-way-3bd2b1164a53" target="blank" style={{ color: `#8e91f2` }}>卷积神经网络</a>（例如 <a href="https://en.wikipedia.org/wiki/DeepDream" target="blank" style={{ color: `#8e91f2` }}>DeepDream</a>）的构建块之一。
 
 ……它看起来像这样：
 
@@ -125,9 +123,8 @@ authors: ['default']
 
 中间还可能存在别的层，它们被称为 **隐藏层 (Hidden Layers)**——它们提高了网络理解输入数据的能力（想一想：大脑越大，在某种程度上它就可能理解的「越抽象」）。
 
-<Tip>
-  <a href="https://www.youtube.com/watch?v=rA5qnZUXcqo" target="blank" style={{ color: `#8e91f2` }}>类似的过程</a>也发生在你自己的<a href="https://en.wikipedia.org/wiki/Visual_cortex" target="blank" style={{ color: `#8e91f2` }}>视觉皮层</a>内部！
-</Tip>
+> [!TIP]
+> <a href="https://www.youtube.com/watch?v=rA5qnZUXcqo" target="blank" style={{ color: `#8e91f2` }}>类似的过程</a>也发生在你自己的<a href="https://en.wikipedia.org/wiki/Visual_cortex" target="blank" style={{ color: `#8e91f2` }}>视觉皮层</a>内部！
 
 与生物神经网络（依靠电信号）相反，FFNN 的工作原理是在输入中接受一些 **数字**，并在整个网络中逐层传播（前馈）这些数字；最后一层出现的数字决定网络的最终结果。
 
@@ -168,9 +165,8 @@ FFNN 依赖于两个构建块：神经元和突触。
 
 想象一下，你有一个具有三个输入的神经元，每个输入决定它是否看到烤冷面 (1.0) 或没有 (0.0)。现在，如果你想创建一个在看到至少两个烤冷面时激活的神经元，你只需创建一个偏置为 $-1.0$ 的神经元； 这样，你的神经元的「自然」状态将为 $-1.0$（不激活），一个烤冷面时为 $0.0$（仍然不激活），两个时为 $1.0$（激活）。
 
-<Tip>
-  如果我的烤冷面比喻对你没有吸引力，那你可能会认为这个<a href="https://stackoverflow.com/questions/2480650/what-is-the-role-of-the-bias-in-neural-networks" target="blank" style={{ color: `#8e91f2` }}>基于数学的解释</a>对你更有帮助。
-</Tip>
+> [!TIP]
+> 如果我的烤冷面比喻对你没有吸引力，那你可能会认为这个<a href="https://stackoverflow.com/questions/2480650/what-is-the-role-of-the-bias-in-neural-networks" target="blank" style={{ color: `#8e91f2` }}>基于数学的解释</a>对你更有帮助。
 
 除了神经元之外，我们还有 **突触 (Synapses)**。突触就像一根导线，将一个神经元的输出连接到另一个神经元的输入；每个突触都有一定的 **权重 (Weight)**：
 
@@ -216,11 +212,10 @@ $0.1 - 0.3 = -0.2$
   <Image alt="nn-8" src="https://pic.imgdb.cn/item/660f747a68eb935713fcccd9.png" width={220} height={150} />
 </center>
 
-<Note>
-  另一个比较流行的激活函数是 tanh，它的图形看起来略有不同（形如 s）并且具有<a href="https://machinelearningmastery.com/rectified-linear-activation-function-for-deep-learning-neural-networks" target="blank" style={{ color: `#8e91f2` }}>不同的属性</a>。<br />
-
-  激活函数影响网络的输入和输出。例如，与 ReLU 相比，tanh 强制网络处理 $[-1.0, 1.0]$ 范围内的数字，而不是 $[0.0, \infty]$。
-</Note>
+> [!NOTE]
+> 另一个比较流行的激活函数是 tanh，它的图形看起来略有不同（形如 s）并且具有<a href="https://machinelearningmastery.com/rectified-linear-activation-function-for-deep-learning-neural-networks" target="blank" style={{ color: `#8e91f2` }}>不同的属性</a>。
+>
+> 激活函数影响网络的输入和输出。例如，与 ReLU 相比，tanh 强制网络处理 $[-1.0, 1.0]$ 范围内的数字，而不是 $[0.0, \infty]$。
 
 正如你所看到的，当我们的带偏置的加权和低于零时，神经元的输出将为 $0.0$。这正是我们当前输出所发生的情况：
 
@@ -328,9 +323,8 @@ $\left( 3.402\cdot 10^{38}\right)^{( 3+5)} \ \sim =\ 1.8\cdot 10^{308}$
 
 在所有进化算法中，我们将研究的具体子类称为[遗传算法](https://en.wikipedia.org/wiki/Genetic_algorithm)。
 
-<Important>
-  与神经网络类似，遗传算法也不是一个具体的算法，而是一系列不同的算法；因此，为了避免熬夜，我们将简单介绍一下它的工作原理。
-</Important>
+> [!IMPORTANT]
+> 与神经网络类似，遗传算法也不是一个具体的算法，而是一系列不同的算法；因此，为了避免熬夜，我们将简单介绍一下它的工作原理。
 
 从上到下开始，遗传算法从 **种群 (Population)** 开始：
 
@@ -388,9 +382,8 @@ $\left( 3.402\cdot 10^{38}\right)^{( 3+5)} \ \sim =\ 1.8\cdot 10^{308}$
 
 一只吃了 $30$ 种食物的鸟比只吃了 $20$ 种食物的鸟要好，就这么简单。
 
-<Tip>
-  **否定适应度函数 (Negating a fitness function)** 会使遗传算法返回最差的解决方案而不是最好的解决方案；只是一个有趣的技巧，供以后记住。
-</Tip>
+> [!TIP]
+> **否定适应度函数 (Negating a fitness function)** 会使遗传算法返回最差的解决方案而不是最好的解决方案；只是一个有趣的技巧，供以后记住。
 
 现在，遗传算法的巅峰时刻已经到来：**繁殖 (Reproduction)**！
 
