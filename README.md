@@ -36,7 +36,7 @@ yarn
 Please note, that if you are using Windows, you may need to run:
 
 ```bash
-set PWD="$(pwd)"
+$env:PWD = $(Get-Location).Path
 ```
 
 ## Development
@@ -126,7 +126,7 @@ canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/introducing-t
 
 ## Deploy
 
-**Vercel**  
+**Vercel**
 The easiest way to deploy the template is to deploy on [Vercel](https://vercel.com). Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
 **Netlify**
