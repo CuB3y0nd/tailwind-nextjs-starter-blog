@@ -1,7 +1,7 @@
 ---
 title: '李忠《x86 汇编语言：从实模式到保护模式》（第二版）学习笔记'
 date: '2024-02-21'
-lastmod: '2024-02-21'
+lastmod: '2024-06-14'
 tags: ['Assembly']
 draft: false
 summary: '李忠《x86 汇编语言：从实模式到保护模式》（第二版）检测点及章节习题 + pwndbg 速查手册'
@@ -18,5 +18,301 @@ GitHub 地址：[assembly.rip](https://github.com/CuB3y0nd/assembly.rip)。欢�
  - 章节习题答案
  - 个人整理的 `pwndbg` 常用指令速查手册
 
-其实本来想模仿 [cheats.rs](https://cheats.rs) 做一个 x86-asm 的 Cheat Sheet 的，域名就买 `assembly.rip`。但是经过深思后还是暂时放弃了这个想法，不过或许以后有空可能会重启也说不准。
+其实本来想效仿 [cheats.rs](https://cheats.rs) 做一个 x86-asm 的 Cheat Sheet 的，域名就买 `assembly.rip`。但是经过深思后还是暂时放弃了这个想法，不过或许以后有空可能会重启也说不准。
+
+---
+
+以上为前言，下面是十分钟速通笔记。
+
+> [!NOTE]
+> 笔记主要是对于 [x86 Assembly Crash Course](https://www.youtube.com/watch?v=75gBFiFtAb8) 的总结，其中也包含了一些视频中没有的内容。
+
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
+## 一些你必须知道的
+
+首先，什么是汇编代码？汇编代码是处理器在计算机上实际运行的代码。例如，以一些 C 代码为例：
+
+```c
+#include <stdio.h>
+
+void main(void)
+{
+    puts("Hello World!");
+}
+```
+
+但实际上计算机不会运行你写的这份代码，而是该代码的汇编代码（C 语言是编译型语言）。如下所示：
+
+```plain-text
+0000000000001135 <main>:
+    1135:       55                      push   rbp
+    1136:       48 89 e5                mov    rbp,rsp
+    1139:       48 8d 3d c4 0e 00 00    lea    rdi,[rip+0xec4]        # 2004 <_IO_stdin_used+0x4>
+    1140:       e8 eb fe ff ff          call   1030 <puts@plt>
+    1145:       90                      nop
+    1146:       5d                      pop    rbp
+    1147:       c3                      ret
+    1148:       0f 1f 84 00 00 00 00    nop    DWORD PTR [rax+rax*1+0x0]
+    114f:       00
+```
+
+像 C 这样的语言的目的是让我们不必编写繁琐的汇编代码，更方便的编写程序。我们编写代码并将其交给编译器，编译器会获取该代码并生成对应的汇编代码，这些代码同样实现了 C 代码所实现的内容，它们的区别只是在于语法不同。汇编代码才是处理器实际运行的代码。由于这是实际运行的代码，因此理解它会很有帮助。由于大多数时候我们得到的是程序编译后的二进制文件，因此我们只能通过阅读汇编代码来理解程序。尽管有像 `IDA`、`Ghidra` 这样的反编译工具可以根据反汇编代码生成更易于理解的 C 语言代码，但掌握汇编还是一项必不可少的技能。
+
+此外，对于处理器，有很多不同的架构。不同类型的架构可以运行不同类型的汇编代码。通常，我们遇到最多的是 64-bit 和 32-bit 的 **ELF (Executable and Linkable Format)** 文件。我习惯分别将它们称为 `x64` 和 `x86` 可执行文件。
+
+## 寄存器 (Registers)
+
+寄存器本质上是处理器临时存储数据的地方。以下是 `x64` 处理器的寄存器列表及一些常见用例。
+
+```plain-text
+rbp: Base Pointer, points to the bottom of the current stack frame
+rsp: Stack Pointer, points to the top of the current stack frame
+rip: Instruction Pointer, points to the instruction to be executed
+
+General Purpose Registers
+These can be used for a variety of different things
+rax:
+rbx:
+rcx:
+rdx:
+rsi:
+rdi:
+r8:
+r9:
+r10:
+r11:
+r12:
+r13:
+r14:
+r15:
+```
+
+`x86` 中，函数的参数保存在栈中；`x64` 中，函数的前 6 个参数保存在寄存器中，若超过 6 个，则会将其余的参数保存在栈上。前 6 个参数依次分别保存在这些寄存器中：
+
+```plain-text
+rdi:    First Argument
+rsi:    Second Argument
+rdx:    Third Argument
+rcx:    Fourth Argument
+r8:     Fifth Argument
+r9:     Sixth Argument
+```
+
+`x86` 中，函数的返回值通常保存在 `eax` 中；`x64` 中，函数的返回值通常保存在 `rax` 中。
+
+另外，寄存器有不同的大小。我们通常处理的大小有 8 Bytes、4 Bytes、2 Bytes 和 1 Byte。产生这些不同大小的寄存器的原因是由于技术的进步，我们可以在寄存器中存储更多的数据。
+
+```plain-text
++-----------------+---------------+---------------+------------+
+| 8 Byte Register | Lower 4 Bytes | Lower 2 Bytes | Lower Byte |
++-----------------+---------------+---------------+------------+
+|   rbp           |     ebp       |     bp        |     bpl    |
+|   rsp           |     esp       |     sp        |     spl    |
+|   rip           |     eip       |               |            |
+|   rax           |     eax       |     ax        |     al     |
+|   rbx           |     ebx       |     bx        |     bl     |
+|   rcx           |     ecx       |     cx        |     cl     |
+|   rdx           |     edx       |     dx        |     dl     |
+|   rsi           |     esi       |     si        |     sil    |
+|   rdi           |     edi       |     di        |     dil    |
+|   r8            |     r8d       |     r8w       |     r8b    |
+|   r9            |     r9d       |     r9w       |     r9b    |
+|   r10           |     r10d      |     r10w      |     r10b   |
+|   r11           |     r11d      |     r11w      |     r11b   |
+|   r12           |     r12d      |     r12w      |     r12b   |
+|   r13           |     r13d      |     r13w      |     r13b   |
+|   r14           |     r14d      |     r14w      |     r14b   |
+|   r15           |     r15d      |     r15w      |     r15b   |
++-----------------+---------------+---------------+------------+
+```
+
+在 `x64` 中，我们可以用上 8 Bytes 的寄存器。然而，在 `x86` 中，我们能使用的最大的寄存器的容量只有 4 Bytes。
+
+我们也可以使用比架构的最大寄存器更小的寄存器。比如，在 `x64` 中有 `rax`、`eax`、`ax` 和 `al` 寄存器。其中，`rax` 指向完整的八字节，`eax` 是 `rax` 的低四字节，`ax` 是 `rax` 的最后两个字节，`al` 是 `rax` 的最后一个字节。
+
+## 字 (Word)
+
+你可能听说过「字」这个术语。一个字代表了两个字节的数据，一个双字则代表了四个字节的数据，一个四字就是八个字节的数据。
+
+## 栈 (Stack)
+
+通常，你处理的最常见的内存区域之一是栈。它是存储代码中的局部变量的地方。
+
+例如，在此代码中，变量 `x` 存储在栈中：
+
+```c
+#include <stdio.h>
+
+void main(void)
+{
+    int x = 5;
+    puts("hi");
+}
+```
+
+通过汇编代码，我们可以看到它实际存储在地址为 `rbp-0x4` 的栈上。
+
+```plain-text
+0000000000001135 <main>:
+    1135:       55                      push   rbp
+    1136:       48 89 e5                mov    rbp,rsp
+    1139:       48 83 ec 10             sub    rsp,0x10
+    113d:       c7 45 fc 05 00 00 00    mov    DWORD PTR [rbp-0x4],0x5
+    1144:       48 8d 3d b9 0e 00 00    lea    rdi,[rip+0xeb9]        # 2004 <_IO_stdin_used+0x4>
+    114b:       e8 e0 fe ff ff          call   1030 <puts@plt>
+    1150:       90                      nop
+    1151:       c9                      leave
+    1152:       c3                      ret
+    1153:       66 2e 0f 1f 84 00 00    nop    WORD PTR cs:[rax+rax*1+0x0]
+    115a:       00 00 00
+    115d:       0f 1f 00                nop    DWORD PTR [rax]
+```
+
+栈可以通过 `push` 和 `pop` 指令来传递值。这也是从栈中添加或删除值的唯一方法，因为栈是一种 **LIFO (Last in First Out)** 数据结构。但是我们可以引用栈上的值。
+
+栈的确切边界由 `rbp` 和 `rsp` 这两个寄存器记录。基指针寄存器 `rbp` 指向栈底；栈指针寄存器 `rsp` 指向栈顶。
+
+## 标志位 (Flags)
+
+有一个寄存器专门存储各种标志。标志是此寄存器的一个特定位，无论是否设置，通常都具有某种特定的含义。以下是一些标志列表。
+
+```plain-text
+00:     Carry Flag
+01:     always 1
+02:     Parity Flag
+03:     always 0
+04:     Adjust Flag
+05:     always 0
+06:     Zero Flag
+07:     Sign Flag
+08:     Trap Flag
+09:     Interruption Flag
+10:     Direction Flag
+11:     Overflow Flag
+12:     I/O Privilege Field lower bit
+13:     I/O Privilege Field higher bit
+14:     Nested Task Flag
+15:     Resume Flag
+```
+
+除了上面列出的这些标志之外，还有很多其它的标志。但我们实际上并不会过多的处理它们（我们只会处理少数标志）。
+
+如果你想了解更多信息，可以查看 [FLAGS register](https://en.wikipedia.org/wiki/FLAGS_register)。
+
+## 指令 (Instructions)
+
+现在我们来介绍一些常见的指令。
+
+**mov**
+
+`mov` 指令将数据从一个寄存器移动到另一个寄存器。例如：
+
+```nasm
+mov rax, rdx
+```
+
+这条指令会将数据从 `rdx` 寄存器移动到 `rax` 寄存器。
+
+**dereference**
+
+如果你看到 `[]`，它其实是用来取消引用的，它处理指针。指针是指向特定内存地址的值（其实指针就是内存地址）。取消引用指针意味着将指针视为它指向的值。例如：
+
+```nasm
+mov rax, [rdx]
+```
+
+将把 `rdx` 指向的值移动到 `rax` 寄存器中。另一方面：
+
+```nasm
+mov [rax], rdx
+```
+
+将把 `rdx` 寄存器的值移动到 `rax` 寄存器指向的内存中。`rax` 寄存器的实际值不会被改变。
+
+**lea**
+
+`lea` 指令计算第二个操作数的地址，并将该地址移动到第一个操作数中。例如：
+
+```nasm
+lea rdi, [rbx+0x10]
+```
+
+这会将 `rbx+0x10` 的地址移动到 `rdi` 寄存器中。
+
+**add**
+
+它会将两个值相加，并将总和存储在第一个参数中。例如：
+
+```nasm
+add rax, rdx
+```
+
+这将使 `rax` 等于 `rax + rdx` 的值。
+
+**sub**
+
+该指令将从第一个操作数中减去第二个操作数，并将差值存储在第一个参数中。例如：
+
+```nasm
+sub rsp, 0x10
+```
+
+这将使 `rsp` 等于 `rsp - 0x10` 的值。
+
+**xor**
+
+这将对给定的两个参数执行异或运算，并将结果存储在第一个参数中：
+
+```nasm
+xor rdx, rax
+```
+
+这将使 `rdx` 等于 `rdx ^ rax` 的值。
+
+`and` 和 `or` 运算本质上也做了同样的事情，只是使用了 `and` 或 `or` 二元运算符。
+
+**push**
+
+它将使栈增加 8 Bytes（对于 `x64` 为 8 Bytes；对于 `x86`，为 4 Bytes），然后将参数的内容推送到新的栈空间。例如：
+
+```nasm
+push rax
+```
+
+这会使栈增加 8 Bytes，并且将 `rax` 寄存器的内容推送到栈顶。
+
+**pop**
+
+这会将顶部 8 Bytes（对于 `x64` 为 8 Bytes；对于 `x86`，为 4 Bytes）出栈并将其存储于参数中。然后它会缩小栈空间。例如：
+
+```nasm
+pop rax
+```
+
+栈顶的 8 Bytes 最终将位于 `rax` 寄存器中。
+
+**jmp**
+
+这将跳转到某个特定的指令地址。它用于重定向代码执行。例如：
+
+```nasm
+jmp 0x602010
+```
+
+该指令将导致代码执行跳转到 `0x602010`，并执行那里的任何指令。
+
+**call & ret**
+
+`call` 类似于 `jmp` 指令。不同之处在于它会将 `rbp` 和 `rip` 的值推送到栈上，然后跳转到指定的地址处继续执行。主要用于调用函数。函数执行完成后，将调用 `ret` 指令，该指令使用之前推送到栈中的 `rbp` 和 `rip` 的值从中断的地方继续执行。
+
+**cmp**
+
+它与 `sub` 指令类似，只不过它不将结果存储在参数中。它用于检查结果是小于零、大于零还是等于零。并根据值相应地设置标志位。
+
+**jnz / jz**
+
+非零跳转和零跳转 (jnz/jz) 指令与跳转指令相似，不同之处在于它们会根据零标志的状态执行跳转。对于 `jz`，它会在设置零标志时跳转；对于 `jnz`，情况正好相反。
 
