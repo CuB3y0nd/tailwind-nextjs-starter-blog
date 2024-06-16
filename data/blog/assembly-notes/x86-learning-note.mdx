@@ -1,7 +1,7 @@
 ---
 title: '李忠《x86 汇编语言：从实模式到保护模式》（第二版）学习笔记'
 date: '2024-02-21'
-lastmod: '2024-06-14'
+lastmod: '2024-06-16'
 tags: ['Assembly']
 draft: false
 summary: '李忠《x86 汇编语言：从实模式到保护模式》（第二版）检测点及章节习题 + pwndbg 速查手册'
@@ -315,4 +315,205 @@ jmp 0x602010
 **jnz / jz**
 
 非零跳转和零跳转 (jnz/jz) 指令与跳转指令相似，不同之处在于它们会根据零标志的状态执行跳转。对于 `jz`，它会在设置零标志时跳转；对于 `jnz`，情况正好相反。
+
+## 小试牛刀
+
+下面是一些简单的逆向问题，来自：[CTF-Workshop](https://github.com/kablaa/CTF-Workshop/tree/master/Reversing/Challenges)
+
+这些挑战的目的是让你获得一些逆向分析代码的经验，尝试弄清楚二进制文件在做什么。要将机器代码反汇编成汇编代码，你可以使用 `objdump` 之类的工具。
+
+### Hello World
+
+首先，我们看一下汇编代码：
+
+```bash
+$ objdump -D hello_world -M intel | less
+```
+
+通过搜索字符串 `main` 找到入口函数后，我们看到以下内容：
+
+```nasm
+080483fb <main>:
+ 80483fb:       8d 4c 24 04             lea    ecx,[esp+0x4]
+ 80483ff:       83 e4 f0                and    esp,0xfffffff0
+ 8048402:       ff 71 fc                push   DWORD PTR [ecx-0x4]
+ 8048405:       55                      push   ebp
+ 8048406:       89 e5                   mov    ebp,esp
+ 8048408:       51                      push   ecx
+ 8048409:       83 ec 04                sub    esp,0x4
+ 804840c:       83 ec 0c                sub    esp,0xc
+ 804840f:       68 b0 84 04 08          push   0x80484b0
+ 8048414:       e8 b7 fe ff ff          call   80482d0 <puts@plt>
+ 8048419:       83 c4 10                add    esp,0x10
+ 804841c:       b8 00 00 00 00          mov    eax,0x0
+ 8048421:       8b 4d fc                mov    ecx,DWORD PTR [ebp-0x4]
+ 8048424:       c9                      leave
+ 8048425:       8d 61 fc                lea    esp,[ecx-0x4]
+ 8048428:       c3                      ret
+ 8048429:       66 90                   xchg   ax,ax
+ 804842b:       66 90                   xchg   ax,ax
+ 804842d:       66 90                   xchg   ax,ax
+ 804842f:       90                      nop
+```
+
+阅读代码，我们看到一个对 `puts` 函数的调用：
+
+```nasm
+push   0x80484b0
+call   80482d0 <puts@plt>
+```
+
+在剩下的代码中，我们并没有看到有其它什么有趣的东西。由此推断这段代码的功能可能只是打印一个字符串。运行二进制文件，我们发现确实如此：
+
+```bash
+$ ./hello_world
+hello world!
+```
+
+### If then
+
+同上，用 `objdump` 查看汇编代码：
+
+```bash
+$ objdump -D if_then -M intel | less
+```
+
+找到 `main` 函数后，我们看到：
+
+```nasm
+080483fb <main>:
+ 80483fb:       8d 4c 24 04             lea    ecx,[esp+0x4]
+ 80483ff:       83 e4 f0                and    esp,0xfffffff0
+ 8048402:       ff 71 fc                push   DWORD PTR [ecx-0x4]
+ 8048405:       55                      push   ebp
+ 8048406:       89 e5                   mov    ebp,esp
+ 8048408:       51                      push   ecx
+ 8048409:       83 ec 14                sub    esp,0x14
+ 804840c:       c7 45 f4 0a 00 00 00    mov    DWORD PTR [ebp-0xc],0xa
+ 8048413:       83 7d f4 0a             cmp    DWORD PTR [ebp-0xc],0xa
+ 8048417:       75 10                   jne    8048429 <main+0x2e>
+ 8048419:       83 ec 0c                sub    esp,0xc
+ 804841c:       68 c0 84 04 08          push   0x80484c0
+ 8048421:       e8 aa fe ff ff          call   80482d0 <puts@plt>
+ 8048426:       83 c4 10                add    esp,0x10
+ 8048429:       b8 00 00 00 00          mov    eax,0x0
+ 804842e:       8b 4d fc                mov    ecx,DWORD PTR [ebp-0x4]
+ 8048431:       c9                      leave
+ 8048432:       8d 61 fc                lea    esp,[ecx-0x4]
+ 8048435:       c3                      ret
+ 8048436:       66 90                   xchg   ax,ax
+ 8048438:       66 90                   xchg   ax,ax
+ 804843a:       66 90                   xchg   ax,ax
+ 804843c:       66 90                   xchg   ax,ax
+ 804843e:       66 90                   xchg   ax,ax
+```
+
+它将值 `0xa` 传送到 `ebp-0xc` 中：
+
+```nasm
+mov    DWORD PTR [ebp-0xc],0xa
+```
+
+紧接着，运行了 `cmp` 指令来检查 `ebp-0xc` 与 `0xa` 是否相等。如果不相等，则跳转到 `main+0x2e`。由于它刚刚被赋予了值 `0xa`，因此它不会执行跳转：
+
+```nasm
+cmp    DWORD PTR [ebp-0xc],0xa
+jne    8048429 <main+0x2e>
+```
+
+然后，它应该调用 `puts`：
+
+```nasm
+sub    esp,0xc
+push   0x80484c0
+call   80482d0 <puts@plt>
+```
+
+因此，该程序的最终结果应该是调用 `puts`。运行测试，我们看到它的输出是：
+
+```bash
+$ ./if_then
+x = ten
+```
+
+### Loop
+
+老样子：
+
+```bash
+$ objdump -D loop -M intel | less
+```
+
+```bash
+080483fb <main>:
+ 80483fb:       8d 4c 24 04             lea    ecx,[esp+0x4]
+ 80483ff:       83 e4 f0                and    esp,0xfffffff0
+ 8048402:       ff 71 fc                push   DWORD PTR [ecx-0x4]
+ 8048405:       55                      push   ebp
+ 8048406:       89 e5                   mov    ebp,esp
+ 8048408:       51                      push   ecx
+ 8048409:       83 ec 14                sub    esp,0x14
+ 804840c:       c7 45 f4 00 00 00 00    mov    DWORD PTR [ebp-0xc],0x0
+ 8048413:       eb 17                   jmp    804842c <main+0x31>
+ 8048415:       83 ec 08                sub    esp,0x8
+ 8048418:       ff 75 f4                push   DWORD PTR [ebp-0xc]
+ 804841b:       68 c0 84 04 08          push   0x80484c0
+ 8048420:       e8 ab fe ff ff          call   80482d0 <printf@plt>
+ 8048425:       83 c4 10                add    esp,0x10
+ 8048428:       83 45 f4 01             add    DWORD PTR [ebp-0xc],0x1
+ 804842c:       83 7d f4 13             cmp    DWORD PTR [ebp-0xc],0x13
+ 8048430:       7e e3                   jle    8048415 <main+0x1a>
+ 8048432:       b8 00 00 00 00          mov    eax,0x0
+ 8048437:       8b 4d fc                mov    ecx,DWORD PTR [ebp-0x4]
+ 804843a:       c9                      leave
+ 804843b:       8d 61 fc                lea    esp,[ecx-0x4]
+ 804843e:       c3                      ret
+ 804843f:       90                      nop
+```
+
+我们看到它将位于 `ebp-0xc` 处的一个变量初始化为 `0`，然后跳转到 `0x804842c (main+0x31)`：
+
+```nasm
+mov    DWORD PTR [ebp-0xc],0x0
+jmp    804842c <main+0x31>
+```
+
+查看 `0x804842c` 处的指令，我们看到以下内容：
+
+```nasm
+cmp    DWORD PTR [ebp-0xc],0x13
+jle    8048415 <main+0x1a>
+```
+
+我们看到它将 `ebp-0xc` 处的值与 `0x13` 进行比较，如果小于或等于，则跳转到 `0x8048415 (0x80483fb+0x1a)`。这给我们带来了一个 `printf` 调用：
+
+```nasm
+sub    esp,0x8
+push   DWORD PTR [ebp-0xc]
+push   0x80484c0
+call   80482d0 <printf@plt>
+```
+
+它看起来像是在以某种格式化字符串的形式打印 `ebp-0xc` 的值。之后我们可以看到它增加了 `ebp-0xc` 的值，然后再次执行 `cmp`：
+
+```nasm
+add    DWORD PTR [ebp-0xc],0x1
+```
+
+综上，把所有部分组合在一起，我们可以推断出这是一个将运行 `20` 次，并每次打印迭代计数器的 `for` 循环。用 C 语言的形式来写，应该类似以下内容：
+
+```c
+int i = 0;
+for (i = 0; i < 20; i++)
+{
+    printf("%d", i);
+}
+```
+
+运行它，证明我们的分析是正确的：
+
+```bash
+$ ./loop
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
+```
 
