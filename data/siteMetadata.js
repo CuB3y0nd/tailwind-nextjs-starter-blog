@@ -84,14 +84,6 @@ const siteMetadata = {
     //   indexName: 'docsearch',
     // },
   },
-  navidrome: {
-    user: 'CuB3y0nd',
-    token: 'f7c910abea606ae12d859b73da9b76a1',
-    salt: '5bd5d0',
-    format: 'json',
-    version: '1.16.1',
-    client: 'API',
-  },
 }
 
 module.exports = siteMetadata
