@@ -2,15 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 
-const client_id = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || ''
-const client_secret = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET || ''
-const refresh_token = process.env.NEXT_PUBLIC_SPOTIFY_REFRESH_TOKEN || ''
-
-const basic = Buffer.from(`${client_id}:${client_secret}`).toString('base64')
-const NOW_PLAYING_ENDPOINT = `https://api.spotify.com/v1/me/player/currently-playing`
-const RECENTLY_PLAYED_ENDPOINT = `https://api.spotify.com/v1/me/player/recently-played`
-const TOKEN_ENDPOINT = `https://accounts.spotify.com/api/token`
-
 interface SpotifyTrack {
   name: string
   artists: { name: string }[]
@@ -25,104 +16,7 @@ interface SpotifyNowPlayingData {
   item?: SpotifyTrack
 }
 
-const getAccessToken = async () => {
-  const response = await fetch(TOKEN_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${basic}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to get access token: ${response.status} ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return data
-}
-
-const getNowPlaying = async (): Promise<SpotifyNowPlayingData> => {
-  try {
-    const { access_token } = await getAccessToken()
-
-    const response = await fetch(NOW_PLAYING_ENDPOINT, {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    })
-
-    if (response.status === 204 || response.status > 400) {
-      return { isPlaying: false }
-    }
-
-    if (!response.ok) {
-      throw new Error(`Failed to get now playing data: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-
-    return {
-      isPlaying: data.is_playing,
-      item: data.item
-        ? {
-            name: data.item.name,
-            artists: data.item.artists.map((artist: { name: string }) => ({ name: artist.name })),
-            album: {
-              images: data.item.album.images,
-            },
-            uri: data.item.uri,
-          }
-        : undefined,
-    }
-  } catch (error) {
-    console.error('Error fetching now playing data:', error)
-    return { isPlaying: false }
-  }
-}
-
-const getRecentlyPlayed = async (): Promise<SpotifyTrack | null> => {
-  try {
-    const { access_token } = await getAccessToken()
-
-    const response = await fetch(RECENTLY_PLAYED_ENDPOINT, {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to get recently played data: ${response.status} ${response.statusText}`
-      )
-    }
-
-    const data = await response.json()
-    const recentlyPlayedItem = data.items[0]?.track
-
-    return recentlyPlayedItem
-      ? {
-          name: recentlyPlayedItem.name,
-          artists: recentlyPlayedItem.artists.map((artist: { name: string }) => ({
-            name: artist.name,
-          })),
-          album: {
-            images: recentlyPlayedItem.album.images,
-          },
-          uri: recentlyPlayedItem.uri,
-        }
-      : null
-  } catch (error) {
-    console.error('Error fetching recently played data:', error)
-    return null
-  }
-}
-
-const SpotifyNowPlaying: React.FC = () => {
+const NowPlaying: React.FC = () => {
   const [nowPlaying, setNowPlaying] = useState<SpotifyNowPlayingData | null>(null)
   const [recentlyPlayed, setRecentlyPlayed] = useState<SpotifyTrack | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -131,12 +25,17 @@ const SpotifyNowPlaying: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const nowPlayingData = await getNowPlaying()
-        setNowPlaying(nowPlayingData)
+        const response = await fetch('/api/spotify')
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`)
+        }
 
-        if (!nowPlayingData.isPlaying) {
-          const recentlyPlayedData = await getRecentlyPlayed()
-          setRecentlyPlayed(recentlyPlayedData)
+        const data = await response.json()
+        setNowPlaying(data)
+        if (!data.isPlaying) {
+          setRecentlyPlayed(data.item || null)
+        } else {
+          setRecentlyPlayed(null)
         }
       } catch (error) {
         setError('Error fetching data.')
@@ -167,11 +66,12 @@ const SpotifyNowPlaying: React.FC = () => {
             <p>Fetching currently playing song...</p>
           </div>
         ) : nowPlaying?.isPlaying && nowPlaying.item ? (
-          <div className="text-text dark:text-text-dark hover:bg-surface0 dark:hover:bg-surface0-dark inline-flex w-auto items-center justify-center rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 px-4 py-2.5 transition duration-500 hover:scale-105 hover:rounded-md hover:border-green-500 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-green-500">
+          <div className="text-text dark:text-text-dark hover:bg-surface0 dark:hover:bg-surface0-dark relative inline-flex w-auto items-center justify-center rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 px-4 py-2.5 transition duration-500 hover:scale-105 hover:rounded-md hover:border-green-500 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-green-500">
             <a
               href={`https://open.spotify.com/track/${nowPlaying.item.uri.split(':')[2]}`}
               target="_blank"
               rel="noopener noreferrer"
+              className="flex items-center"
             >
               <img
                 className="mr-3"
@@ -194,11 +94,12 @@ const SpotifyNowPlaying: React.FC = () => {
             </div>
           </div>
         ) : recentlyPlayed ? (
-          <div className="text-text dark:text-text-dark hover:bg-surface0 dark:hover:bg-surface0-dark inline-flex w-auto items-center justify-center rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 px-4 py-2.5 transition duration-500 hover:scale-105 hover:rounded-md hover:border-yellow-500 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-yellow-500">
+          <div className="text-text dark:text-text-dark hover:bg-surface0 dark:hover:bg-surface0-dark relative inline-flex w-auto items-center justify-center rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 px-4 py-2.5 transition duration-500 hover:scale-105 hover:rounded-md hover:border-yellow-500 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-yellow-500">
             <a
               href={`https://open.spotify.com/track/${recentlyPlayed.uri.split(':')[2]}`}
               target="_blank"
               rel="noopener noreferrer"
+              className="flex items-center"
             >
               <img
                 className="mr-3"
@@ -221,7 +122,7 @@ const SpotifyNowPlaying: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="text-text dark:text-text-dark hover:bg-surface0 dark:hover:bg-surface0-dark inline-flex w-auto items-center justify-center rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 px-4 py-2.5 transition duration-500 hover:scale-105 hover:rounded-md hover:border-red-500 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-red-500">
+          <div className="text-text dark:text-text-dark hover:bg-surface0 dark:hover:bg-surface0-dark inline-flex w-auto items-center justify-center rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 px-4 py-2.5 transition duration-500 hover:scale-105 hover:rounded-md hover:border-gray-500 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-gray-500">
             <p>Nothing playing...</p>
           </div>
         )}
@@ -230,4 +131,4 @@ const SpotifyNowPlaying: React.FC = () => {
   )
 }
 
-export default SpotifyNowPlaying
+export default NowPlaying
