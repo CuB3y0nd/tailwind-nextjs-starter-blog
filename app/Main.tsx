@@ -1,6 +1,6 @@
 import Link from '@/components/Link'
 import Tag from '@/components/Tag'
-import NavidromeNowPlaying from '@/components/NavidromeNowPlaying'
+import SpotifyNowPlaying from '@/components/SpotifyNowPlaying'
 import { sortPosts, allCoreContent } from 'pliny/utils/contentlayer'
 import { allBlogs } from 'contentlayer/generated'
 import Pinned from '@/components/Pinned'
@@ -18,14 +18,14 @@ export default function Home({ posts }) {
     <>
       <div className="mx-auto max-w-2xl px-4 pt-20 sm:px-6 xl:max-w-4xl xl:px-0">
         <div className="space-y-2 pb-8 pt-6 md:space-y-5">
-          <h1 className="dark:text-text-dark mt-4 text-3xl font-bold tracking-tight text-text md:text-4xl">
+          <h1 className="dark:text-text-dark text-text mt-4 text-3xl font-bold tracking-tight md:text-4xl">
             CuB3y0nd
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             {siteMetadata.description}
           </p>
           {pinnedPosts.length > 0 && <Pinned posts={pinnedPosts} />}
-          <h3 className="dark:text-text-dark my-4 flex gap-2 text-2xl font-bold tracking-tight text-text md:text-3xl">
+          <h3 className="dark:text-text-dark text-text my-4 flex gap-2 text-2xl font-bold tracking-tight md:text-3xl">
             My Writings
           </h3>
         </div>
@@ -35,7 +35,7 @@ export default function Home({ posts }) {
             const { slug, date, title, summary, tags } = post
             return (
               <article key={slug}>
-                <div className="dark:hover:bg-surface0-dark flex h-full transform flex-col overflow-hidden rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 transition duration-500 hover:scale-105 hover:rounded-md hover:border-primary-500 hover:bg-surface0 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-primary-500">
+                <div className="dark:hover:bg-surface0-dark hover:bg-surface0 flex h-full transform flex-col overflow-hidden rounded-md border-2 border-solid border-gray-300 bg-transparent bg-opacity-20 transition duration-500 hover:scale-105 hover:rounded-md hover:border-primary-500 dark:border-gray-700 dark:bg-opacity-20 dark:hover:border-primary-500">
                   <div className="flex grow flex-col space-y-3 p-4">
                     <div className="grow space-y-4">
                       <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function Home({ posts }) {
           </Link>
         </div>
       )}
-      <NavidromeNowPlaying />
+      <SpotifyNowPlaying />
     </>
   )
 }
