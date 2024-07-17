@@ -1,7 +1,7 @@
 ---
 title: "微积分笔记"
 date: '2024-03-29'
-lastmod: '2024-04-07'
+lastmod: '2024-07-17'
 tags: ['Mathematices', 'Calculus']
 draft: false
 summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
@@ -25,7 +25,7 @@ $\displaystyle \lim _{x\to c} f(x)=L$
 用 $\varepsilon -\delta$ 语言来描述就是：
 
 $$
-\displaystyle \forall \varepsilon  >0,\ \exists \delta  >0,\ s.t.\ 0<|x−c|< \delta \Longrightarrow |f(x)-L|< \varepsilon 
+\displaystyle \forall \varepsilon  >0,\ \exists \delta  >0,\ s.t.\ 0<|x−c|< \delta \Longrightarrow |f(x)-L|< \varepsilon
 $$
 
 说白了就是：无论给定任何一个数字 $\varepsilon (\varepsilon  >0)$，总能找到一个数 $\delta ( \delta  >0)$。使当 $x$ 在 $c$ 的 $\delta$ 范围内时，$f(x)$ 在极限 $L$ 的 $\varepsilon$ 范围内。
@@ -278,7 +278,7 @@ $2.\ \frac{d}{dx}[\cos x] =-\sin x$
 
 ### Proof: The derivative of $e^{x}$ is $e^{x}$
 
-Know the limit definition of $\mathbb{e}$ is $e=\displaystyle \lim _{n\rightarrow \infty }\left( 1+\frac{1}{n}\right)^{n} =\displaystyle \lim _{n\rightarrow 0}( 1+n)^{\frac{1}{n}}$ 
+Know the limit definition of $\mathbb{e}$ is $e=\displaystyle \lim _{n\rightarrow \infty }\left( 1+\frac{1}{n}\right)^{n} =\displaystyle \lim _{n\rightarrow 0}( 1+n)^{\frac{1}{n}}$
 
 $\mathnormal{Proof.}$
 
@@ -459,4 +459,23 @@ $$
  & Q.E.D.
 \end{aligned}
 $$
+
+## Proof: L'Hôpital's rule
+
+> [!NOTE]
+> This isn't full proof of L'Hôpital's rule, just a special case. But it should give some intuition for why it works.
+
+$$
+f( a) =0,\ g( a) =0;\ f^{\prime} ( a) \ exists,\ g^{\prime} ( a) \ exists\ \Longleftrightarrow \ \displaystyle \lim _{x\rightarrow a}\frac{f( x)}{g( x)} =\frac{f^{\prime} ( a)}{g^{\prime} ( a)}
+$$
+
+$$
+\begin{aligned}
+\frac{f^{\prime }( a)}{g^{\prime }( a)} & =\frac{\displaystyle \lim _{x\rightarrow a}\frac{f( x) -f( a)}{x-a}}{\displaystyle \lim _{x\rightarrow a}\frac{g( x) -g( a)}{x-a}} & \\
+ & =\displaystyle \lim _{x\rightarrow a}\frac{f( x) -f( a)}{g( x) -g( a)} & \\
+ & =\displaystyle \lim _{x\rightarrow a}\frac{f( x)}{g( x)} & We\ know\ f( a) \ and\ g( a) \ both\ equal\ to\ zero \\
+ & & Q.E.D
+\end{aligned}
+$$
+
 
