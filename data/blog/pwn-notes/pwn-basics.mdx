@@ -1133,3 +1133,97 @@ Continuing at 0x8048451.
 
 目前这些基本够入门调试器的使用了，在以后的学习中会逐渐掌握更多指令。
 
+## pwntools
+
+`pwntools` 可以帮助我们快速编写漏洞利用脚本。
+
+### 用法
+
+这里只展示一小部分功能的用法，有关更多功能请查阅 [pwntools document](https://docs.pwntools.com/en/stable/)。
+
+如果我们想将其导入 python：
+
+```python
+from pwn import *
+```
+
+如果我们想通过 TCP 连接到 `github.com` 上的服务器，端口 `9000`：
+
+```python
+target = remote('github.com', 9000)
+```
+
+如果你想运行二进制文件：
+
+```python
+target = process('./challenge')
+```
+
+如果要将 gdb 附加到某个进程：
+
+```python
+gdb.attach(target)
+```
+
+如果我们想将 gdb 附加到某个进程，并且立即向 gdb 传递一个命令以在 main 处设置断点：
+
+```python
+gdb.attach(target, gdbscript='b* main')
+```
+
+现在进行实际的 I/O 操作。如果我们想将变量 `x` 发送到目标（目标可以是进程，也可以是 pwntools 建立的远程连接）：
+
+```python
+target.send(x)
+```
+
+如果我们想要发送变量 `x`，并在其末尾附加一个换行符：
+
+```python
+target.sendline(x)
+```
+
+如果我们想从目标打印一行文本：
+
+```python
+print(target.recvline())
+```
+
+如果我们想打印从 `target` 中获得的直到字符串 `out` 的所有文本：
+
+```python
+print(target.recvuntil("out"))
+```
+
+还有一件事，ELF 采用低字节序存储数据，这意味着数据以最低有效字节优先的方式存储。在少数情况下，当我们扫描整数时，我们需要考虑到这一点。幸运的是，pwntools 会为我们处理这个问题。
+
+将整数 `y` 打包为小端序 `QWORD` (常用于 x64)：
+
+```python
+p64(x)
+```
+
+将整数 `y` 打包为小端序 `DWORD` (常用于 x86)：
+
+```python
+p32(x)
+```
+
+它还可以解包我们获得的值。假设我们想解包一个小端序 `QWORD` 并获取其整数值：
+
+```python
+u64(x)
+```
+
+要解包 `DWORD`：
+
+```python
+u32(x)
+```
+
+最后，如果要与目标交互：
+
+```python
+target.interactive()
+```
+
