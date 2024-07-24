@@ -1,0 +1,128 @@
+---
+title: 'Writeup: CSAW 2019 beleaf'
+date: '2024-07-24'
+lastmod: '2024-07-24'
+tags: ['CTF','Writeup', 'Reverse']
+draft: false
+summary: 'Writeup for CSAW 2019 beleaf'
+authors: ['default']
+---
+
+<div className="border-solid border-2 border-surface0 dark:border-surface0-dark p-2 bg-base dark:bg-base-dark mt-5">
+  <TOCInline toc={props.toc} asDisclosure />
+</div>
+
+## Information
+
+ - Category: Reverse
+ - Points: 50
+
+## Description
+
+> tree sounds are best listened to by https://binary.ninja/demo or ghidra
+
+<Download name="beleaf" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/03-beginner_re/csaw19_beleaf/beleaf" type="Binary" />
+
+## Writeup
+
+简单运行一下程序：
+
+```plain-text
+λ ~/ ./beleaf
+Enter the flag
+>>> i dont have the fucking flag
+Incorrect!
+```
+
+大概可以推测出我们的目标就是弄到一个正确的 `flag`。
+
+丢到 IDA 里发现，输入长度小于等于 32 (0x20) 会输出 `Incorrect!`，所以 `flag` 长度起码 33 字节。
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/24/pkbSdLq.png" width={1904} height={1012} />
+</center>
+
+接下来进入一个简单的 for 循环，将我们输入的每一个字符逐一放到 `sub_7FA` 函数中，并将返回值与 `valid_arr[i]` 比较，如果不等于 `valid_arr[i]` 则输出 `Incorrect!`。如果所有字符都通过了验证，则输出 `Correct!`
+
+再看看 `calc_idx` 函数，大致可以看出它的作用是根据传入的字符查找它在 `charset` 中对应的索引。
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/24/pkbSDoT.png" width={1904} height={1012} />
+</center>
+
+`calc_idx` 的核心如下：
+
+ - `character == charset[i]` 则返回索引 `i`
+ - `character >= charset[i]` 则设置索引为 `i = 2 * (i + 1)`
+ - 否则设置索引为 `i = 2 * i + 1`
+
+因此我们构造 `flag` 的关键条件就是：
+
+ - `flag` 长度 >= 33
+ - `calc_idx(input[i]) == valid_arr[i]`
+
+## Exploit
+
+```python
+#!/usr/bin/python3
+
+import sys
+
+valid_arr = [
+    0x01, 0x09, 0x11, 0x27, 0x02,
+    0x00, 0x12, 0x03, 0x08, 0x12,
+    0x09, 0x12, 0x11, 0x01, 0x03,
+    0x13, 0x04, 0x03, 0x05, 0x15,
+    0x2E, 0x0A, 0x03, 0x0A, 0x12,
+    0x03, 0x01, 0x2E, 0x16, 0x2E,
+    0x0A, 0x12, 0x06
+]
+
+charset = [
+    0x00000077, 0x00000066, 0x0000007B, 0x0000005F, 0x0000006E,
+    0x00000079, 0x0000007D, 0xFFFFFFFF, 0x00000062, 0x0000006C,
+    0x00000072, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFFFFFFFF, 0x00000061, 0x00000065, 0x00000069,
+    0xFFFFFFFF, 0x0000006F, 0x00000074, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000067,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0x00000075
+]
+
+def create_charset():
+    result = ""
+
+    for c in charset:
+        try:
+            result += chr(c)
+        except OverflowError:
+            continue
+
+    return result
+
+def checker(char):
+    i = 0
+    while char != charset[i]:
+        if char >= charset[i]:
+            i = 2 * (i + 1)
+        else:
+            i = 2 * i + 1
+    return i
+
+def main():
+    charset = create_charset()
+
+    i = 0
+    while (i < 33):
+        for c in charset:
+            if checker(ord(c)) == valid_arr[i]:
+                sys.stdout.write(c)
+        i += 1
+
+if __name__ == '__main__':
+    main()
+```
+
+
