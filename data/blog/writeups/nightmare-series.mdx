@@ -178,7 +178,7 @@ Thu Jul 25 05:35:00 PM CST 2024
   <Image alt="untitled" src="https://s21.ax1x.com/2024/07/25/pkbJ5H1.png" width={1920} height={1080} />
 </center>
 
-从 IDA 里面可以看出，程序可以将一个 24 (0x18) 字节 数据读入 `buf` 中。如果 `v5` 的高双字等于 `0xCAF3BAEE` 则返回 shell，否则返回系统时间。
+从 IDA 里面可以看出，程序可以将一个 24 (0x18) 字节 数据读入 `buf` 中。如果 `v5` 的 HIDWORD（高位四字节）等于 `0xCAF3BAEE` 则返回 shell，否则返回系统时间。
 
 所以我们的思路就是溢出，然后覆盖原始数据。
 
