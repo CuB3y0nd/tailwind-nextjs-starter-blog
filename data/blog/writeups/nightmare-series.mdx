@@ -355,7 +355,7 @@ Invalid Password, Try Again!
 
 那么有了溢出 padding 后怎么获取 flag 呢？
 
-由伪代码知，它会从 `stream` 里面读取 48 字节的数据，保存到 `flag` 变量里面。那么我们如果可以直接输出 `flag` 就好了。这里有一个思路是利用之前的溢出漏洞，将 `input` 填满后把 `flag` 变量的地址溢出给 `v6`，这就会导致 `puts` 输出 `flag` 变量的内容。perfect
+由伪代码知，它会从 `stream` 里面读取 48 字节的数据，保存到 `flag` 变量里面。那么我们如果可以直接输出 `flag` 就好了。这里有一个思路是利用之前的溢出漏洞，将 `input` 填满后把 `flag` 变量的地址溢出给 `v6`，这就会导致 `puts` 输出 `flag` 变量的内容。perfect 移花接木
 
 嗯...这样就很清晰了。通过 IDA 直接看 `flag` 在 `.bss` 中的地址：
 
