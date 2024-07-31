@@ -802,6 +802,8 @@ pilot: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, 
 
 在栈中安排 shellcode 的布局如下：因为程序给出了 `buf` 的地址，所以我们可以将 shellcode 插在 `buf` 的头部，然后填满 `buf` 的剩余空间，最后将 `buf` 的起始地址溢出到 `ret` 就实现了执行 shellcode 的逻辑。
 
+这里有一个现成的 [shellcode](http://shell-storm.org/shellcode/index.html) 网站。
+
 ### Exploit
 
 ```python
