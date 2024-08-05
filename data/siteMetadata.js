@@ -8,8 +8,8 @@ const siteMetadata = {
   theme: 'system', // system, dark or light
   siteUrl: 'https://www.cubeyond.net',
   siteRepo: 'https://github.com/CuB3y0nd/cubeyond.net',
-  siteLogo: '/static/images/logo.png',
-  socialBanner: '/static/images/twitter-card.png',
+  siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
+  socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
   email: 'root@cubeyond.net',
   github: 'https://github.com/CuB3y0nd',
   x: 'https://twitter.com/x',
