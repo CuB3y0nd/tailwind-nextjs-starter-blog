@@ -1,7 +1,7 @@
 ---
 title: "微积分笔记"
 date: '2024-03-29'
-lastmod: '2024-07-18'
+lastmod: '2024-08-15'
 tags: ['Mathematices', 'Calculus']
 draft: false
 summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
@@ -108,11 +108,11 @@ $Suppose\ f\ is\ a\ continuous\ function\ at\ every\ point\ of\ the\ interval\ [
 
 ### 导数的符号表示
 
-**Lagrange's notation:** $f^{\prime }$
+**Lagrange's notation:** $\displaystyle f^{\prime }$
 
-**Leibniz's notation:** $\frac{dy}{dx}$
+**Leibniz's notation:** $\displaystyle \frac{dy}{dx}$
 
-**Newton's notation:** $\dot{y}$
+**Newton's notation:** $\displaystyle \dot{y}$
 
 ### 导数的两种定义形式
 
@@ -144,7 +144,7 @@ $Assume:\ f\ differentiability\ at\ x=c$
 $
 \begin{array}{l}
 \because f\ differentiability\ at\ x=c\\
-\therefore f^{\prime }( c) =\displaystyle \lim _{x\rightarrow c}\frac{f( x) -f( c)}{x-c}
+\therefore \displaystyle f^{\prime }( c) = \lim _{x\rightarrow c}\frac{f( x) -f( c)}{x-c}
 \end{array}
 $
 
@@ -165,7 +165,7 @@ $$
 
 ### Justifying the power rule
 
-#### Proof: $\frac{d}{dx}\left( x^{n}\right) =nx^{n-1}$
+#### Proof: $\displaystyle \frac{d}{dx}\left( x^{n}\right) =nx^{n-1}$
 
 $\mathnormal{Proof.}$
 
@@ -184,7 +184,7 @@ $$
 \end{aligned}
 $$
 
-#### Proof: $\frac{d}{dx}\left(\sqrt{x}\right) =\frac{1}{2} x^{-\frac{1}{2}}$
+#### Proof: $\displaystyle \frac{d}{dx}\left(\sqrt{x}\right) =\frac{1}{2} x^{-\frac{1}{2}}$
 
 $\mathnormal{Proof.}$
 
@@ -201,7 +201,7 @@ $$
 
 ### Justifying the basic derivative rules
 
-#### Proof: Constant rule ($\frac{d}{dx} k=0$)
+#### Proof: Constant rule ($\displaystyle \frac{d}{dx} k=0$)
 
 $\mathnormal{Proof.}$
 
@@ -210,21 +210,21 @@ $$
 \because k\ is\ constant\\
 \therefore y\ does\ not\ change\ as\ x\ changes\\
 \therefore f( x+h) -f( x) =0\\
-\therefore \frac{d}{dx} k=\displaystyle \lim _{h\rightarrow 0}\frac{f( x+h) -f( x)}{h} =\lim _{h\rightarrow 0}\frac{0}{h} =0
+\therefore \displaystyle \frac{d}{dx} k= \lim _{h\rightarrow 0}\frac{f( x+h) -f( x)}{h} =\lim _{h\rightarrow 0}\frac{0}{h} =0
 \end{array}
 $$
 
 #### Proof: Constant multiple and sum/difference rules
 
-**Constant multiple rule:** $\dfrac{d}{dx}[k\cdot f(x)]=k\cdot\dfrac{d}{dx}f(x)$
+**Constant multiple rule:** $\displaystyle \dfrac{d}{dx}[k\cdot f(x)]=k\cdot\dfrac{d}{dx}f(x)$
 
-**Sum rule:** $\dfrac{d}{dx}[f(x)+g(x)]=\dfrac{d}{dx}f(x)+\dfrac{d}{dx}g(x)$
+**Sum rule:** $\displaystyle \dfrac{d}{dx}[f(x)+g(x)]=\dfrac{d}{dx}f(x)+\dfrac{d}{dx}g(x)$
 
-**Difference rule:** $\dfrac{d}{dx}[f(x)-g(x)]=\dfrac{d}{dx}f(x)-\dfrac{d}{dx}g(x)$
+**Difference rule:** $\displaystyle \dfrac{d}{dx}[f(x)-g(x)]=\dfrac{d}{dx}f(x)-\dfrac{d}{dx}g(x)$
 
 $\mathnormal{Proof.}$
 
-$1.\ f( x) =kg( x) \Longrightarrow f^{\prime }( x) =kg^{\prime }( x)$
+$\displaystyle 1.\ f( x) =kg( x) \Longrightarrow f^{\prime }( x) =kg^{\prime }( x)$
 
 $$
 \begin{aligned}
@@ -237,7 +237,7 @@ f^{\prime }( x) & =\displaystyle \lim _{h\rightarrow 0}\frac{f( x+h) -f( x)}{h}\
 \end{aligned}
 $$
 
-$2.\ f( x) =g( x) \pm j( x) \Longrightarrow f^{\prime }( x) =g^{\prime }( x) \pm j^{\prime }( x)$
+$\displaystyle 2.\ f( x) =g( x) \pm j( x) \Longrightarrow f^{\prime }( x) =g^{\prime }( x) \pm j^{\prime }( x)$
 
 $$
 \begin{aligned}
@@ -255,7 +255,7 @@ Known $\displaystyle \lim _{x\rightarrow 0}\frac{\sin x}{x} =1$ and $\displaysty
 
 $\mathnormal{Proof.}$
 
-$1.\ \frac{d}{dx}[\sin x] =\cos x$
+$\displaystyle 1.\ \frac{d}{dx}[\sin x] =\cos x$
 
 $$
 \begin{aligned}
@@ -270,7 +270,7 @@ $$
 \end{aligned}
 $$
 
-$2.\ \frac{d}{dx}[\cos x] =-\sin x$
+$\displaystyle 2.\ \frac{d}{dx}[\cos x] =-\sin x$
 
 <center>
   <Image alt="1" src="https://pic.imgdb.cn/item/66122e7268eb935713987d7f.png" width={1920} height={1080} />
@@ -289,7 +289,7 @@ $$
 \end{aligned}
 $$
 
-$Let\ n=e^{\Delta x} -1,\ we\ can\ get\ n+1=e^{\Delta x} ,\ such\ that\ \Delta x=\ln( n+1) \ and\ as\ \Delta x\rightarrow 0=n\rightarrow 0$
+$\displaystyle Let\ n=e^{\Delta x} -1,\ we\ can\ get\ n+1=e^{\Delta x} ,\ such\ that\ \Delta x=\ln( n+1) \ and\ as\ \Delta x\rightarrow 0=n\rightarrow 0$
 
 $We\ can\ rewrite\ to:$
 
@@ -320,7 +320,7 @@ $$
 \end{aligned}
 $$
 
-$Let\ n=\frac{\Delta x}{x} ,\ \Delta x=nx,\ \frac{1}{\Delta x} =\frac{1}{n} \cdot \frac{1}{x} \ and\ as\ \Delta x\rightarrow 0=n\rightarrow 0$
+$\displaystyle Let\ n=\frac{\Delta x}{x} ,\ \Delta x=nx,\ \frac{1}{\Delta x} =\frac{1}{n} \cdot \frac{1}{x} \ and\ as\ \Delta x\rightarrow 0=n\rightarrow 0$
 
 $We\ can\ rewrite\ to:$
 
@@ -333,13 +333,13 @@ $$
 \end{aligned}
 $$
 
-#### Method 2 (Using the fact that $\frac{d}{dx}\left( e^{x}\right) =e^{x}$ and applying implicit differentiation)
+#### Method 2 (Using the fact that $\displaystyle \frac{d}{dx}\left( e^{x}\right) =e^{x}$ and applying implicit differentiation)
 
 $\mathnormal{Proof.}$
 
-$Known\ \frac{d}{dx}\left( e^{x}\right) =e^{x}$
+$\displaystyle Known\ \frac{d}{dx}\left( e^{x}\right) =e^{x}$
 
-$Let\ y=\ln( x) ,\ we\ can\ get:$
+$\displaystyle Let\ y=\ln( x) ,\ we\ can\ get:$
 
 $$
 \begin{aligned}
@@ -388,9 +388,9 @@ $$
 
 $\mathnormal{Proof.}$
 
-$Known\ \frac{d}{dx}\left( e^{x}\right) =e^{x}$
+$\displaystyle Known\ \frac{d}{dx}\left( e^{x}\right) =e^{x}$
 
-$Let\ a=e^{\ln a}$
+$\displaystyle Let\ a=e^{\ln a}$
 
 $$
 \begin{aligned}
@@ -406,7 +406,7 @@ $$
 
 $\mathnormal{Proof.}$
 
-$Known\ \frac{d}{dx}(\ln x) =\frac{1}{x}$
+$\displaystyle Known\ \frac{d}{dx}(\ln x) =\frac{1}{x}$
 
 $$
 \begin{aligned}
@@ -433,7 +433,7 @@ $For\ why\ if\ function\ u\ is\ continuous\ at\ x,\ then\ \Delta u\rightarrow 0\
   <Image alt="1" src="https://pic.imgdb.cn/item/661a87a868eb935713971ab1.png" width={1920} height={1080} />
 </center>
 
-$The\ chain\ rule\ tell\ us:\ \frac{d}{dx}[ y( u( x))] =\frac{dy}{dx} =\frac{dy}{du} \cdot \frac{du}{dx}$
+$\displaystyle The\ chain\ rule\ tell\ us:\ \frac{d}{dx}[ y( u( x))] =\frac{dy}{dx} =\frac{dy}{du} \cdot \frac{du}{dx}$
 
 $Assuming\ y,\ u\ differentiable\ at\ x.\ We\ can\ get:$
 
@@ -500,3 +500,12 @@ f^{\prime }( a) \ undefined
 \end{cases}
 $$
 
+## Definite Integral & Riemann Sum
+
+The definite integral of a continuous function $f$ over the interval $[ a,\ b]$, denoted by $\displaystyle \int _{a}^{b} f( x) dx$, is the limit of a Riemann sum as the number of subdivisions approaches infinity.
+
+$$
+\displaystyle \int _{a}^{b} f( x) dx=\lim _{n\rightarrow \infty }\sum _{i=1}^{n} f( x_{i}) \Delta x
+$$
+
+Where $\displaystyle \Delta x=\frac{b-a}{n}$ and $x_{i} =a+\Delta x\cdot i$.
