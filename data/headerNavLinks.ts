@@ -4,7 +4,7 @@ const headerNavLinks = [
   // { href: '/tags', title: '标签' },
   // { href: '/projects', title: '项目' },
   { href: '/friends', title: '友链' },
-  { href: 'https://memos.cubeyond.net', title: '朋友圈' },
+  { href: 'https://memos.cubeyond.net', title: '语丝' },
   { href: '/about', title: '关于我' },
 ]
 
