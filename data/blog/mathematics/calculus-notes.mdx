@@ -1,7 +1,7 @@
 ---
 title: "微积分笔记"
 date: '2024-03-29'
-lastmod: '2024-08-15'
+lastmod: '2024-08-18'
 tags: ['Mathematices', 'Calculus']
 draft: false
 summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
@@ -480,25 +480,13 @@ $$
 
 ## Mean Value Theorem
 
-$$
-\begin{cases}
-f\ continuous\ over\ [ a,\ b]\\
-every\ point\ over\ ( a,\ b) \ is\ differentiable
-\end{cases} \Longrightarrow \ there\ exists\ some\ c\in ( a,\ b) \ where\ \frac{\Delta y}{\Delta x} =\frac{f( b) -f( a)}{b-a} =f^{\prime }( c)
-$$
+If $f$ is continuous over $[ a,\ b]$ and every point over $( a,\ b)$ is differentiable. Then there exists some $c\in ( a,\ b)$ where $\displaystyle \frac{\Delta y}{\Delta x} =\frac{f( b) -f( a)}{b-a} =f^{\prime }( c)$
 
 ## Extreme Value Theorem
 
-$$
-f\ continuous\ over\ [ a,\ b] \Longrightarrow \exists \ c,\ d\in [ a,\ b] :f( c) \leqslant f( x) \leqslant f( d) \ for\ all\ x\in [ a,\ b]
-$$
+$$f\ continuous\ over\ [ a,\ b] \Longrightarrow \exists \ c,\ d\in [ a,\ b] :f( c) \leqslant f( x) \leqslant f( d) \ for\ all\ x\in [ a,\ b]$$
 
-$$
-critical\ points\ exists\ when\ non\ endpoint\ point\ at\ x=a\ \begin{cases}
-f^{\prime }( a) =0\\
-f^{\prime }( a) \ undefined
-\end{cases}
-$$
+critical points exists when non endpoint point at $$x=a\ \begin{cases} f^{\prime }( a) =0\\ f^{\prime }( a) \ undefined \end{cases}$$
 
 ## Definite Integral & Riemann Sum
 
@@ -536,7 +524,21 @@ $$\displaystyle \int _{a}^{b} f( x) dx+\int _{b}^{c} f( x) dx=\int _{a}^{c} f( x
 
 ## First fundamental theorem of calculus
 
-Let $f$ be a continuous real−valued function defined on $[ a,\ b]$. Let $F$ be the function defined, for all $x$ in $[ a,\ b]$, by $\displaystyle F( x) =\int _{a}^{x} f( t) dt$
+Let $f$ be a continuous real−valued function defined on $[ a,\ b]$. And $F$ be the function defined, for all $x$ in $[ a,\ b]$, by $\displaystyle F( x) =\int _{a}^{x} f( t) dt$
 
 Then $F$ is uniformly continuous on $[ a,\ b]$ and differentiable on the open interval $( a,\ b)$, and $\displaystyle F^{\prime }( x) =f( x)$ for all $x$ in $( a,\ b)$ so $F$ is an antiderivative of $f$.
+
+<center>
+  <Image alt="1" src="https://s21.ax1x.com/2024/08/18/pACxH78.jpg" width={2400} height={1080} />
+</center>
+
+## Second fundamental theorem of calculus / Newton–Leibniz theorem
+
+Let $f$ be a continuous real−valued function defined on $[ a,\ b]$ and $F$ is a continuous function on $[ a,\ b]$ which is an antiderivative of $f$ in $( a,\ b)$: $\displaystyle F^{\prime }( x) =f( x)$
+
+If $f$ is Riemann integrable on $[ a,\ b]$ then $\displaystyle \int _{a}^{b} f( x) dx=F( b) -F( a)$
+
+<center>
+  <Image alt="1" src="https://s21.ax1x.com/2024/08/18/pACzG3d.jpg" width={2400} height={1080} />
+</center>
 
