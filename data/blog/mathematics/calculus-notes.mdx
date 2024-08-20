@@ -1,7 +1,7 @@
 ---
 title: "微积分笔记"
 date: '2024-03-29'
-lastmod: '2024-08-18'
+lastmod: '2024-08-20'
 tags: ['Mathematices', 'Calculus']
 draft: false
 summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
@@ -547,4 +547,46 @@ If $f$ is Riemann integrable on $[ a,\ b]$ then $\displaystyle \int _{a}^{b} f( 
 $$\displaystyle \int x^{n} dx=\frac{x^{n+1}}{n+1} +C,\ n\neq -1$$
 
 Yes that just simple!
+
+## Indefinite integration rules
+
+**Polynomials**
+
+$$\displaystyle \int x^{n} dx=\frac{x^{n+1}}{n+1} +C$$
+
+**Radicals**
+
+$$\displaystyle \int \sqrt[m]{x^{n}} dx=\frac{x^{\frac{n}{m} +1}}{\frac{n}{m} +1} +C$$
+
+**Trigonometric functions**
+
+$$\displaystyle \int \sin( x) dx=-\cos( x) +C$$
+
+$$\displaystyle \int \cos( x) dx=\sin( x) +C$$
+
+$$\displaystyle \int \sec^{2}( x) dx=\tan( x) +C$$
+
+$$\displaystyle \int \csc^{2}( x) dx=-\cot( x) +C$$
+
+$$\displaystyle \int \sec( x)\tan( x) dx=\sec( x) +C$$
+
+$$\displaystyle \int \csc( x)\cot( x) dx=-\csc( x) +C$$
+
+**Exponential functions**
+
+$$\displaystyle \int e^{x} dx=e^{x} +C$$
+
+$$\displaystyle \int a^{x} dx=\frac{a^{x}}{\ln( a)} +C$$
+
+**Logarithmic functions**
+
+$$\displaystyle \int \frac{1}{x} dx=\ln |x|+C$$
+
+**Inverse trigonometric functions**
+
+$$\displaystyle \int \frac{1}{\sqrt{a^{2} -x^{2}}} dx=\arcsin\left(\frac{x}{a}\right) +C$$
+
+$$\displaystyle \int \frac{1}{a^{2} +x^{2}} dx=\frac{1}{a}\arctan\left(\frac{x}{a}\right) +C$$
+
+这些就不用证明了吧，自己算算就知道了。
 
