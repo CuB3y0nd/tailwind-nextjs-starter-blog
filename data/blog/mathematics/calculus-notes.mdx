@@ -1,7 +1,7 @@
 ---
 title: "微积分笔记"
 date: '2024-03-29'
-lastmod: '2024-08-20'
+lastmod: '2024-08-25'
 tags: ['Mathematices', 'Calculus']
 draft: false
 summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
@@ -571,6 +571,36 @@ $$\displaystyle \int \csc^{2}( x) dx=-\cot( x) +C$$
 $$\displaystyle \int \sec( x)\tan( x) dx=\sec( x) +C$$
 
 $$\displaystyle \int \csc( x)\cot( x) dx=-\csc( x) +C$$
+
+$$\displaystyle \int \sec xdx=\ln| \sec x+\tan x| +C$$（分子分母同乘 $\sec x+\tan x$）
+
+$$\displaystyle \int \csc xdx=\ln| \csc x-\cot x| +C$$（分子分母同乘 $\csc x-\cot x$）
+
+下面是另一种方法求这两个不定积分：
+
+$
+\begin{array}{ l l l }
+\displaystyle \int \sec xdx & =\displaystyle \int \frac{1}{\cos x} dx & \\
+ & =\displaystyle \int \frac{\cos x}{\cos^{2} x} dx & \\
+ & =\displaystyle \int \frac{1}{1-\sin^{2} x}\cos xdx & Let\ u=\sin x\\
+ & =\displaystyle \int \frac{1}{( 1+u)( 1-u)} du & \\
+ & =\displaystyle \frac{1}{2}\int \left(\frac{1}{1+u} +\frac{1}{1-u}\right) du & Partial\ fractions\\
+ & =\displaystyle \frac{1}{2}\ln\left| \frac{1+u}{1-u}\right| +C & \\
+ & =\displaystyle \frac{1}{2}\ln\left| \frac{1+\sin x}{1-\sin x}\right| +C &
+\end{array}
+$
+
+$
+\begin{array}{ l l l }
+\displaystyle \int \csc xdx & =\displaystyle \int \frac{1}{\sin x} dx & \\
+ & =\displaystyle \int \frac{\sin x}{\sin^{2} x} dx & \\
+ & =\displaystyle \int \frac{1}{1-\cos^{2} x}\sin xdx & Let\ u=\cos x\\
+ & =\displaystyle -\int \frac{1}{( 1+u)( 1-u)} du & \\
+ & =\displaystyle -\frac{1}{2}\int \left(\frac{1}{1+u} +\frac{1}{1-u}\right) du & Partial\ fractions\\
+ & =\displaystyle -\frac{1}{2}\ln\left| \frac{1+u}{1-u}\right| +C & \\
+ & =\displaystyle -\frac{1}{2}\ln\left| \frac{1+\cos x}{1-\cos x}\right| +C &
+\end{array}
+$
 
 **Exponential functions**
 
