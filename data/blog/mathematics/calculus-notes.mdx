@@ -1,7 +1,7 @@
 ---
 title: "微积分笔记"
 date: '2024-03-29'
-lastmod: '2024-08-25'
+lastmod: '2024-08-26'
 tags: ['Mathematices', 'Calculus']
 draft: false
 summary: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程"
@@ -618,9 +618,17 @@ $$\displaystyle \int \frac{1}{\sqrt{a^{2} -x^{2}}} dx=\arcsin\left(\frac{x}{a}\r
 
 $$\displaystyle \int \frac{1}{a^{2} +x^{2}} dx=\frac{1}{a}\arctan\left(\frac{x}{a}\right) +C$$
 
-这些就不用证明了吧，自己算算就知道了。
-
 ## Integration by parts
 
-$\displaystyle \int uvdx=u\int vdx-\int \left( u^{\prime }\int vdx\right) dx$
+$$\displaystyle \int uvdx=u\int vdx-\int \left( u^{\prime }\int vdx\right) dx$$
+
+## Integration by reduction formulae
+
+$$\displaystyle \int \sin^{n} xdx=-\frac{1}{n}\sin^{n-1} x\cos x+\frac{n-1}{n}\int \sin^{n-2} xdx$$
+
+$$\displaystyle \int \cos^{n} xdx=\frac{1}{n}\cos^{n-1} x\sin x+\frac{n-1}{n}\int \cos^{n-2} xdx$$
+
+$$\displaystyle \int \tan^{n} xdx=\frac{1}{n-1}\tan^{n-1} x-\int \tan^{n-2} xdx$$
+
+$$\displaystyle \int (\ln x)^{n} dx=x(\ln x)^{n} -n\int (\ln x)^{n-1} dx$$
 
